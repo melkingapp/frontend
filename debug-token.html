@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Token</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>Debug JWT Token</h1>
+    
+    <div>
+        <h2>Token Information</h2>
+        <button onclick="checkToken()">بررسی توکن</button>
+        <div id="tokenInfo"></div>
+    </div>
+    
+    <div>
+        <h2>Test API Call</h2>
+        <button onclick="testApi()">تست API</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <script>
+        function checkToken() {
+            const accessToken = localStorage.getItem('access_token');
+            const refreshToken = localStorage.getItem('refresh_token');
+            
+            console.log('Access Token:', accessToken);
+            console.log('Refresh Token:', refreshToken);
+            
+            let info = '<h3>Token Status:</h3>';
+            
+            if (accessToken) {
+                info += `<p>✅ Access Token: ${accessToken.substring(0, 50)}...</p>`;
+                
+                // Decode JWT payload
+                try {
+                    const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                    const exp = new Date(payload.exp * 1000);
+                    const now = new Date();
+                    
+                    info += `<p>📅 Expires: ${exp.toLocaleString()}</p>`;
+                    info += `<p>⏰ Current: ${now.toLocaleString()}</p>`;
+                    info += `<p>${exp > now ? '✅ Valid' : '❌ Expired'}</p>`;
+                    info += `<p>👤 User ID: ${payload.user_id}</p>`;
+                } catch (e) {
+                    info += `<p>❌ Invalid token format</p>`;
+                }
+            } else {
+                info += `<p>❌ No access token found</p>`;
+            }
+            
+            if (refreshToken) {
+                info += `<p>✅ Refresh Token: ${refreshToken.substring(0, 50)}...</p>`;
+            } else {
+                info += `<p>❌ No refresh token found</p>`;
+            }
+            
+            document.getElementById('tokenInfo').innerHTML = info;
+        }
+        
+        async function testApi() {
+            const accessToken = localStorage.getItem('access_token');
+            
+            if (!accessToken) {
+                document.getElementById('apiResult').innerHTML = '<p style="color: red;">❌ No access token found</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/buildings/list/', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('API Response Status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('apiResult').innerHTML = 
+                        `<p style="color: green;">✅ API Call Successful! Found ${data.results?.length || data.length || 0} buildings</p>`;
+                } else {
+                    const error = await response.text();
+                    document.getElementById('apiResult').innerHTML = 
+                        `<p style="color: red;">❌ API Error ${response.status}: ${error}</p>`;
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                document.getElementById('apiResult').innerHTML = 
+                    `<p style="color: red;">❌ Network Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Auto check on load
+        window.onload = checkToken;
+    </script>
+</body>
+</html>

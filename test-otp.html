@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تست OTP</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>تست سیستم OTP</h1>
+    
+    <div>
+        <h2>مرحله 1: ارسال کد</h2>
+        <input type="tel" id="phone" placeholder="09123456789" />
+        <select id="role">
+            <option value="manager">مدیر</option>
+            <option value="resident">ساکن</option>
+        </select>
+        <button onclick="sendOTP()">ارسال کد</button>
+    </div>
+    
+    <div id="otpSection" style="display: none;">
+        <h2>مرحله 2: تایید کد</h2>
+        <input type="text" id="otp" placeholder="کد 5 رقمی" maxlength="5" />
+        <button onclick="verifyOTP()">تایید</button>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        let currentPhone = '';
+        let currentRole = '';
+        
+        async function sendOTP() {
+            const phone = document.getElementById('phone').value;
+            const role = document.getElementById('role').value;
+            
+            if (!phone || !role) {
+                alert('شماره تلفن و نقش الزامی است');
+                return;
+            }
+            
+            currentPhone = phone;
+            currentRole = role;
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/send-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: phone,
+                        role: role
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Send response:', data);
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: green;">کد ارسال شد! OTP: ${data.otp || 'چک کنید SMS'}</p>`;
+                    document.getElementById('otpSection').style.display = 'block';
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: red;">خطا: ${data.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: red;">خطا در اتصال: ${error.message}</p>`;
+            }
+        }
+        
+        async function verifyOTP() {
+            const otp = document.getElementById('otp').value;
+            
+            if (!otp) {
+                alert('کد OTP الزامی است');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/verify-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: currentPhone,
+                        role: currentRole,
+                        otp: otp
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Verify response:', data);
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: green;">✅ ورود موفق! کاربر: ${data.user.first_name}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: red;">❌ خطا: ${data.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: red;">خطا در اتصال: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

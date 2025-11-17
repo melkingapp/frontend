@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Payments</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐛 Debug Payments</h1>
+        
+        <div class="section info">
+            <h3>📋 وضعیت احراز هویت</h3>
+            <div id="authStatus" class="result">در حال بررسی...</div>
+        </div>
+
+        <div class="section">
+            <h3>🔐 تست احراز هویت</h3>
+            <button onclick="checkAuth()">بررسی احراز هویت</button>
+            <div id="authResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>📊 تست دریافت پرداخت‌ها</h3>
+            <button onclick="testPayments()">دریافت پرداخت‌ها</button>
+            <div id="paymentsResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔧 تست بدون احراز هویت</h3>
+            <button onclick="testWithoutAuth()">تست بدون احراز هویت</button>
+            <div id="noAuthResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+
+        function checkAuth() {
+            const resultDiv = document.getElementById('authResult');
+            resultDiv.innerHTML = 'در حال بررسی...';
+            
+            try {
+                const auth = localStorage.getItem('auth');
+                if (auth) {
+                    const authData = JSON.parse(auth);
+                    resultDiv.innerHTML = `✅ احراز هویت موجود:\n${JSON.stringify(authData, null, 2)}`;
+                    resultDiv.parentElement.className = 'section success';
+                } else {
+                    resultDiv.innerHTML = '❌ احراز هویت یافت نشد';
+                    resultDiv.parentElement.className = 'section error';
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `❌ خطا در بررسی احراز هویت: ${e.message}`;
+                resultDiv.parentElement.className = 'section error';
+            }
+        }
+
+        async function testPayments() {
+            const resultDiv = document.getElementById('paymentsResult');
+            resultDiv.innerHTML = 'در حال تست...';
+            
+            try {
+                const auth = localStorage.getItem('auth');
+                if (!auth) {
+                    resultDiv.innerHTML = '❌ ابتدا وارد سیستم شوید';
+                    resultDiv.parentElement.className = 'section error';
+                    return;
+                }
+
+                const authData = JSON.parse(auth);
+                const token = authData.tokens?.access;
+
+                if (!token) {
+                    resultDiv.innerHTML = '❌ توکن دسترسی یافت نشد';
+                    resultDiv.parentElement.className = 'section error';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/billing/pending-payments/`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `✅ موفق:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'section success';
+                } else {
+                    resultDiv.innerHTML = `❌ خطا ${response.status}:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'section error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ خطا در اتصال: ${error.message}`;
+                resultDiv.parentElement.className = 'section error';
+            }
+        }
+
+        async function testWithoutAuth() {
+            const resultDiv = document.getElementById('noAuthResult');
+            resultDiv.innerHTML = 'در حال تست...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/billing/pending-payments/`);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `Status: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                resultDiv.parentElement.className = 'section info';
+            } catch (error) {
+                resultDiv.innerHTML = `❌ خطا در اتصال: ${error.message}`;
+                resultDiv.parentElement.className = 'section error';
+            }
+        }
+
+        // Auto check auth on load
+        window.onload = function() {
+            checkAuth();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تست ثبت هزینه</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>تست ثبت هزینه</h1>
+    
+    <div>
+        <h2>مرحله 1: لاگین</h2>
+        <button onclick="login()">لاگین</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div id="expenseSection" style="display: none;">
+        <h2>مرحله 2: ثبت هزینه</h2>
+        <form id="expenseForm">
+            <div>
+                <label>نوع هزینه:</label>
+                <select id="expense_type" required>
+                    <option value="water_bill">قبض آب</option>
+                    <option value="electricity">برق</option>
+                </select>
+            </div>
+            <div>
+                <label>مبلغ کل:</label>
+                <input type="number" id="total_amount" value="25000" required>
+            </div>
+            <div>
+                <label>انتخاب واحدها:</label>
+                <select id="unit_selection" required>
+                    <option value="all_units">همه واحدها</option>
+                    <option value="occupied_units">واحدهای پر</option>
+                </select>
+            </div>
+            <div>
+                <label>نحوه تقسیم:</label>
+                <select id="distribution_method" required>
+                    <option value="equal">مساوی</option>
+                    <option value="proportional">نسبی</option>
+                </select>
+            </div>
+            <div>
+                <label>نقش:</label>
+                <select id="role" required>
+                    <option value="both">هردو</option>
+                    <option value="owner">مالک</option>
+                    <option value="resident">ساکن</option>
+                </select>
+            </div>
+            <div>
+                <label>توضیحات:</label>
+                <textarea id="description"></textarea>
+            </div>
+            <div>
+                <label>شناسه ساختمان:</label>
+                <input type="number" id="building_id" value="19" required>
+            </div>
+            <button type="submit">ثبت هزینه</button>
+        </form>
+        <div id="expenseResult"></div>
+    </div>
+
+    <script>
+        let accessToken = '';
+        
+        async function login() {
+            try {
+                // 1. Send OTP
+                const otpResponse = await fetch('http://127.0.0.1:8000/api/v1/send-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: '09123456789',
+                        role: 'manager'
+                    })
+                });
+                
+                const otpData = await otpResponse.json();
+                console.log('OTP Response:', otpData);
+                
+                if (otpResponse.ok) {
+                    const otpCode = otpData.otp;
+                    console.log('OTP Code:', otpCode);
+                    
+                    // 2. Verify OTP
+                    const verifyResponse = await fetch('http://127.0.0.1:8000/api/v1/verify-otp/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            phone_number: '09123456789',
+                            role: 'manager',
+                            otp: otpCode
+                        })
+                    });
+                    
+                    const verifyData = await verifyResponse.json();
+                    console.log('Verify Response:', verifyData);
+                    
+                    if (verifyResponse.ok) {
+                        accessToken = verifyData.tokens.access;
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', verifyData.tokens.refresh);
+                        
+                        document.getElementById('loginResult').innerHTML = 
+                            `<p style="color: green;">✅ لاگین موفق!</p>`;
+                        document.getElementById('expenseSection').style.display = 'block';
+                    } else {
+                        document.getElementById('loginResult').innerHTML = 
+                            `<p style="color: red;">❌ خطا در تایید: ${verifyData.error}</p>`;
+                    }
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        `<p style="color: red;">❌ خطا در ارسال OTP: ${otpData.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loginResult').innerHTML = 
+                    `<p style="color: red;">❌ خطا: ${error.message}</p>`;
+            }
+        }
+        
+        document.getElementById('expenseForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const expenseData = {
+                expense_type: document.getElementById('expense_type').value,
+                total_amount: parseFloat(document.getElementById('total_amount').value),
+                unit_selection: document.getElementById('unit_selection').value,
+                specific_units: [],
+                distribution_method: document.getElementById('distribution_method').value,
+                role: document.getElementById('role').value,
+                description: document.getElementById('description').value,
+                building_id: parseInt(document.getElementById('building_id').value)
+            };
+            
+            console.log('Expense data:', expenseData);
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/billing/register-expense/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(expenseData)
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    document.getElementById('expenseResult').innerHTML = 
+                        `<p style="color: green;">✅ هزینه با موفقیت ثبت شد!<br>
+                        نوع: ${data.expense_type}<br>
+                        مبلغ: ${data.total_amount.toLocaleString()} تومان<br>
+                        تعداد واحدها: ${data.units_count}</p>`;
+                } else {
+                    document.getElementById('expenseResult').innerHTML = 
+                        `<p style="color: red;">❌ خطا در ثبت هزینه: ${data.error || data.detail}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('expenseResult').innerHTML = 
+                    `<p style="color: red;">❌ خطا: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست اتصال صفحه پرداخت‌ها به بکند</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست اتصال صفحه پرداخت‌ها به بکند</h1>
+        
+        <div class="test-section info">
+            <h3>📋 اطلاعات تست</h3>
+            <p><strong>صفحه:</strong> http://localhost:5173/manager/unit-management/payments</p>
+            <p><strong>بکند:</strong> http://localhost:8000/api/v1/billing/</p>
+            <p><strong>وضعیت:</strong> <span id="status">در حال تست...</span></p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 تست احراز هویت</h3>
+            <button onclick="testAuth()">تست JWT Token</button>
+            <div id="authResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 تست دریافت پرداخت‌های در انتظار</h3>
+            <button onclick="testPendingPayments()">دریافت پرداخت‌ها</button>
+            <div id="paymentsResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ تست تایید پرداخت</h3>
+            <button onclick="testApprovePayment()">تایید پرداخت</button>
+            <div id="approveResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>❌ تست رد پرداخت</h3>
+            <button onclick="testRejectPayment()">رد پرداخت</button>
+            <div id="rejectResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 تست اعتبارسنجی پرداخت‌ها</h3>
+            <button onclick="testValidatePayments()">اعتبارسنجی</button>
+            <div id="validateResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📄 تست استعلام قبض</h3>
+            <button onclick="testInquireBill()">استعلام قبض</button>
+            <div id="inquireResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 تست اتصال کامل</h3>
+            <button onclick="testFullIntegration()">تست کامل</button>
+            <div id="fullResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        let authToken = null;
+
+        // دریافت توکن از localStorage
+        function getAuthToken() {
+            try {
+                const auth = localStorage.getItem('auth');
+                if (auth) {
+                    const authData = JSON.parse(auth);
+                    return authData.tokens?.access;
+                }
+            } catch (e) {
+                console.error('خطا در دریافت توکن:', e);
+            }
+            return null;
+        }
+
+        // تست احراز هویت
+        async function testAuth() {
+            const resultDiv = document.getElementById('authResult');
+            resultDiv.innerHTML = 'در حال تست...';
+            
+            authToken = getAuthToken();
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '❌ توکن JWT یافت نشد. لطفاً ابتدا وارد شوید.';
+                resultDiv.parentElement.className = 'test-section error';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/profile/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ احراز هویت موفق\nکاربر: ${data.username}\nنقش: ${data.role}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.innerHTML = `❌ خطا در احراز هویت: ${response.status}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ خطا در اتصال: ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // تست دریافت پرداخت‌های در انتظار
+        async function testPendingPayments() {
+            const resultDiv = document.getElementById('paymentsResult');
+            resultDiv.innerHTML = 'در حال تست...';
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '❌ ابتدا احراز هویت کنید';
+                resultDiv.parentElement.className = 'test-section error';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/billing/pending-payments/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `✅ دریافت موفق\nتعداد پرداخت‌ها: ${data.payments?.length || 0}\n\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.innerHTML = `❌ خطا: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ خطا در اتصال: ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // تست تایید پرداخت
+        async function testApprovePayment() {
+            const resultDiv = document.getElementById('approveResult');
+            resultDiv.innerHTML = 'در حال تست...';
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '❌ ابتدا احراز هویت کنید';
+                resultDiv.parentElement.className = 'test-section error';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/billing/approve-payment/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ payment_id: 1 })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `✅ تایید موفق\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.innerHTML = `❌ خطا: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ خطا در اتصال: ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // تست رد پرداخت
+        async function testRejectPayment() {
+            const resultDiv = document.getElementById('rejectResult');
+            resultDiv.innerHTML = 'در حال تست...';
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '❌ ابتدا احراز هویت کنید';
+                resultDiv.parentElement.className = 'test-section error';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/billing/reject-payment/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ payment_id: 2, reason: 'تست رد پرداخت' })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `✅ رد موفق\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.innerHTML = `❌ خطا: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ خطا در اتصال: ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // تست اعتبارسنجی پرداخت‌ها
+        async function testValidatePayments() {
+            const resultDiv = document.getElementById('validateResult');
+            resultDiv.innerHTML = 'در حال تست...';
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '❌ ابتدا احراز هویت کنید';
+                resultDiv.parentElement.className = 'test-section error';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/billing/validate-payments/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ payment_ids: [1, 2, 3], building_id: 1 })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `✅ اعتبارسنجی موفق\nتعداد کل: ${data.summary?.total_payments || 0}\nمعتبر: ${data.summary?.valid_payments || 0}\nنامعتبر: ${data.summary?.invalid_payments || 0}\n\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.innerHTML = `❌ خطا: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ خطا در اتصال: ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // تست استعلام قبض
+        async function testInquireBill() {
+            const resultDiv = document.getElementById('inquireResult');
+            resultDiv.innerHTML = 'در حال تست...';
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '❌ ابتدا احراز هویت کنید';
+                resultDiv.parentElement.className = 'test-section error';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/billing/inquire-bill/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ bill_id: "123", payment_id: "456" })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `✅ استعلام موفق\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.innerHTML = `❌ خطا: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ خطا در اتصال: ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // تست اتصال کامل
+        async function testFullIntegration() {
+            const resultDiv = document.getElementById('fullResult');
+            resultDiv.innerHTML = 'در حال تست اتصال کامل...';
+            
+            const tests = [
+                { name: 'احراز هویت', fn: testAuth },
+                { name: 'دریافت پرداخت‌ها', fn: testPendingPayments },
+                { name: 'اعتبارسنجی', fn: testValidatePayments }
+            ];
+
+            let results = [];
+            
+            for (const test of tests) {
+                try {
+                    await test.fn();
+                    results.push(`✅ ${test.name}: موفق`);
+                } catch (error) {
+                    results.push(`❌ ${test.name}: ${error.message}`);
+                }
+            }
+
+            resultDiv.innerHTML = results.join('\n');
+            resultDiv.parentElement.className = 'test-section success';
+        }
+
+        // شروع خودکار تست احراز هویت
+        window.onload = function() {
+            testAuth();
+        };
+    </script>
+</body>
+</html>

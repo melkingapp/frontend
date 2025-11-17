@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تست Debug ثبت هزینه</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>تست Debug ثبت هزینه</h1>
+    
+    <button onclick="testExpense()">تست ثبت هزینه</button>
+    <div id="result"></div>
+
+    <script>
+        async function testExpense() {
+            try {
+                // 1. Login
+                console.log("📱 لاگین...");
+                const loginResponse = await fetch('http://127.0.0.1:8000/api/v1/send-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: '09123456789',
+                        role: 'manager'
+                    })
+                });
+                
+                const otpData = await loginResponse.json();
+                console.log('OTP Response:', otpData);
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed: ' + otpData.error);
+                }
+                
+                const otpCode = otpData.otp;
+                console.log('OTP Code:', otpCode);
+                
+                // 2. Verify OTP
+                const verifyResponse = await fetch('http://127.0.0.1:8000/api/v1/verify-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: '09123456789',
+                        role: 'manager',
+                        otp: otpCode
+                    })
+                });
+                
+                const verifyData = await verifyResponse.json();
+                console.log('Verify Response:', verifyData);
+                
+                if (!verifyResponse.ok) {
+                    throw new Error('OTP verification failed: ' + verifyData.error);
+                }
+                
+                const accessToken = verifyData.tokens.access;
+                console.log('Access Token:', accessToken.substring(0, 50) + '...');
+                
+                // 3. Test expense with exact frontend data
+                console.log("💰 ثبت هزینه...");
+                const expenseData = {
+                    expense_type: "water",  // Mapped from water_bill
+                    total_amount: 25000,
+                    unit_selection: "all_units",
+                    specific_units: [],
+                    distribution_method: "equal",
+                    role: "both",
+                    description: "",
+                    building_id: 19
+                };
+                
+                console.log("🔥 Sending data:", expenseData);
+                
+                const expenseResponse = await fetch('http://127.0.0.1:8000/api/v1/billing/register-expense/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(expenseData)
+                });
+                
+                console.log('Response status:', expenseResponse.status);
+                const responseData = await expenseResponse.json();
+                console.log('Response data:', responseData);
+                
+                if (expenseResponse.ok) {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: green;">✅ هزینه با موفقیت ثبت شد!<br>
+                        نوع: ${responseData.expense_type}<br>
+                        مبلغ: ${responseData.total_amount.toLocaleString()} تومان<br>
+                        تعداد واحدها: ${responseData.units_count}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: red;">❌ خطا در ثبت هزینه: ${responseData.error || responseData.detail}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: red;">❌ خطا: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

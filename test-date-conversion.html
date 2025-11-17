@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست تبدیل تاریخ شمسی به میلادی</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-jalaali/0.10.4/moment-jalaali.min.js"></script>
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .error {
+            background: #ffe8e8;
+            color: #d00;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>تست تبدیل تاریخ شمسی به میلادی</h1>
+        
+        <h2>تست‌های مختلف تبدیل تاریخ:</h2>
+        
+        <div id="tests"></div>
+        
+        <h2>تست کامپوننت PersianDateRangePicker:</h2>
+        <div class="test-item">
+            <h3>نمونه استفاده:</h3>
+            <p>کامپوننت PersianDateRangePicker از پکیج react-multi-date-picker استفاده می‌کند و:</p>
+            <ul>
+                <li>نمایش تاریخ‌ها به صورت شمسی</li>
+                <li>ارسال تاریخ‌ها به بکند به صورت میلادی (YYYY-MM-DD)</li>
+                <li>پشتیبانی از بازه‌های سریع (امروز، هفته جاری، ماه جاری، سال جاری، ماه گذشته)</li>
+                <li>انتخاب بازه سفارشی</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        moment.loadPersian({ dialect: 'persian-modern' });
+        
+        const tests = [
+            {
+                name: "تاریخ امروز",
+                persian: moment().format('jYYYY/jMM/jDD'),
+                gregorian: moment().format('YYYY-MM-DD')
+            },
+            {
+                name: "اول سال جاری",
+                persian: moment().startOf('jYear').format('jYYYY/jMM/jDD'),
+                gregorian: moment().startOf('jYear').format('YYYY-MM-DD')
+            },
+            {
+                name: "اول ماه جاری",
+                persian: moment().startOf('jMonth').format('jYYYY/jMM/jDD'),
+                gregorian: moment().startOf('jMonth').format('YYYY-MM-DD')
+            },
+            {
+                name: "تاریخ مشخص (1403/01/01)",
+                persian: "1403/01/01",
+                gregorian: moment("1403/01/01", "jYYYY/jMM/jDD").format('YYYY-MM-DD')
+            },
+            {
+                name: "تاریخ مشخص (1403/12/29)",
+                persian: "1403/12/29",
+                gregorian: moment("1403/12/29", "jYYYY/jMM/jDD").format('YYYY-MM-DD')
+            }
+        ];
+        
+        const testsContainer = document.getElementById('tests');
+        
+        tests.forEach(test => {
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-item';
+            
+            let resultClass = 'result';
+            let resultText = '';
+            
+            try {
+                // تست تبدیل شمسی به میلادی
+                const convertedGregorian = moment(test.persian, 'jYYYY/jMM/jDD').format('YYYY-MM-DD');
+                
+                // تست تبدیل میلادی به شمسی
+                const convertedPersian = moment(test.gregorian, 'YYYY-MM-DD').format('jYYYY/jMM/jDD');
+                
+                resultText = `
+                    <strong>تاریخ شمسی:</strong> ${test.persian}<br>
+                    <strong>تاریخ میلادی:</strong> ${test.gregorian}<br>
+                    <strong>تبدیل شمسی به میلادی:</strong> ${convertedGregorian}<br>
+                    <strong>تبدیل میلادی به شمسی:</strong> ${convertedPersian}<br>
+                    <strong>وضعیت:</strong> ✅ موفق
+                `;
+            } catch (error) {
+                resultClass += ' error';
+                resultText = `
+                    <strong>خطا:</strong> ${error.message}<br>
+                    <strong>وضعیت:</strong> ❌ ناموفق
+                `;
+            }
+            
+            testDiv.innerHTML = `
+                <h3>${test.name}</h3>
+                <div class="${resultClass}">${resultText}</div>
+            `;
+            
+            testsContainer.appendChild(testDiv);
+        });
+        
+        // تست اضافی برای بررسی صحت تبدیل
+        console.log('=== تست تبدیل تاریخ ===');
+        console.log('تاریخ امروز شمسی:', moment().format('jYYYY/jMM/jDD'));
+        console.log('تاریخ امروز میلادی:', moment().format('YYYY-MM-DD'));
+        console.log('تبدیل شمسی به میلادی:', moment(moment().format('jYYYY/jMM/jDD'), 'jYYYY/jMM/jDD').format('YYYY-MM-DD'));
+        console.log('تبدیل میلادی به شمسی:', moment(moment().format('YYYY-MM-DD'), 'YYYY-MM-DD').format('jYYYY/jMM/jDD'));
+    </script>
+</body>
+</html>

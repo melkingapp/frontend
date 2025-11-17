@@ -1,0 +1,176 @@
+import axios from 'axios';
+
+// Configuration - Hardcoded for local development
+const baseURL = 'http://localhost:8000/api/v1';
+// Production fallback (when building for production)
+// const baseURL = import.meta.env.VITE_API_BASE_URL || 
+//     (window.location.protocol === 'https:' ? 'https://melkingapp.ir/api/v1' : 'http://melkingapp.ir/api/v1');
+
+console.log('🔧 API Configuration:', {
+    'Environment': import.meta.env.MODE,
+    'baseURL': baseURL,
+    'VITE_API_BASE_URL': import.meta.env.VITE_API_BASE_URL
+});
+
+// Create axios instance
+const client = axios.create({
+    baseURL: baseURL,
+    timeout: 30000, // Increased timeout to 30 seconds
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Request interceptor
+client.interceptors.request.use(
+    (config) => {
+        const token = getAccessToken();
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response interceptor
+client.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+                await refreshToken();
+                const newToken = getAccessToken();
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return client(originalRequest);
+            } catch (refreshError) {
+                clearTokens();
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
+
+// Token management functions
+export const getAccessToken = () => {
+    return localStorage.getItem('access_token');
+};
+
+export const getRefreshToken = () => {
+    return localStorage.getItem('refresh_token');
+};
+
+export const setTokens = (accessToken, refreshToken) => {
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+};
+
+export const clearTokens = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+};
+
+export const refreshToken = async () => {
+    const refreshTokenValue = getRefreshToken();
+    if (!refreshTokenValue) {
+        throw new Error('No refresh token available');
+    }
+
+    try {
+        const response = await axios.post(`${baseURL}/refresh/`, {
+            refresh: refreshTokenValue,
+        });
+
+        const { access } = response.data;
+        localStorage.setItem('access_token', access);
+        return access;
+    } catch (error) {
+        console.error('Token refresh error:', error);
+        throw error;
+    }
+};
+
+// HTTP methods
+export const get = async (url, config = {}) => {
+    try {
+        const response = await client.get(url, config);
+        return response.data;
+    } catch (error) {
+        console.error(`GET ${url} error:`, error);
+        throw error;
+    }
+};
+
+export const post = async (url, data = {}, config = {}) => {
+    try {
+        const response = await client.post(url, data, config);
+        return response.data;
+    } catch (error) {
+        console.error(`POST ${url} error:`, error);
+        throw error;
+    }
+};
+
+export const put = async (url, data = {}, config = {}) => {
+    try {
+        const response = await client.put(url, data, config);
+        return response.data;
+    } catch (error) {
+        console.error(`PUT ${url} error:`, error);
+        throw error;
+    }
+};
+
+export const patch = async (url, data = {}, config = {}) => {
+    try {
+        const response = await client.patch(url, data, config);
+        return response.data;
+    } catch (error) {
+        console.error(`PATCH ${url} error:`, error);
+        throw error;
+    }
+};
+
+export const deleteRequest = async (url, config = {}) => {
+    try {
+        const response = await client.delete(url, config);
+        return response.data;
+    } catch (error) {
+        console.error(`DELETE ${url} error:`, error);
+        throw error;
+    }
+};
+
+// Utility functions
+export const isAuthenticated = () => {
+    return !!getAccessToken();
+};
+
+// Default export (برای backward compatibility)
+const apiService = {
+    get,
+    post,
+    put,
+    patch,
+    delete: deleteRequest,
+    getAccessToken,
+    getRefreshToken,
+    setTokens,
+    clearTokens,
+    refreshToken,
+    isAuthenticated
+};
+
+export default apiService;

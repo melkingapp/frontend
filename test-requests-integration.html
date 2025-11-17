@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست Integration صفحه Requests</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست Integration صفحه Requests</h1>
+        
+        <div class="test-section info">
+            <h3>📋 وضعیت Integration</h3>
+            <p>صفحه Requests قبلاً کامل به بکند وصل شده است:</p>
+            <ul>
+                <li>✅ API Service: requestsApi.js</li>
+                <li>✅ Redux Slice: requestsSlice.js</li>
+                <li>✅ Components: RequestBase, RequestsPage, RequestSummary</li>
+                <li>✅ Backend Endpoints: /services/building/{id}/requests/</li>
+                <li>✅ Test Endpoints: /services/building/{id}/requests-test/</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 تست API Endpoints</h3>
+            <button onclick="testRequestsAPI()">تست API درخواست‌ها</button>
+            <button onclick="testRequestsWithBuilding()">تست API با Building ID</button>
+            <div id="api-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 داده‌های موجود</h3>
+            <div id="data-display"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 تست Frontend Integration</h3>
+            <p>برای تست کامل، به آدرس زیر بروید:</p>
+            <a href="http://localhost:5173/manager/unit-management/requests" target="_blank" style="color: #007bff; text-decoration: none;">
+                http://localhost:5173/manager/unit-management/requests
+            </a>
+        </div>
+    </div>
+
+    <script>
+        async function testRequestsAPI() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>در حال تست...</p>';
+            
+            try {
+                // Test main API
+                const response = await fetch('http://127.0.0.1:8000/api/v1/services/building/1/requests/');
+                const data = await response.json();
+                
+                let html = '<div class="test-section success">';
+                html += '<h4>✅ API اصلی (با احراز هویت)</h4>';
+                html += `<p>Status: ${response.status}</p>`;
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                html += '</div>';
+                
+                // Test fallback API
+                const testResponse = await fetch('http://127.0.0.1:8000/api/v1/services/building/1/requests-test/');
+                const testData = await testResponse.json();
+                
+                html += '<div class="test-section success">';
+                html += '<h4>✅ API تست (بدون احراز هویت)</h4>';
+                html += `<p>Status: ${testResponse.status}</p>`;
+                html += `<pre>${JSON.stringify(testData, null, 2)}</pre>`;
+                html += '</div>';
+                
+                resultsDiv.innerHTML = html;
+                
+                // Display data
+                displayRequestsData(testData.requests || []);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-section error"><h4>❌ خطا در تست API</h4><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function testRequestsWithBuilding() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>در حال تست با Building ID...</p>';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/services/building/1/requests-test/');
+                const data = await response.json();
+                
+                let html = '<div class="test-section success">';
+                html += '<h4>✅ تست با Building ID = 1</h4>';
+                html += `<p>Status: ${response.status}</p>`;
+                html += `<p>تعداد درخواست‌ها: ${data.count}</p>`;
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                html += '</div>';
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-section error"><h4>❌ خطا در تست</h4><p>${error.message}</p></div>`;
+            }
+        }
+
+        function displayRequestsData(requests) {
+            const dataDiv = document.getElementById('data-display');
+            
+            if (requests.length === 0) {
+                dataDiv.innerHTML = '<p>هیچ درخواستی یافت نشد.</p>';
+                return;
+            }
+            
+            let html = '<h4>📋 درخواست‌های موجود:</h4>';
+            html += '<div style="display: grid; gap: 10px; margin-top: 10px;">';
+            
+            requests.forEach((request, index) => {
+                const statusColor = {
+                    'pending': '#fbbf24',
+                    'approved': '#10b981',
+                    'rejected': '#ef4444'
+                }[request.status] || '#6b7280';
+                
+                html += `
+                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; background: #f9f9f9;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h5 style="margin: 0; color: #1f2937;">${request.name}</h5>
+                            <span style="background: ${statusColor}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                ${request.status}
+                            </span>
+                        </div>
+                        <p style="margin: 5px 0; color: #6b7280;">واحد: ${request.unit} | نقش: ${request.role}</p>
+                        <p style="margin: 5px 0; color: #374151;">${request.description}</p>
+                        <p style="margin: 5px 0; font-size: 12px; color: #9ca3af;">تاریخ: ${request.created_at}</p>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            dataDiv.innerHTML = html;
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            testRequestsAPI();
+        };
+    </script>
+</body>
+</html>

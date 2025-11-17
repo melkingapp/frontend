@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تست لیست تراکنش‌ها</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>تست لیست تراکنش‌ها</h1>
+    
+    <button onclick="testTransactions()">تست لیست تراکنش‌ها</button>
+    <div id="result"></div>
+
+    <script>
+        async function testTransactions() {
+            try {
+                // 1. Login
+                console.log("📱 لاگین...");
+                const loginResponse = await fetch('http://127.0.0.1:8000/api/v1/send-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: '09123456789',
+                        role: 'manager'
+                    })
+                });
+                
+                const otpData = await loginResponse.json();
+                console.log('OTP Response:', otpData);
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed: ' + otpData.error);
+                }
+                
+                const otpCode = otpData.otp;
+                console.log('OTP Code:', otpCode);
+                
+                // 2. Verify OTP
+                const verifyResponse = await fetch('http://127.0.0.1:8000/api/v1/verify-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: '09123456789',
+                        role: 'manager',
+                        otp: otpCode
+                    })
+                });
+                
+                const verifyData = await verifyResponse.json();
+                console.log('Verify Response:', verifyData);
+                
+                if (!verifyResponse.ok) {
+                    throw new Error('OTP verification failed: ' + verifyData.error);
+                }
+                
+                const accessToken = verifyData.tokens.access;
+                console.log('Access Token:', accessToken.substring(0, 50) + '...');
+                
+                // 3. Test transactions endpoint
+                console.log("💰 دریافت لیست تراکنش‌ها...");
+                const transactionsResponse = await fetch('http://127.0.0.1:8000/api/v1/billing/transactions/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', transactionsResponse.status);
+                const responseData = await transactionsResponse.json();
+                console.log('Response data:', responseData);
+                
+                if (transactionsResponse.ok) {
+                    const transactions = responseData.transactions || [];
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: green;">✅ لیست تراکنش‌ها دریافت شد!<br>
+                        تعداد تراکنش‌ها: ${transactions.length}<br>
+                        مجموع مبلغ: ${responseData.total_amount?.toLocaleString() || 'نامشخص'} تومان</p>
+                        <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
+                            ${transactions.slice(0, 10).map(t => 
+                                `<div style="border-bottom: 1px solid #eee; padding: 5px;">
+                                    <strong>${t.title}</strong> - ${t.amount.toLocaleString()} تومان - ${t.status}
+                                </div>`
+                            ).join('')}
+                            ${transactions.length > 10 ? `<div>... و ${transactions.length - 10} تراکنش دیگر</div>` : ''}
+                        </div>`;
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: red;">❌ خطا در دریافت لیست تراکنش‌ها: ${responseData.error || responseData.detail}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: red;">❌ خطا: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

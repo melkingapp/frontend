@@ -1,0 +1,130 @@
+name: ⚛️ Frontend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  NODE_VERSION: '20'
+  DEPLOY_PATH: /var/www/melking/frontend-new
+  NGINX_SERVICE: nginx
+
+jobs:
+  build:
+    name: 🧪 Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Lint
+        run: npm run lint
+
+      - name: 🏗️ Build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'https://melkingapp.ir/api/v1' }}
+        run: npm run build
+
+      - name: 📦 Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: 🚀 Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 20
+    environment:
+      name: production
+
+    steps:
+      - name: 📥 Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+
+      - name: 🏷️ Prepare release metadata
+        id: release
+        run: echo "name=release-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 📦 Archive build
+        run: tar -czf frontend-dist.tar.gz -C dist .
+
+      - name: 📤 Upload to server
+        run: |
+          scp -o StrictHostKeyChecking=no frontend-dist.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/frontend-dist.tar.gz
+
+      - name: ♻️ Deploy release
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << "ENDSSH"
+            set -euo pipefail
+            RELEASE_NAME="${{ steps.release.outputs.name }}"
+            DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
+            mkdir -p "${DEPLOY_PATH}/releases"
+            mkdir -p "${DEPLOY_PATH}/shared"
+            RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE_NAME}"
+            rm -rf "${RELEASE_DIR}"
+            mkdir -p "${RELEASE_DIR}"
+            tar -xzf /tmp/frontend-dist.tar.gz -C "${RELEASE_DIR}"
+            rm -f /tmp/frontend-dist.tar.gz
+            ln -sfn "${RELEASE_DIR}" "${DEPLOY_PATH}/current"
+            if command -v chown >/dev/null 2>&1; then
+              chown -R www-data:www-data "${DEPLOY_PATH}" || true
+            fi
+            systemctl reload "${{ env.NGINX_SERVICE }}"
+            echo "Release deployed to ${RELEASE_DIR}"
+          ENDSSH
+
+      - name: 🏥 Health check
+        run: |
+          if [ -n "${{ secrets.DEPLOYMENT_URL }}" ]; then
+            curl -fsSL -o /dev/null "${{ secrets.DEPLOYMENT_URL }}"
+          else
+            echo "DEPLOYMENT_URL not set – skipping health check."
+          fi
+
+  notify:
+    name: 🔔 Notify
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: ✅ Success
+        if: needs.deploy.result == 'success'
+        run: |
+          echo "✅ Frontend deployed successfully to ${{ secrets.DEPLOYMENT_URL }}"
+
+      - name: ❌ Failure
+        if: needs.deploy.result != 'success'
+        run: |
+          echo "❌ Frontend deployment failed. Please review the logs."
+

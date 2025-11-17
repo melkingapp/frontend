@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست حل مشکل UNIQUE constraint</title>
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .step {
+            background-color: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .step h3 {
+            color: #2980b9;
+            margin-top: 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        .form-row > div {
+            flex: 1;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 تست حل مشکل UNIQUE constraint</h1>
+        
+        <!-- مرحله 1: ورود مدیر -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 1: ورود مدیر</h3>
+                <p>مدیر وارد سیستم می‌شود</p>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="managerUsername" placeholder="نام کاربری مدیر">
+                </div>
+                <div>
+                    <input type="password" id="managerPassword" placeholder="رمز عبور مدیر">
+                </div>
+                <div>
+                    <button onclick="loginManager()">ورود مدیر</button>
+                </div>
+            </div>
+            <div id="managerLoginResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- مرحله 2: دریافت درخواست‌ها -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 2: دریافت درخواست‌های عضویت</h3>
+                <p>درخواست‌های عضویت دریافت می‌شوند</p>
+            </div>
+            <button onclick="fetchMembershipRequests()">دریافت درخواست‌ها</button>
+            <div id="requestsResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- مرحله 3: تایید درخواست -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 3: تایید درخواست عضویت</h3>
+                <p>مدیر درخواست را تایید می‌کند (تست حل مشکل UNIQUE constraint)</p>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="requestId" placeholder="شناسه درخواست">
+                </div>
+                <div>
+                    <button onclick="approveRequest()">تایید درخواست</button>
+                </div>
+            </div>
+            <div id="approvalResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- مرحله 4: تست مجدد -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 4: تست مجدد</h3>
+                <p>اگر مشکل حل شده باشد، تایید مجدد باید موفق باشد</p>
+            </div>
+            <button onclick="approveRequestAgain()">تایید مجدد همان درخواست</button>
+            <div id="retryResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let managerToken = null;
+        let lastRequestId = null;
+        const API_BASE = 'http://localhost:8000/api';
+
+        function showResult(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        async function loginManager() {
+            const username = document.getElementById('managerUsername').value;
+            const password = document.getElementById('managerPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    managerToken = data.access;
+                    showResult('managerLoginResult', `ورود مدیر موفق! توکن: ${managerToken.substring(0, 20)}...`, 'success');
+                } else {
+                    showResult('managerLoginResult', `خطا: ${data.error || 'نام کاربری یا رمز عبور اشتباه'}`, 'error');
+                }
+            } catch (error) {
+                showResult('managerLoginResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function fetchMembershipRequests() {
+            if (!managerToken) {
+                showResult('requestsResult', 'ابتدا وارد شوید', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/membership/requests/`, {
+                    headers: {
+                        'Authorization': `Bearer ${managerToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    let result = `تعداد درخواست‌ها: ${data.count || 0}\n\n`;
+                    data.requests.forEach(req => {
+                        result += `درخواست ${req.request_id}:\n`;
+                        result += `  نام: ${req.full_name}\n`;
+                        result += `  ساختمان: ${req.building_title}\n`;
+                        result += `  واحد: ${req.unit_number}\n`;
+                        result += `  وضعیت: ${req.status}\n`;
+                        result += `  نوع مالک: ${req.owner_type}\n`;
+                        if (req.owner_type === 'landlord') {
+                            result += `  مستاجر: ${req.tenant_full_name || 'منتظر مستاجر'}\n`;
+                        }
+                        result += `\n`;
+                    });
+                    showResult('requestsResult', result, 'success');
+                } else {
+                    showResult('requestsResult', `خطا: ${data.error || 'خطا در دریافت درخواست‌ها'}`, 'error');
+                }
+            } catch (error) {
+                showResult('requestsResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function approveRequest() {
+            if (!managerToken) {
+                showResult('approvalResult', 'ابتدا وارد شوید', 'error');
+                return;
+            }
+
+            const requestId = document.getElementById('requestId').value;
+            if (!requestId) {
+                showResult('approvalResult', 'لطفاً شناسه درخواست را وارد کنید', 'error');
+                return;
+            }
+
+            lastRequestId = requestId;
+
+            try {
+                const response = await fetch(`${API_BASE}/membership/requests/${requestId}/approve/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${managerToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('approvalResult', `درخواست عضویت تایید شد!\nواحد ایجاد شد: ${data.unit.units_id}\nوضعیت اجاره: ${data.unit.rental_status || 'تعیین نشده'}`, 'success');
+                } else {
+                    showResult('approvalResult', `خطا: ${data.error || 'خطا در تایید درخواست'}`, 'error');
+                }
+            } catch (error) {
+                showResult('approvalResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function approveRequestAgain() {
+            if (!managerToken) {
+                showResult('retryResult', 'ابتدا وارد شوید', 'error');
+                return;
+            }
+
+            if (!lastRequestId) {
+                showResult('retryResult', 'ابتدا یک درخواست را تایید کنید', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/membership/requests/${lastRequestId}/approve/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${managerToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('retryResult', `تایید مجدد موفق!\nواحد: ${data.unit.units_id}\nوضعیت اجاره: ${data.unit.rental_status || 'تعیین نشده'}`, 'success');
+                } else {
+                    showResult('retryResult', `خطا در تایید مجدد: ${data.error || 'خطا در تایید درخواست'}`, 'error');
+                }
+            } catch (error) {
+                showResult('retryResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
+

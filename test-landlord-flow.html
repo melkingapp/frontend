@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست جریان مالک دارای مستاجر</title>
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+            direction: rtl;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .step {
+            background-color: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .step h3 {
+            color: #2980b9;
+            margin-top: 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        .form-row > div {
+            flex: 1;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 تست جریان مالک دارای مستاجر</h1>
+        
+        <!-- مرحله 1: ورود مالک -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 1: ورود مالک</h3>
+                <p>مالک وارد سیستم می‌شود و درخواست عضویت ارسال می‌کند</p>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="ownerUsername" placeholder="نام کاربری مالک">
+                </div>
+                <div>
+                    <input type="password" id="ownerPassword" placeholder="رمز عبور مالک">
+                </div>
+                <div>
+                    <button onclick="loginOwner()">ورود مالک</button>
+                </div>
+            </div>
+            <div id="ownerLoginResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- مرحله 2: ارسال درخواست عضویت -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 2: ارسال درخواست عضویت</h3>
+                <p>مالک درخواست عضویت ارسال می‌کند و "دارای مستاجر" را انتخاب می‌کند</p>
+                <div class="highlight">
+                    💡 <strong>تست:</strong> فیلدهای مستاجر را خالی بگذارید تا ببینید آیا درخواست قبول می‌شود یا نه
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="buildingCode" placeholder="کد ساختمان">
+                </div>
+                <div>
+                    <input type="text" id="ownerName" placeholder="نام مالک">
+                </div>
+                <div>
+                    <input type="text" id="ownerPhone" placeholder="شماره مالک">
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="unitNumber" placeholder="شماره واحد">
+                </div>
+                <div>
+                    <input type="number" id="floor" placeholder="طبقه">
+                </div>
+                <div>
+                    <input type="number" id="area" placeholder="متراژ">
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <select id="role">
+                        <option value="">انتخاب نقش</option>
+                        <option value="owner">مالک</option>
+                    </select>
+                </div>
+                <div>
+                    <select id="ownerType">
+                        <option value="">انتخاب نوع مالک</option>
+                        <option value="resident">مالک مقیم</option>
+                        <option value="landlord">دارای مستاجر</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="number" id="residentCount" placeholder="تعداد نفر" value="1">
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="tenantName" placeholder="نام مستاجر (اختیاری)">
+                </div>
+                <div>
+                    <input type="text" id="tenantPhone" placeholder="شماره مستاجر (اختیاری)">
+                </div>
+                <div>
+                    <button onclick="createMembershipRequest()">ارسال درخواست عضویت</button>
+                </div>
+            </div>
+            <div id="membershipResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- مرحله 3: تایید توسط مدیر -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 3: تایید توسط مدیر</h3>
+                <p>مدیر درخواست را تایید می‌کند و واحد ایجاد می‌شود</p>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="managerUsername" placeholder="نام کاربری مدیر">
+                </div>
+                <div>
+                    <input type="password" id="managerPassword" placeholder="رمز عبور مدیر">
+                </div>
+                <div>
+                    <button onclick="loginManager()">ورود مدیر</button>
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="requestId" placeholder="شناسه درخواست">
+                </div>
+                <div>
+                    <button onclick="approveRequest()">تایید درخواست</button>
+                </div>
+            </div>
+            <div id="approvalResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- مرحله 4: درخواست اجاره توسط مستاجر -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 4: درخواست اجاره توسط مستاجر</h3>
+                <p>مستاجر وارد سیستم می‌شود و درخواست اجاره ارسال می‌کند</p>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="tenantUsername" placeholder="نام کاربری مستاجر">
+                </div>
+                <div>
+                    <input type="password" id="tenantPassword" placeholder="رمز عبور مستاجر">
+                </div>
+                <div>
+                    <button onclick="loginTenant()">ورود مستاجر</button>
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="rentalTenantName" placeholder="نام مستاجر">
+                </div>
+                <div>
+                    <input type="text" id="rentalTenantPhone" placeholder="شماره مستاجر">
+                </div>
+                <div>
+                    <input type="text" id="rentalBuildingCode" placeholder="کد ساختمان">
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="rentalUnitNumber" placeholder="شماره واحد">
+                </div>
+                <div>
+                    <textarea id="rentalMessage" placeholder="پیام اضافی"></textarea>
+                </div>
+                <div>
+                    <button onclick="createRentalRequest()">ارسال درخواست اجاره</button>
+                </div>
+            </div>
+            <div id="rentalResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- مرحله 5: تایید توسط مالک -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 5: تایید توسط مالک</h3>
+                <p>مالک درخواست اجاره را تایید می‌کند</p>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="rentalRequestId" placeholder="شناسه درخواست اجاره">
+                </div>
+                <div>
+                    <button onclick="approveRentalRequest()">تایید درخواست اجاره</button>
+                </div>
+            </div>
+            <div id="rentalApprovalResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- مرحله 6: تایید نهایی توسط مدیر -->
+        <div class="section">
+            <div class="step">
+                <h3>مرحله 6: تایید نهایی توسط مدیر</h3>
+                <p>مدیر درخواست اجاره را تایید نهایی می‌کند</p>
+            </div>
+            <div class="form-row">
+                <div>
+                    <input type="text" id="finalRentalRequestId" placeholder="شناسه درخواست اجاره">
+                </div>
+                <div>
+                    <button onclick="finalApproveRentalRequest()">تایید نهایی</button>
+                </div>
+            </div>
+            <div id="finalApprovalResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let ownerToken = null;
+        let managerToken = null;
+        let tenantToken = null;
+        const API_BASE = 'http://localhost:8000/api';
+
+        function showResult(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        async function loginOwner() {
+            const username = document.getElementById('ownerUsername').value;
+            const password = document.getElementById('ownerPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    ownerToken = data.access;
+                    showResult('ownerLoginResult', `ورود مالک موفق! توکن: ${ownerToken.substring(0, 20)}...`, 'success');
+                } else {
+                    showResult('ownerLoginResult', `خطا: ${data.error || 'نام کاربری یا رمز عبور اشتباه'}`, 'error');
+                }
+            } catch (error) {
+                showResult('ownerLoginResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function createMembershipRequest() {
+            if (!ownerToken) {
+                showResult('membershipResult', 'ابتدا وارد شوید', 'error');
+                return;
+            }
+
+            const requestData = {
+                building_code: document.getElementById('buildingCode').value,
+                full_name: document.getElementById('ownerName').value,
+                phone_number: document.getElementById('ownerPhone').value,
+                unit_number: document.getElementById('unitNumber').value,
+                floor: parseInt(document.getElementById('floor').value),
+                area: parseFloat(document.getElementById('area').value),
+                resident_count: parseInt(document.getElementById('residentCount').value),
+                role: document.getElementById('role').value,
+                owner_type: document.getElementById('ownerType').value,
+                tenant_full_name: document.getElementById('tenantName').value,
+                tenant_phone_number: document.getElementById('tenantPhone').value,
+                has_parking: false,
+                parking_count: 0
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/membership/requests/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${ownerToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('membershipResult', `درخواست عضویت با موفقیت ارسال شد!\nشناسه: ${data.request.request_id}`, 'success');
+                    document.getElementById('requestId').value = data.request.request_id;
+                } else {
+                    showResult('membershipResult', `خطا: ${data.error || 'خطا در ارسال درخواست'}`, 'error');
+                }
+            } catch (error) {
+                showResult('membershipResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function loginManager() {
+            const username = document.getElementById('managerUsername').value;
+            const password = document.getElementById('managerPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    managerToken = data.access;
+                    showResult('approvalResult', `ورود مدیر موفق! توکن: ${managerToken.substring(0, 20)}...`, 'success');
+                } else {
+                    showResult('approvalResult', `خطا: ${data.error || 'نام کاربری یا رمز عبور اشتباه'}`, 'error');
+                }
+            } catch (error) {
+                showResult('approvalResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function approveRequest() {
+            if (!managerToken) {
+                showResult('approvalResult', 'ابتدا وارد شوید', 'error');
+                return;
+            }
+
+            const requestId = document.getElementById('requestId').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/membership/requests/${requestId}/approve/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${managerToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('approvalResult', `درخواست عضویت تایید شد!\nواحد ایجاد شد: ${data.unit.units_id}`, 'success');
+                } else {
+                    showResult('approvalResult', `خطا: ${data.error || 'خطا در تایید درخواست'}`, 'error');
+                }
+            } catch (error) {
+                showResult('approvalResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function loginTenant() {
+            const username = document.getElementById('tenantUsername').value;
+            const password = document.getElementById('tenantPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    tenantToken = data.access;
+                    showResult('rentalResult', `ورود مستاجر موفق! توکن: ${tenantToken.substring(0, 20)}...`, 'success');
+                } else {
+                    showResult('rentalResult', `خطا: ${data.error || 'نام کاربری یا رمز عبور اشتباه'}`, 'error');
+                }
+            } catch (error) {
+                showResult('rentalResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function createRentalRequest() {
+            if (!tenantToken) {
+                showResult('rentalResult', 'ابتدا وارد شوید', 'error');
+                return;
+            }
+
+            const requestData = {
+                tenant_full_name: document.getElementById('rentalTenantName').value,
+                tenant_phone_number: document.getElementById('rentalTenantPhone').value,
+                building_code: document.getElementById('rentalBuildingCode').value,
+                unit_number: document.getElementById('rentalUnitNumber').value,
+                message: document.getElementById('rentalMessage').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/buildings/rental-requests/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${tenantToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('rentalResult', `درخواست اجاره با موفقیت ارسال شد!\nشناسه: ${data.request.request_id}`, 'success');
+                    document.getElementById('rentalRequestId').value = data.request.request_id;
+                    document.getElementById('finalRentalRequestId').value = data.request.request_id;
+                } else {
+                    showResult('rentalResult', `خطا: ${data.error || 'خطا در ارسال درخواست'}`, 'error');
+                }
+            } catch (error) {
+                showResult('rentalResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function approveRentalRequest() {
+            if (!ownerToken) {
+                showResult('rentalApprovalResult', 'ابتدا وارد شوید', 'error');
+                return;
+            }
+
+            const requestId = document.getElementById('rentalRequestId').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/buildings/rental-requests/${requestId}/owner-action/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${ownerToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'approve' })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('rentalApprovalResult', `درخواست اجاره توسط مالک تایید شد!`, 'success');
+                } else {
+                    showResult('rentalApprovalResult', `خطا: ${data.error || 'خطا در تایید درخواست'}`, 'error');
+                }
+            } catch (error) {
+                showResult('rentalApprovalResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function finalApproveRentalRequest() {
+            if (!managerToken) {
+                showResult('finalApprovalResult', 'ابتدا وارد شوید', 'error');
+                return;
+            }
+
+            const requestId = document.getElementById('finalRentalRequestId').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/buildings/rental-requests/${requestId}/manager-action/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${managerToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'approve' })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('finalApprovalResult', `درخواست اجاره توسط مدیر تایید نهایی شد!\nواحد به‌روزرسانی شد و مستاجر اضافه شد.`, 'success');
+                } else {
+                    showResult('finalApprovalResult', `خطا: ${data.error || 'خطا در تایید نهایی'}`, 'error');
+                }
+            } catch (error) {
+                showResult('finalApprovalResult', `خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

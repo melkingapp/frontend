@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تست احراز هویت</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>تست احراز هویت و API</h1>
+    
+    <div>
+        <h2>مرحله 1: لاگین</h2>
+        <button onclick="login()">لاگین</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div id="buildingSection" style="display: none;">
+        <h2>مرحله 2: ثبت ساختمان</h2>
+        <button onclick="registerBuilding()">ثبت ساختمان</button>
+        <div id="buildingResult"></div>
+    </div>
+
+    <script>
+        let accessToken = '';
+        
+        async function login() {
+            try {
+                // 1. Send OTP
+                const otpResponse = await fetch('http://127.0.0.1:8000/api/v1/send-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: '09123456789',
+                        role: 'manager'
+                    })
+                });
+                
+                const otpData = await otpResponse.json();
+                console.log('OTP Response:', otpData);
+                
+                if (otpResponse.ok) {
+                    const otpCode = otpData.otp;
+                    console.log('OTP Code:', otpCode);
+                    
+                    // 2. Verify OTP
+                    const verifyResponse = await fetch('http://127.0.0.1:8000/api/v1/verify-otp/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            phone_number: '09123456789',
+                            role: 'manager',
+                            otp: otpCode
+                        })
+                    });
+                    
+                    const verifyData = await verifyResponse.json();
+                    console.log('Verify Response:', verifyData);
+                    
+                    if (verifyResponse.ok) {
+                        accessToken = verifyData.tokens.access;
+                        localStorage.setItem('access_token', accessToken);
+                        document.getElementById('loginResult').innerHTML = 
+                            `<p style="color: green;">✅ لاگین موفق! توکن: ${accessToken.substring(0, 50)}...</p>`;
+                        document.getElementById('buildingSection').style.display = 'block';
+                    } else {
+                        document.getElementById('loginResult').innerHTML = 
+                            `<p style="color: red;">❌ خطا در تایید: ${verifyData.error}</p>`;
+                    }
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        `<p style="color: red;">❌ خطا در ارسال OTP: ${otpData.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loginResult').innerHTML = 
+                    `<p style="color: red;">❌ خطا: ${error.message}</p>`;
+            }
+        }
+        
+        async function registerBuilding() {
+            try {
+                const buildingData = {
+                    title: 'ساختمان تست',
+                    usage_type: 'residential',
+                    property_type: 'block',
+                    unit_count: 5,
+                    is_owner_resident: true,
+                    resident_floor: 1,
+                    fund_balance: 1000000,
+                    fund_sheba_number: 'IR123456789012345678901234',
+                    blocks_count: 1,
+                    residential_type: 'apartment'
+                };
+                
+                const response = await fetch('http://127.0.0.1:8000/api/v1/buildings/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(buildingData)
+                });
+                
+                const data = await response.json();
+                console.log('Building Response:', data);
+                
+                if (response.ok) {
+                    document.getElementById('buildingResult').innerHTML = 
+                        `<p style="color: green;">✅ ساختمان با موفقیت ثبت شد!</p>`;
+                } else {
+                    document.getElementById('buildingResult').innerHTML = 
+                        `<p style="color: red;">❌ خطا در ثبت ساختمان: ${data.error || data.detail}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('buildingResult').innerHTML = 
+                    `<p style="color: red;">❌ خطا: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

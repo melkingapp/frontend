@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تست فرم ساختمان</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>تست فرم ساختمان</h1>
+    
+    <div>
+        <h2>مرحله 1: لاگین</h2>
+        <button onclick="login()">لاگین</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div id="formSection" style="display: none;">
+        <h2>مرحله 2: ثبت ساختمان</h2>
+        <form id="buildingForm">
+            <div>
+                <label>عنوان ساختمان:</label>
+                <input type="text" id="title" value="ساختمان تست فرم" required>
+            </div>
+            <div>
+                <label>نوع کاربری:</label>
+                <select id="usage_type" required>
+                    <option value="commercial">تجاری</option>
+                    <option value="residential">مسکونی</option>
+                </select>
+            </div>
+            <div>
+                <label>نوع ملک:</label>
+                <select id="property_type" required>
+                    <option value="tower">برج</option>
+                    <option value="block">بلوک</option>
+                </select>
+            </div>
+            <div>
+                <label>تعداد واحد:</label>
+                <input type="number" id="unit_count" value="2" required>
+            </div>
+            <div>
+                <label>مدیر ساکن است؟</label>
+                <input type="checkbox" id="is_owner_resident">
+            </div>
+            <div>
+                <label>طبقه محل سکونت:</label>
+                <input type="text" id="resident_floor" value="">
+            </div>
+            <div>
+                <label>موجودی صندوق:</label>
+                <input type="number" id="fund_balance" value="22222" required>
+            </div>
+            <div>
+                <label>شماره شبا:</label>
+                <input type="text" id="fund_sheba_number" value="IR222222222222222222222222" required>
+            </div>
+            <div>
+                <label>تعداد بلوک‌ها:</label>
+                <input type="text" id="blocks_count" value="">
+            </div>
+            <div>
+                <label>نوع مسکونی:</label>
+                <select id="residential_type">
+                    <option value="apartment">آپارتمان</option>
+                    <option value="villa">ویلا</option>
+                </select>
+            </div>
+            <button type="submit">ثبت ساختمان</button>
+        </form>
+        <div id="formResult"></div>
+    </div>
+
+    <script>
+        let accessToken = '';
+        
+        async function login() {
+            try {
+                // 1. Send OTP
+                const otpResponse = await fetch('http://127.0.0.1:8000/api/v1/send-otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone_number: '09123456789',
+                        role: 'manager'
+                    })
+                });
+                
+                const otpData = await otpResponse.json();
+                console.log('OTP Response:', otpData);
+                
+                if (otpResponse.ok) {
+                    const otpCode = otpData.otp;
+                    console.log('OTP Code:', otpCode);
+                    
+                    // 2. Verify OTP
+                    const verifyResponse = await fetch('http://127.0.0.1:8000/api/v1/verify-otp/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            phone_number: '09123456789',
+                            role: 'manager',
+                            otp: otpCode
+                        })
+                    });
+                    
+                    const verifyData = await verifyResponse.json();
+                    console.log('Verify Response:', verifyData);
+                    
+                    if (verifyResponse.ok) {
+                        accessToken = verifyData.tokens.access;
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', verifyData.tokens.refresh);
+                        
+                        document.getElementById('loginResult').innerHTML = 
+                            `<p style="color: green;">✅ لاگین موفق!</p>`;
+                        document.getElementById('formSection').style.display = 'block';
+                    } else {
+                        document.getElementById('loginResult').innerHTML = 
+                            `<p style="color: red;">❌ خطا در تایید: ${verifyData.error}</p>`;
+                    }
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        `<p style="color: red;">❌ خطا در ارسال OTP: ${otpData.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loginResult').innerHTML = 
+                    `<p style="color: red;">❌ خطا: ${error.message}</p>`;
+            }
+        }
+        
+        document.getElementById('buildingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('title').value,
+                usage_type: document.getElementById('usage_type').value,
+                property_type: document.getElementById('property_type').value,
+                unit_count: parseInt(document.getElementById('unit_count').value),
+                is_owner_resident: document.getElementById('is_owner_resident').checked,
+                resident_floor: document.getElementById('resident_floor').value,
+                fund_balance: parseFloat(document.getElementById('fund_balance').value),
+                fund_sheba_number: document.getElementById('fund_sheba_number').value,
+                blocks_count: document.getElementById('blocks_count').value,
+                residential_type: document.getElementById('residential_type').value
+            };
+            
+            console.log('Form data:', formData);
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/buildings/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    document.getElementById('formResult').innerHTML = 
+                        `<p style="color: green;">✅ ساختمان با موفقیت ثبت شد! ID: ${data.building?.building_id}</p>`;
+                } else {
+                    document.getElementById('formResult').innerHTML = 
+                        `<p style="color: red;">❌ خطا در ثبت ساختمان: ${data.error || data.detail}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('formResult').innerHTML = 
+                    `<p style="color: red;">❌ خطا: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
