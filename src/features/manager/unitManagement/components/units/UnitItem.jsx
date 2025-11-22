@@ -2,14 +2,10 @@ import { Home, Phone, Square, Car, Edit, CheckCircle2, XCircle, CircleSlash, Lay
 import { useMemo } from "react";
 
 export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
-    const isOccupied = unit.is_occupied || false;
-    
     // استفاده از فیلدهای جدید
     const fullName = unit.full_name || "";
     const role = unit.role || "";
     const tenantFullName = unit.tenant_full_name || "";
-    const phoneNumber = unit.phone_number || "";
-    const tenantPhoneNumber = unit.tenant_phone_number || "";
     const hasParking = unit.has_parking || false;
     const parkingCount = unit.parking_count || 0;
     const residentCount = (unit.resident_count ?? 0);

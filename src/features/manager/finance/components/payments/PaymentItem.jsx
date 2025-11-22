@@ -3,7 +3,7 @@ import { Home, Calendar, Check, X, Loader2 } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../shared/utils";
 import DocumentViewer from "../../../../../shared/components/shared/display/DocumentViewer";
 import { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../slices/paymentsSlice";

@@ -73,7 +73,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                 dispatch(maintainApprovedBuildings());
             });
         }
-    }, [dispatch, requests.length, approvedBuildings.length]);
+    }, [dispatch, requests.length, approvedBuildings.length, membershipRequests.length]);
 
     // Get approved units from membership requests
     // اگر کاربر هم مالک و هم ساکن است، فقط نقش مالک را نشان بده

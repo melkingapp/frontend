@@ -9,7 +9,7 @@ export default function UnitManagmentsSummary() {
     const dispatch = useDispatch();
     const limit = 4;
     const { units } = useSelector(state => state.units);
-    const { selectedBuildingId, data: buildings, loading: buildingsLoading } = useSelector(state => state.building);
+    const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
 
     // Get building ID from selected building or first building
     const buildingId = selectedBuildingId || (buildings && buildings.length > 0 ? buildings[0].building_id : null);

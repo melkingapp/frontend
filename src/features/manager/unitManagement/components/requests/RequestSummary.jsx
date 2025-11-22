@@ -9,7 +9,7 @@ export default function RequestSummary() {
     const dispatch = useDispatch();
     const limit = 4;
     const { requests } = useSelector(state => state.requests);
-    const { selectedBuildingId, data: buildings, loading: buildingsLoading } = useSelector(state => state.building);
+    const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
 
     // Get building ID from selected building or first building
     const buildingId = selectedBuildingId || (buildings && buildings.length > 0 ? buildings[0].building_id : null);
