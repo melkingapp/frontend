@@ -158,8 +158,14 @@ jobs:
             }
             sleep 3
             echo ""
-            echo "🔍 Verifying symlink exists..."
-            ls -la /etc/nginx/sites-enabled/ | grep frontend-new || echo "⚠️ Symlink not found in sites-enabled"
+            echo "🔍 Verifying symlink exists after reload..."
+            if [ ! -L /etc/nginx/sites-enabled/frontend-new ]; then
+              echo "⚠️ Symlink disappeared after reload, recreating..."
+              ln -sf "\${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
+              systemctl reload "${{ env.NGINX_SERVICE }}"
+              sleep 2
+            fi
+            ls -la /etc/nginx/sites-enabled/ | grep frontend-new || echo "⚠️ Symlink still not found"
             echo ""
             echo "🔍 Checking if nginx is listening on port \${FRONTEND_PORT}..."
             if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
