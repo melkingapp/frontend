@@ -32,7 +32,7 @@ const _handleTokenRefresh = async (_dispatch) => {
 // Async thunks
 export const fetchResidentRequests = createAsyncThunk(
     'residentBuilding/fetchResidentRequests',
-    async (_, { rejectWithValue, dispatch }) => {
+    async (_, { rejectWithValue, dispatch: _dispatch }) => {
         try {
             const response = await getResidentRequests();
             return response;
@@ -56,7 +56,7 @@ export const fetchApprovedBuildings = createAsyncThunk(
 
 export const fetchApprovedBuildingsDetails = createAsyncThunk(
     'residentBuilding/fetchApprovedBuildingsDetails',
-    async (buildingIds, { rejectWithValue, dispatch }) => {
+    async (buildingIds, { rejectWithValue, dispatch: _dispatch }) => {
         try {            
             const fetchBuildingDetails = async (buildingId) => {
                 try {
@@ -261,7 +261,7 @@ const residentBuildingSlice = createSlice({
 // Action to refresh approved buildings (for when user is removed from a building)
 export const refreshApprovedBuildings = createAsyncThunk(
     'residentBuilding/refreshApprovedBuildings',
-    async (_, { rejectWithValue, dispatch, getState }) => {
+    async (_, { rejectWithValue, dispatch: _dispatch, getState }) => {
         try {            
             // Get buildings directly from the building list API (which uses BuildingUser table)
             const response = await getApprovedBuildings();

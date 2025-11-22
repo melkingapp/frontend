@@ -152,22 +152,38 @@ jobs:
             nginx -t && echo "✅ Nginx config is valid"
             echo ""
             echo "🔄 Reloading nginx..."
-            systemctl reload "${{ env.NGINX_SERVICE }}" && echo "✅ Nginx reloaded"
-            sleep 2
+            systemctl reload "${{ env.NGINX_SERVICE }}" && echo "✅ Nginx reloaded" || {
+              echo "⚠️ Reload failed, trying restart..."
+              systemctl restart "${{ env.NGINX_SERVICE }}"
+            }
+            sleep 3
+            echo ""
+            echo "🔍 Verifying symlink exists..."
+            ls -la /etc/nginx/sites-enabled/ | grep frontend-new || echo "⚠️ Symlink not found in sites-enabled"
             echo ""
             echo "🔍 Checking if nginx is listening on port \${FRONTEND_PORT}..."
             if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
               echo "✅ Nginx is listening on port \${FRONTEND_PORT}"
             else
-              echo "⚠️ Nginx is not listening on port \${FRONTEND_PORT}, trying restart..."
-              systemctl restart "${{ env.NGINX_SERVICE }}" || true
-              sleep 3
+              echo "⚠️ Nginx is not listening on port \${FRONTEND_PORT}"
+              echo "Checking nginx status..."
+              systemctl status "${{ env.NGINX_SERVICE }}" --no-pager || true
+              echo ""
+              echo "Checking nginx error log..."
+              tail -30 /var/log/nginx/error.log || true
+              echo ""
+              echo "Trying full restart..."
+              systemctl restart "${{ env.NGINX_SERVICE }}"
+              sleep 5
               if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
                 echo "✅ Nginx is now listening on port \${FRONTEND_PORT}"
               else
                 echo "❌ Nginx failed to listen on port \${FRONTEND_PORT}"
-                echo "Checking nginx error log..."
-                tail -20 /var/log/nginx/error.log || true
+                echo "Listing all nginx configs..."
+                ls -la /etc/nginx/sites-enabled/ || true
+                echo ""
+                echo "Testing nginx config..."
+                nginx -T 2>&1 | grep -A 10 "frontend-new" || echo "Config not found in nginx test"
                 exit 1
               fi
             fi
