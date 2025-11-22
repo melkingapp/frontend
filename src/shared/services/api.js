@@ -143,7 +143,7 @@ class ApiService {
         let errorMessage = data?.detail || data?.message || data?.error;
         
         // Log the full error response for debugging (only in development)
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.error('API Error Response:', {
             status: response.status,
             statusText: response.statusText,
@@ -154,7 +154,7 @@ class ApiService {
         
         // Handle specific HTTP status codes
         switch (response.status) {
-          case 401:
+          case 401: {
             // Check if error is about invalid token type
             const isInvalidTokenType = errorMessage?.toLowerCase().includes('token not valid') || 
                                       errorMessage?.toLowerCase().includes('invalid token');

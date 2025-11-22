@@ -22,7 +22,7 @@ import {
 
 const ResidentSettings = () => {
   const dispatch = useDispatch();
-  const { notificationSettings, loading, error } = useSelector(state => state.settings);
+  const { notificationSettings } = useSelector(state => state.settings);
   const { selectedResidentBuilding } = useSelector(state => state.buildings);
   
   const [formData, setFormData] = useState({
@@ -109,7 +109,7 @@ const ResidentSettings = () => {
       await dispatch(updateNotificationSettings(formData)).unwrap();
       setHasUnsavedChanges(false);
       toast.success('تنظیمات با موفقیت ذخیره شد');
-    } catch (error) {
+    } catch {
       toast.error('خطا در ذخیره تنظیمات');
     } finally {
       setIsSaving(false);

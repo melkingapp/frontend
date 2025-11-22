@@ -7,7 +7,6 @@ export default function RentalRequestsManager() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [selectedRequest, setSelectedRequest] = useState(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newRequest, setNewRequest] = useState({
         tenant_full_name: '',
@@ -67,7 +66,7 @@ export default function RentalRequestsManager() {
                 throw new Error(errorData.error || `HTTP ${response.status}`);
             }
 
-            const data = await response.json();
+            await response.json();
             toast.success('درخواست اجاره با موفقیت ارسال شد');
             setShowCreateForm(false);
             setNewRequest({

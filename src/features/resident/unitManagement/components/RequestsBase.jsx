@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "sonner";
 import RequestItem from "../../../manager/unitManagement/components/requests/RequestItem";
 import { fetchRequests } from "../../../manager/unitManagement/slices/requestsSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
@@ -9,8 +8,7 @@ import { selectSelectedBuilding } from "../../../manager/building/buildingSlice"
 export default function RequestsBase({ requests: propRequests, limit }) {
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedBuilding);
-    const { requests: reduxRequests, loading, error } = useSelector(state => state.requests);
-    const [selectedRequest, setSelectedRequest] = useState(null);
+    const { requests: reduxRequests, loading } = useSelector(state => state.requests);
 
     // Use Redux data if available, otherwise fall back to props
     const dataSource = reduxRequests.length > 0 ? reduxRequests : (propRequests || []);

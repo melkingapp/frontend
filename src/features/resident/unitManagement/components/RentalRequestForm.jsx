@@ -7,7 +7,6 @@ import { User, Building, Home, Phone, MessageSquare, CheckCircle, AlertCircle, X
 
 const RentalRequestForm = ({ onSuccess, onCancel }) => {
   const dispatch = useDispatch();
-  const { user } = useSelector(state => state.auth);
   const { createLoading, error } = useSelector(state => state.requests);
 
   const [formData, setFormData] = useState({

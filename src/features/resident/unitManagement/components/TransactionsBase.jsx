@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { CreditCard, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "sonner";
 import TransactionItem from "../../../manager/unitManagement/components/transactions/TransactionItem";
 import { fetchTransactions } from "../../../manager/unitManagement/slices/transactionsSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
@@ -9,8 +8,7 @@ import { selectSelectedBuilding } from "../../../manager/building/buildingSlice"
 export default function TransactionsBase({ transactions: propTransactions, limit }) {
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedBuilding);
-    const { transactions: reduxTransactions, loading, error } = useSelector(state => state.transactions);
-    const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const { transactions: reduxTransactions, loading } = useSelector(state => state.transactions);
 
     // Use Redux data if available, otherwise fall back to props
     const dataSource = reduxTransactions.length > 0 ? reduxTransactions : (propTransactions || []);

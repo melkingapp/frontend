@@ -12,9 +12,6 @@ export default function ManagerProfile() {
     const { user } = useSelector(state => state.auth);
     const { data: buildings } = useSelector(state => state.building);
     const profile = useSelector(selectProfile);
-    const profileLoading = useSelector(selectProfileLoading);
-    const updateLoading = useSelector(selectUpdateLoading);
-    const updateError = useSelector(selectUpdateError);
     
     const [isEditing, setIsEditing] = useState(false);
     const [profileData, setProfileData] = useState({

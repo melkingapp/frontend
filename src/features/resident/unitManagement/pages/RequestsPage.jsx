@@ -16,15 +16,6 @@ import { useState } from "react";
 
 export default function RequestsPage() {
     const navigate = useNavigate();
-    const user = useSelector(state => state.auth.user);
-    const [showRentalForm, setShowRentalForm] = useState(false);
-
-
-    const handleRentalFormSuccess = (result) => {
-        setShowRentalForm(false);
-        // می‌توانید پیام موفقیت نمایش دهید
-        toast.success('درخواست اجاره با موفقیت ارسال شد!');
-    };
 
     return (
         <div className="p-2 space-y-6">

@@ -225,7 +225,7 @@ const settingsSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(updateUnitResidentCount.fulfilled, (state, action) => {
+            .addCase(updateUnitResidentCount.fulfilled, (state) => {
                 state.loading = false;
                 // Optionally update the unit in a larger units state if needed
                 // For now, just clear loading

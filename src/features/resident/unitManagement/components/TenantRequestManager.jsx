@@ -68,7 +68,7 @@ export default function TenantRequestManager() {
                 throw new Error(errorData.error || `HTTP ${response.status}`);
             }
 
-            const result = await response.json();
+            await response.json();
             toast.success('درخواست اجاره با موفقیت ارسال شد');
             
             // Reset form
