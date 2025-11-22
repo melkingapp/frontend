@@ -2,12 +2,7 @@ import axios from 'axios';
 
 // Configuration - Use environment variable or auto-detect
 const getBaseURL = () => {
-    // First priority: Environment variable
-    if (import.meta.env.VITE_API_BASE_URL) {
-        return import.meta.env.VITE_API_BASE_URL;
-    }
-    
-    // Second priority: Check if we're in development (localhost)
+    // Check if we're in development (localhost)
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
         const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
@@ -16,12 +11,17 @@ const getBaseURL = () => {
             // Development: use localhost:8000
             return 'http://localhost:8000/api/v1';
         } else {
-            // Production: use server IP with port 9000
+            // Production: always use server IP with port 9000 (override VITE_API_BASE_URL)
             return 'http://171.22.25.201:9000/api/v1';
         }
     }
     
-    // Fallback
+    // Fallback for SSR or when window is not available
+    // Check environment variable only as fallback
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL;
+    }
+    
     return 'http://localhost:8000/api/v1';
 };
 

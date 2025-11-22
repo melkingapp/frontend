@@ -14,13 +14,13 @@ const inferBaseUrlFromWindow = () => {
     if (isLocalhost) {
         return 'http://localhost:8000/api/v1';
     } else {
-        // Production: use server IP with port 9000
+        // Production: always use server IP with port 9000 (override VITE_API_BASE_URL)
         return 'http://171.22.25.201:9000/api/v1';
     }
 };
 
-const runtimeBaseUrl = sanitizeBaseUrl(import.meta.env?.VITE_API_BASE_URL);
-const BASE_URL = runtimeBaseUrl || inferBaseUrlFromWindow();
+// In production, always use server IP, ignore VITE_API_BASE_URL
+const BASE_URL = inferBaseUrlFromWindow();
 
 // تنظیمات API
 export const API_CONFIG = {
