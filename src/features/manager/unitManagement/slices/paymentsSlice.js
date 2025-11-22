@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getPendingPayments, approvePayment as approvePaymentService, rejectPayment as rejectPaymentService, validatePayments as validatePaymentsService, inquireBill as inquireBillService } from '../../../../shared/services/billingService';
+import { getPendingPayments, approvePayment as approvePaymentService, rejectPayment as rejectPaymentService } from '../../../../shared/services/billingService';
 
 // Async thunks
 export const fetchPendingPayments = createAsyncThunk(

@@ -237,7 +237,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAcceptPrefill = async () => {
+  const _handleAcceptPrefill = async () => {
     if (!unitData) return;
     try {
       // Normalize role: 'tenant' -> 'resident', 'owner' -> 'owner', anything else -> 'resident'
@@ -489,7 +489,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                 {/* Show for each building where user is a member (via BuildingUser) but doesn't have approved membership request */}
                 {!unitLoading && (() => {
                   // Debug logs (only in development)
-                  if (process.env.NODE_ENV === 'development') {
+                  if (import.meta.env.DEV) {
                     console.log("🔍 MembershipRequestForm - unitData:", unitData);
                     console.log("🔍 MembershipRequestForm - approvedBuildings:", approvedBuildings);
                     console.log("🔍 MembershipRequestForm - membershipRequests:", membershipRequests);
@@ -506,7 +506,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                     return !hasApprovedRequest;
                   });
                   
-                  if (process.env.NODE_ENV === 'development') {
+                  if (import.meta.env.DEV) {
                     console.log("🔍 buildingsNeedingRequest:", buildingsNeedingRequest);
                   }
                   
@@ -539,7 +539,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         phone_number: effectivePhoneNumber,
                       };
                   
-                  if (process.env.NODE_ENV === 'development') {
+                  if (import.meta.env.DEV) {
                     console.log("🔍 Showing pre-fill notification for building:", targetBuilding.building_code);
                   }
                   
