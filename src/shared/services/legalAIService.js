@@ -53,7 +53,7 @@ export const legalAIService = {
       const response = await apiService.get('/legal-ai/questions/');
       return response.data;
     } catch (error) {
-      console.log('Failed to get legal questions, returning empty array');
+      console.log('Failed to get legal questions, returning empty array', error);
       return [];
     }
   },
@@ -63,7 +63,7 @@ export const legalAIService = {
       const response = await apiService.get('/legal-ai/documents/');
       return response.data;
     } catch (error) {
-      console.log('Failed to get legal documents, returning empty array');
+      console.log('Failed to get legal documents, returning empty array', error);
       return [];
     }
   }

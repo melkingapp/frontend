@@ -9,7 +9,6 @@ import {
     selectApprovedBuildings,
     setSelectedBuilding,
     fetchResidentRequests,
-    fetchApprovedBuildingsDetails,
     refreshApprovedBuildings,
     maintainApprovedBuildings,
 } from "../../../../features/resident/building/residentBuildingSlice";
@@ -28,7 +27,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const requests = useSelector(selectResidentRequests);
     const approvedBuildings = useSelector(selectApprovedBuildings);
     const membershipRequests = useSelector(selectMembershipRequests);
-    const { user } = useSelector(state => state.auth);
+    // const { user } = useSelector(state => state.auth);
 
     // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
     const getUserRole = () => {
@@ -54,8 +53,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     const userRole = getUserRole();
 
-    // Get pending requests count for display
-    const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
+    // const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
 
     useEffect(() => {
         console.log('🏠 ResidentSidebar useEffect triggered');
@@ -307,7 +305,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                 <div className="absolute mt-2 w-full bg-white rounded-lg shadow-lg border text-sm max-h-60 overflow-y-auto z-50">
                     {approvedUnits.length > 0 ? (
                         <>
-                            {approvedUnits.map((request, index) => {
+                            {approvedUnits.map((request) => {
                                 const unit = {
                                     id: `${request.building}-${request.unit_number}-${request.role}-${request.request_id}`,
                                     building_id: request.building,

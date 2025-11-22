@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { logout, forceLogout } from '../../features/authentication/authSlice';
+import { forceLogout } from '../../features/authentication/authSlice';
 
 const AuthMonitor = () => {
     const dispatch = useDispatch();

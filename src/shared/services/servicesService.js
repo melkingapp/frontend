@@ -1,4 +1,4 @@
-import { get, post, put, deleteRequest } from './apiService';
+import { get, post, put, patch, deleteRequest } from './apiService';
 
 // Get building services
 export const getBuildingServices = async (buildingId) => {
