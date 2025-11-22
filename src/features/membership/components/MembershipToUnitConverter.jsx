@@ -1,7 +1,6 @@
 import { useState, Fragment } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { createUnit } from "../../manager/unitManagement/slices/unitsSlice";
 import { approveMembershipRequestByManager } from "../membershipSlice";
 import { Dialog, Transition } from "@headlessui/react";
 import Button from "../../../shared/components/shared/feedback/Button";
@@ -16,7 +15,7 @@ import {
   X
 } from "lucide-react";
 
-const InfoCard = ({ icon: Icon, title, value, subtitle, color = "blue" }) => {
+const InfoCard = ({ icon: _Icon, title, value, subtitle, color = "blue" }) => {
   const colorClasses = {
     blue: "bg-blue-100 text-blue-600",
     green: "bg-green-100 text-green-600",

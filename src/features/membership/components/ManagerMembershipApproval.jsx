@@ -62,6 +62,7 @@ export default function ManagerMembershipApproval() {
   const { requests, loading, error, approveLoading, rejectLoading } = useSelector(state => state.membership);
   
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
     // دریافت درخواست‌های عضویت که مالک تایید کرده و منتظر تایید مدیر هستند

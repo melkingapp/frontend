@@ -10,7 +10,7 @@ export const createMembershipRequest = createAsyncThunk(
       return response;
     } catch (error) {
       // Log error details for debugging (only in development)
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.error("❌ createMembershipRequest error:", error);
         console.error("❌ Error data:", error.data);
         console.error("❌ Error response:", error.response);
@@ -61,7 +61,7 @@ export const fetchMembershipRequests = createAsyncThunk(
       }
             return response;
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.error("❌ fetchMembershipRequests error:", error);
       }
       return rejectWithValue(error.response?.data?.error || error.message);
@@ -191,7 +191,7 @@ const membershipSlice = createSlice({
       })
       .addCase(createMembershipRequest.fulfilled, (state, action) => {
         state.createLoading = false;
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.log("🔍 createMembershipRequest.fulfilled payload:", action.payload);
         }
         if (action.payload) {
