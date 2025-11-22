@@ -85,6 +85,48 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no frontend-dist.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/frontend-dist.tar.gz
 
+      - name: 📁 Setup deployment directory
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
+            set -euo pipefail
+            DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
+            
+            echo "🔍 Checking deployment path: \${DEPLOY_PATH}"
+            
+            # Check if directory exists
+            if [ -d "\${DEPLOY_PATH}" ]; then
+              echo "✅ Directory exists: \${DEPLOY_PATH}"
+              ls -la "\${DEPLOY_PATH}" || true
+            else
+              echo "⚠️ Directory does not exist, creating it..."
+              sudo mkdir -p "\${DEPLOY_PATH}/releases"
+              sudo mkdir -p "\${DEPLOY_PATH}/shared"
+              echo "✅ Directory created: \${DEPLOY_PATH}"
+            fi
+            
+            # Ensure subdirectories exist
+            sudo mkdir -p "\${DEPLOY_PATH}/releases"
+            sudo mkdir -p "\${DEPLOY_PATH}/shared"
+            
+            # Set proper permissions
+            echo "🔐 Setting permissions..."
+            sudo chown -R \$USER:\$USER "\${DEPLOY_PATH}" 2>/dev/null || sudo chown -R root:root "\${DEPLOY_PATH}"
+            sudo chmod -R 755 "\${DEPLOY_PATH}"
+            
+            # Verify access
+            if [ -w "\${DEPLOY_PATH}" ] || sudo test -w "\${DEPLOY_PATH}"; then
+              echo "✅ Directory is writable"
+            else
+              echo "⚠️ Directory may not be writable, but will use sudo for operations"
+            fi
+            
+            echo ""
+            echo "📂 Final directory structure:"
+            ls -la "\${DEPLOY_PATH}" || true
+            echo ""
+            echo "✅ Deployment directory setup completed"
+          ENDSSH
+
       - name: 🔍 Check backend on port 9000
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << "ENDSSH"
@@ -281,14 +323,37 @@ jobs:
             RELEASE_NAME="${{ steps.release.outputs.name }}"
             DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
             FRONTEND_PORT="${{ env.FRONTEND_PORT }}"
-            mkdir -p "\${DEPLOY_PATH}/releases"
-            mkdir -p "\${DEPLOY_PATH}/shared"
+            
+            echo "📦 Deploying release: \${RELEASE_NAME}"
+            echo "📂 Deployment path: \${DEPLOY_PATH}"
+            
+            # Ensure directories exist with sudo
+            sudo mkdir -p "\${DEPLOY_PATH}/releases"
+            sudo mkdir -p "\${DEPLOY_PATH}/shared"
+            
             RELEASE_DIR="\${DEPLOY_PATH}/releases/\${RELEASE_NAME}"
-            rm -rf "\${RELEASE_DIR}"
-            mkdir -p "\${RELEASE_DIR}"
-            tar -xzf /tmp/frontend-dist.tar.gz -C "\${RELEASE_DIR}"
-            rm -f /tmp/frontend-dist.tar.gz
-            ln -sfn "\${RELEASE_DIR}" "\${DEPLOY_PATH}/current"
+            echo "📁 Release directory: \${RELEASE_DIR}"
+            
+            # Remove old release if exists and create new one
+            sudo rm -rf "\${RELEASE_DIR}"
+            sudo mkdir -p "\${RELEASE_DIR}"
+            
+            # Extract files
+            echo "📤 Extracting files..."
+            sudo tar -xzf /tmp/frontend-dist.tar.gz -C "\${RELEASE_DIR}"
+            sudo rm -f /tmp/frontend-dist.tar.gz
+            
+            # Create symlink
+            echo "🔗 Creating symlink..."
+            sudo ln -sfn "\${RELEASE_DIR}" "\${DEPLOY_PATH}/current"
+            
+            # Verify symlink
+            if [ -L "\${DEPLOY_PATH}/current" ]; then
+              echo "✅ Symlink created: \${DEPLOY_PATH}/current -> \$(readlink -f \${DEPLOY_PATH}/current)"
+            else
+              echo "❌ Failed to create symlink"
+              exit 1
+            fi
             if command -v chown >/dev/null 2>&1; then
               sudo chown -R www-data:www-data "\${DEPLOY_PATH}" || true
             fi
