@@ -6,7 +6,7 @@ import {
     deleteBuilding as deleteBuildingService,
     getBuildingUnits,
     createUnit as createUnitService,
-    getUnitDetails,
+    getBuildingDetails,
     updateUnit as updateUnitService,
     deleteUnit as deleteUnitService
 } from "../../../shared/services/buildingsService";

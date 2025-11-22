@@ -47,6 +47,7 @@ export default function BuildingBalance() {
     if (building?.building_id || building?.id) {
       loadBalanceData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [building, filter, dateRange]);
 
   const loadBalanceData = async () => {

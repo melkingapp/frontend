@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CheckCircle, XCircle, Clock, User, Building2, Calendar, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import Button from "../../../../shared/components/shared/feedback/Button";
@@ -9,13 +9,7 @@ export default function ResidentRequestsManager({ buildingId }) {
     const [error, setError] = useState("");
     const [processingRequest, setProcessingRequest] = useState(null);
 
-    useEffect(() => {
-        if (buildingId) {
-            fetchRequests();
-        }
-    }, [buildingId]);
-
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         try {
             const token = localStorage.getItem('access_token');
             const response = await fetch(`${window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir'}/api/v1/buildings/${buildingId}/resident-requests/`, {
@@ -37,7 +31,13 @@ export default function ResidentRequestsManager({ buildingId }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [buildingId]);
+
+    useEffect(() => {
+        if (buildingId) {
+            fetchRequests();
+        }
+    }, [buildingId, fetchRequests]);
 
     const handleRequestAction = async (requestId, status) => {
         setProcessingRequest(requestId);

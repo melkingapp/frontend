@@ -26,8 +26,6 @@ export default function BalanceFilters({
   dateRange, 
   onDateRangeChange 
 }) {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-
   const filterOptions = [
     { value: "all", label: "همه تراکنش‌ها", icon: <Filter size={16} /> },
     { value: "charge", label: "شارژ", icon: <Clock size={16} /> },
@@ -40,9 +38,6 @@ export default function BalanceFilters({
     { value: "parking", label: "پارکینگ", icon: <Car size={16} /> },
     { value: "purchases", label: "اقلام خریدنی", icon: <ShoppingCart size={16} /> },
   ];
-
-
-  const selectedFilter = filterOptions.find(option => option.value === filter);
 
 
   return (

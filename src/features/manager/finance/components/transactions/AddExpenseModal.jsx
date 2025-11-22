@@ -147,7 +147,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
                 setFilteredUnits(unitsList);
                 break;
         }
-    }, [buildingUnits?.length, form.target]);
+    }, [buildingUnits, form.target]);
 
     useEffect(() => {
         if (!isOpen) {

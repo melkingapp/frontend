@@ -111,7 +111,7 @@ export default function BuildingRequestStatus() {
                     console.error('Error fetching building details:', error);
                 });
         }
-    }, [requests.length, dispatch]); // Only depend on requests length, not the full requests array
+    }, [requests, dispatch]);
 
 
     const getStatusIcon = (status) => {

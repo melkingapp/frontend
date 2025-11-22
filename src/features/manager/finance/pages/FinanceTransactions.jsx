@@ -42,7 +42,7 @@ export default function FinanceTransactions() {
       console.log("🔥 Loading buildings...");
       dispatch(fetchBuildings());
     }
-  }, [dispatch, buildings.length]);
+  }, [dispatch, buildings]);
 
   // Auto-select first building if none selected
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function FinanceTransactions() {
           console.error("🔥 Fetch all transactions error:", error);
         });
     }
-  }, [dispatch, building?.building_id, buildings.length]);
+  }, [dispatch, building, buildings]);
 
   // Get transactions from Redux state
   const transactionsData = useSelector(state => state.finance.transactions || []);

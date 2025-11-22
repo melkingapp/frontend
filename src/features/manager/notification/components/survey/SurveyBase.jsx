@@ -39,7 +39,7 @@ export default function SurveyBase({ limit }) {
                     console.error("🔥 SurveyBase - Fetch surveys error:", error);
                 });
         }
-    }, [dispatch, selectedBuilding?.building_id, selectedBuilding?.id]);
+    }, [dispatch, selectedBuilding]);
 
     const handleRefresh = () => {
         if (selectedBuilding?.building_id || selectedBuilding?.id) {

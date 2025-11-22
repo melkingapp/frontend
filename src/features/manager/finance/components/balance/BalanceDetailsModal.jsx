@@ -36,24 +36,6 @@ export default function BalanceDetailsModal({ transaction, onClose }) {
     return null;
   }
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    try {
-      return moment(dateString).format("jYYYY/jMM/jDD");
-    } catch {
-      return dateString;
-    }
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return "—";
-    try {
-      return moment(dateString).format("HH:mm");
-    } catch {
-      return "—";
-    }
-  };
-
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";
     try {

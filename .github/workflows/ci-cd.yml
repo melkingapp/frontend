@@ -55,7 +55,7 @@ jobs:
     name: 🚀 Deploy
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.SSH_PRIVATE_KEY != ''
     timeout-minutes: 20
     environment:
       name: production
