@@ -1,9 +1,26 @@
 // API Configuration and Base Service
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    
+    if (isLocalhost) {
+      return 'http://127.0.0.1:8000/api/v1';
+    } else {
+      // Production: use server IP with port 9000
+      return 'http://171.22.25.201:9000/api/v1';
+    }
+  }
+  
+  return 'http://127.0.0.1:8000/api/v1';
+};
+
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 
-    (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-      ? 'http://127.0.0.1:8000/api/v1'
-      : `${window.location.protocol}//${window.location.host}/api/v1`),
+  BASE_URL: getBaseURL(),
   ENDPOINTS: {
     BUILDING_SETTINGS: (buildingId) => `/buildings/${buildingId}/settings/`,
     BUILDING_SETTINGS_UPDATE: (buildingId) => `/buildings/${buildingId}/settings/update/`,

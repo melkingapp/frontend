@@ -13,7 +13,18 @@ export default function DocumentViewer({ documentUrl }) {
             return url;
         }
         // Add the backend base URL
-        const baseURL = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || (window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir');
+        const getBaseURL = () => {
+            if (import.meta.env.VITE_API_BASE_URL) {
+                return import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '');
+            }
+            if (typeof window !== 'undefined') {
+                const hostname = window.location.hostname;
+                const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+                return isLocalhost ? 'http://localhost:8000' : 'http://171.22.25.201:9000';
+            }
+            return 'http://localhost:8000';
+        };
+        const baseURL = getBaseURL();
         return `${baseURL}${url}`;
     };
 

@@ -16,8 +16,8 @@ const getBaseURL = () => {
             // Development: use localhost:8000
             return 'http://localhost:8000/api/v1';
         } else {
-            // Production: use same domain (Nginx will proxy to backend on port 9000)
-            return `${window.location.protocol}//${window.location.host}/api/v1`;
+            // Production: use server IP with port 9000
+            return 'http://171.22.25.201:9000/api/v1';
         }
     }
     

@@ -48,7 +48,16 @@ export default function BuildingRequestForm({ onSuccess }) {
 
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir'}/api/v1/buildings/resident-requests/create/`, {
+            const getApiBaseURL = () => {
+                if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+                if (typeof window !== 'undefined') {
+                    const hostname = window.location.hostname;
+                    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+                    return isLocalhost ? 'http://localhost:8000/api/v1' : 'http://171.22.25.201:9000/api/v1';
+                }
+                return 'http://localhost:8000/api/v1';
+            };
+            const response = await fetch(`${getApiBaseURL()}/buildings/resident-requests/create/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

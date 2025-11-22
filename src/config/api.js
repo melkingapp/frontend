@@ -5,11 +5,18 @@ const sanitizeBaseUrl = (value) => {
 
 const inferBaseUrlFromWindow = () => {
     if (typeof window === 'undefined' || !window.location) {
-        return 'https://melkingapp.ir/api/v1';
+        return 'http://171.22.25.201:9000/api/v1';
     }
 
-    const origin = window.location.origin.replace(/\/+$/, '');
-    return `${origin}/api/v1`;
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    
+    if (isLocalhost) {
+        return 'http://localhost:8000/api/v1';
+    } else {
+        // Production: use server IP with port 9000
+        return 'http://171.22.25.201:9000/api/v1';
+    }
 };
 
 const runtimeBaseUrl = sanitizeBaseUrl(import.meta.env?.VITE_API_BASE_URL);
