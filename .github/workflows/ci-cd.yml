@@ -149,13 +149,35 @@ jobs:
             fi
             echo ""
             echo "🔍 Verifying nginx config..."
-            nginx -t && echo "✅ Nginx config is valid"
+            if nginx -t; then
+              echo "✅ Nginx config is valid"
+            else
+              echo "❌ Nginx config test failed!"
+              echo "Checking error log..."
+              tail -50 /var/log/nginx/error.log || true
+              echo ""
+              echo "Config file content:"
+              cat "\${NGINX_CONFIG}"
+              exit 1
+            fi
             echo ""
             echo "🔄 Reloading nginx..."
-            systemctl reload "${{ env.NGINX_SERVICE }}" && echo "✅ Nginx reloaded" || {
-              echo "⚠️ Reload failed, trying restart..."
-              systemctl restart "${{ env.NGINX_SERVICE }}"
-            }
+            if systemctl reload "${{ env.NGINX_SERVICE }}"; then
+              echo "✅ Nginx reloaded"
+            else
+              echo "⚠️ Reload failed, checking error..."
+              journalctl -u "${{ env.NGINX_SERVICE }}" -n 20 --no-pager || true
+              echo ""
+              echo "Trying restart..."
+              if systemctl restart "${{ env.NGINX_SERVICE }}"; then
+                echo "✅ Nginx restarted"
+              else
+                echo "❌ Nginx restart failed!"
+                journalctl -u "${{ env.NGINX_SERVICE }}" -n 30 --no-pager || true
+                tail -50 /var/log/nginx/error.log || true
+                exit 1
+              fi
+            fi
             sleep 3
             echo ""
             echo "🔍 Verifying symlink exists after reload..."
