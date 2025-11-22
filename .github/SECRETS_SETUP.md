@@ -15,7 +15,7 @@ Set these secrets in **GitHub → Settings → Secrets and variables → Actions
 
 | Name | Description | Example |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | Backend REST API base URL injected during `npm run build` | `https://melkingapp.ir/api/v1` |
+| `VITE_API_BASE_URL` | Backend REST API base URL injected during `npm run build` | `http://171.22.25.201:9000/api/v1` |
 
 ## ⚙️ Optional Overrides
 

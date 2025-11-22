@@ -42,7 +42,7 @@ jobs:
 
       - name: 🏗️ Build
         env:
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'https://melkingapp.ir/api/v1' }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'http://171.22.25.201:9000/api/v1' }}
         run: npm run build
 
       - name: 📦 Upload artifact
