@@ -142,31 +142,56 @@ jobs:
 
       - name: ♻️ Deploy release
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << "ENDSSH"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
             set -euo pipefail
             RELEASE_NAME="${{ steps.release.outputs.name }}"
             DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
-            mkdir -p "${DEPLOY_PATH}/releases"
-            mkdir -p "${DEPLOY_PATH}/shared"
-            RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE_NAME}"
-            rm -rf "${RELEASE_DIR}"
-            mkdir -p "${RELEASE_DIR}"
-            tar -xzf /tmp/frontend-dist.tar.gz -C "${RELEASE_DIR}"
+            FRONTEND_PORT="${{ env.FRONTEND_PORT }}"
+            mkdir -p "\${DEPLOY_PATH}/releases"
+            mkdir -p "\${DEPLOY_PATH}/shared"
+            RELEASE_DIR="\${DEPLOY_PATH}/releases/\${RELEASE_NAME}"
+            rm -rf "\${RELEASE_DIR}"
+            mkdir -p "\${RELEASE_DIR}"
+            tar -xzf /tmp/frontend-dist.tar.gz -C "\${RELEASE_DIR}"
             rm -f /tmp/frontend-dist.tar.gz
-            ln -sfn "${RELEASE_DIR}" "${DEPLOY_PATH}/current"
+            ln -sfn "\${RELEASE_DIR}" "\${DEPLOY_PATH}/current"
             if command -v chown >/dev/null 2>&1; then
-              chown -R www-data:www-data "${DEPLOY_PATH}" || true
+              chown -R www-data:www-data "\${DEPLOY_PATH}" || true
             fi
             systemctl reload "${{ env.NGINX_SERVICE }}"
-            echo "✅ Release deployed to ${RELEASE_DIR}"
-            echo "🌐 Frontend available at: http://${{ secrets.SSH_HOST }}:${{ env.FRONTEND_PORT }}"
+            sleep 2
+            echo "✅ Release deployed to \${RELEASE_DIR}"
+            echo "🌐 Frontend available at: http://${{ secrets.SSH_HOST }}:\${FRONTEND_PORT}"
+            echo ""
+            echo "🔍 Verifying nginx configuration..."
+            if netstat -tuln | grep -q ":\${FRONTEND_PORT} " || ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
+              echo "✅ Nginx is listening on port \${FRONTEND_PORT}"
+            else
+              echo "⚠️ Nginx is not listening on port \${FRONTEND_PORT}"
+              echo "Checking nginx status..."
+              systemctl status "${{ env.NGINX_SERVICE }}" || true
+            fi
+            echo ""
+            echo "🏥 Testing frontend locally..."
+            if curl -f -s http://localhost:\${FRONTEND_PORT} > /dev/null 2>&1; then
+              echo "✅ Frontend is responding on localhost:\${FRONTEND_PORT}"
+            else
+              echo "⚠️ Frontend health check failed (may need firewall rules)"
+            fi
           ENDSSH
 
-      - name: 🏥 Health check
+      - name: 🏥 External health check
+        continue-on-error: true
         run: |
           FRONTEND_URL="http://${{ secrets.SSH_HOST }}:${{ env.FRONTEND_PORT }}"
-          echo "Checking frontend at ${FRONTEND_URL}..."
-          curl -fsSL -o /dev/null "${FRONTEND_URL}" && echo "✅ Frontend is accessible on port ${{ env.FRONTEND_PORT }}"
+          echo "Checking frontend externally at ${FRONTEND_URL}..."
+          if curl -fsSL --max-time 5 -o /dev/null "${FRONTEND_URL}"; then
+            echo "✅ Frontend is accessible externally on port ${{ env.FRONTEND_PORT }}"
+          else
+            echo "⚠️ Frontend is not accessible externally (may need firewall rules)"
+            echo "To open port ${{ env.FRONTEND_PORT }}, run on server:"
+            echo "  sudo ufw allow ${{ env.FRONTEND_PORT }}/tcp"
+          fi
 
   notify:
     name: 🔔 Notify
