@@ -172,35 +172,35 @@ jobs:
             
             echo ""
             echo "📝 Creating nginx config at \${NGINX_CONFIG}..."
-            sudo tee "\${NGINX_CONFIG}" > /dev/null << 'EOF'
-            server {
-                listen 8080;
-                server_name _;
-                
-                root /var/www/melking/frontend-new/current;
-                index index.html;
-                
-                location / {
-                    try_files $uri $uri/ /index.html;
-                }
-                
-                location /api/ {
-                    proxy_pass http://127.0.0.1:9000/api/;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                    proxy_set_header X-Forwarded-Proto $scheme;
-                }
-                
-                location /static/ {
-                    proxy_pass http://127.0.0.1:9000/static/;
-                }
-                
-                location /media/ {
-                    proxy_pass http://127.0.0.1:9000/media/;
-                }
-            }
-            EOF
+            {
+              echo 'server {'
+              echo '    listen 8080;'
+              echo '    server_name _;'
+              echo '    '
+              echo '    root /var/www/melking/frontend-new/current;'
+              echo '    index index.html;'
+              echo '    '
+              echo '    location / {'
+              echo '        try_files $uri $uri/ /index.html;'
+              echo '    }'
+              echo '    '
+              echo '    location /api/ {'
+              echo '        proxy_pass http://127.0.0.1:9000/api/;'
+              echo '        proxy_set_header Host $host;'
+              echo '        proxy_set_header X-Real-IP $remote_addr;'
+              echo '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;'
+              echo '        proxy_set_header X-Forwarded-Proto $scheme;'
+              echo '    }'
+              echo '    '
+              echo '    location /static/ {'
+              echo '        proxy_pass http://127.0.0.1:9000/static/;'
+              echo '    }'
+              echo '    '
+              echo '    location /media/ {'
+              echo '        proxy_pass http://127.0.0.1:9000/media/;'
+              echo '    }'
+              echo '}'
+            } | sudo tee "\${NGINX_CONFIG}" > /dev/null
             echo "✅ Config file created"
             echo ""
             echo "📄 Config file content:"
