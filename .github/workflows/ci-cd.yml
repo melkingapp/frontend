@@ -138,6 +138,15 @@ jobs:
             NGINXEOF
             ln -sf "\${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
             nginx -t && echo "✅ Nginx config is valid"
+            systemctl reload "${{ env.NGINX_SERVICE }}" && echo "✅ Nginx reloaded"
+            sleep 1
+            if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
+              echo "✅ Nginx is listening on port \${FRONTEND_PORT}"
+            else
+              echo "⚠️ Nginx is not listening on port \${FRONTEND_PORT}, trying restart..."
+              systemctl restart "${{ env.NGINX_SERVICE }}" || true
+              sleep 2
+            fi
           ENDSSH
 
       - name: ♻️ Deploy release
