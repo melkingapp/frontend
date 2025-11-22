@@ -31,7 +31,11 @@ export default function OwnerRentalRequestsManager() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [authToken]);
+
+    useEffect(() => {
+        fetchRentalRequests();
+    }, [fetchRentalRequests]);
 
     const handleOwnerAction = async (requestId, action, reason = '') => {
         setLoading(true);
