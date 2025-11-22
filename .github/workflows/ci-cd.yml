@@ -107,7 +107,30 @@ jobs:
             DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
             FRONTEND_PORT="${{ env.FRONTEND_PORT }}"
             BACKEND_PORT="${{ env.BACKEND_PORT }}"
-            cat > "\${NGINX_CONFIG}" << 'EOF'
+            NGINX_SERVICE="${{ env.NGINX_SERVICE }}"
+            
+            echo "🔍 Checking nginx service status..."
+            if systemctl is-active --quiet "\${NGINX_SERVICE}" 2>/dev/null; then
+              echo "✅ Nginx service is running"
+            elif systemctl is-enabled --quiet "\${NGINX_SERVICE}" 2>/dev/null; then
+              echo "⚠️ Nginx service is enabled but not running"
+            else
+              echo "⚠️ Nginx service status unknown"
+            fi
+            
+            echo ""
+            echo "🔍 Checking for port conflicts on port \${FRONTEND_PORT}..."
+            if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
+              echo "⚠️ Port \${FRONTEND_PORT} is already in use:"
+              ss -tuln | grep ":\${FRONTEND_PORT} " || true
+              echo "This might be nginx or another service"
+            else
+              echo "✅ Port \${FRONTEND_PORT} is available"
+            fi
+            
+            echo ""
+            echo "📝 Creating nginx config at \${NGINX_CONFIG}..."
+            sudo tee "\${NGINX_CONFIG}" > /dev/null << 'EOF'
             server {
                 listen 8080;
                 server_name _;
@@ -136,11 +159,14 @@ jobs:
                 }
             }
             EOF
-            echo "📝 Created nginx config at \${NGINX_CONFIG}"
+            echo "✅ Config file created"
+            echo ""
+            echo "📄 Config file content:"
             cat "\${NGINX_CONFIG}"
             echo ""
+            
             echo "🔗 Creating symlink..."
-            ln -sf "\${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
+            sudo ln -sf "\${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
             if [ -L /etc/nginx/sites-enabled/frontend-new ]; then
               echo "✅ Symlink created successfully"
             else
@@ -148,73 +174,104 @@ jobs:
               exit 1
             fi
             echo ""
-            echo "🔍 Verifying nginx config..."
-            if nginx -t; then
+            
+            echo "🔍 Verifying nginx config syntax..."
+            if sudo nginx -t 2>&1; then
               echo "✅ Nginx config is valid"
             else
               echo "❌ Nginx config test failed!"
-              echo "Checking error log..."
-              tail -50 /var/log/nginx/error.log || true
+              echo ""
+              echo "Checking nginx error log..."
+              sudo tail -50 /var/log/nginx/error.log 2>/dev/null || echo "Could not read error log"
+              echo ""
+              echo "Checking systemd journal..."
+              sudo journalctl -u "\${NGINX_SERVICE}" -n 30 --no-pager || true
               echo ""
               echo "Config file content:"
               cat "\${NGINX_CONFIG}"
               exit 1
             fi
             echo ""
-            echo "🔄 Reloading nginx..."
-            if systemctl reload "${{ env.NGINX_SERVICE }}"; then
-              echo "✅ Nginx reloaded"
+            
+            echo "🔄 Reloading nginx service..."
+            if sudo systemctl reload "\${NGINX_SERVICE}" 2>&1; then
+              echo "✅ Nginx reloaded successfully"
+              sleep 2
             else
-              echo "⚠️ Reload failed, checking error..."
-              journalctl -u "${{ env.NGINX_SERVICE }}" -n 20 --no-pager || true
+              echo "⚠️ Reload failed, checking status..."
+              sudo systemctl status "\${NGINX_SERVICE}" --no-pager -l || true
               echo ""
-              echo "Trying restart..."
-              if systemctl restart "${{ env.NGINX_SERVICE }}"; then
-                echo "✅ Nginx restarted"
+              echo "Checking journal logs..."
+              sudo journalctl -u "\${NGINX_SERVICE}" -n 30 --no-pager || true
+              echo ""
+              echo "Checking error log..."
+              sudo tail -50 /var/log/nginx/error.log 2>/dev/null || true
+              echo ""
+              echo "Attempting restart..."
+              if sudo systemctl restart "\${NGINX_SERVICE}" 2>&1; then
+                echo "✅ Nginx restarted successfully"
+                sleep 3
               else
                 echo "❌ Nginx restart failed!"
-                journalctl -u "${{ env.NGINX_SERVICE }}" -n 30 --no-pager || true
-                tail -50 /var/log/nginx/error.log || true
+                echo ""
+                echo "Full systemd status:"
+                sudo systemctl status "\${NGINX_SERVICE}" --no-pager -l || true
+                echo ""
+                echo "Recent journal entries:"
+                sudo journalctl -u "\${NGINX_SERVICE}" -n 50 --no-pager || true
+                echo ""
+                echo "Error log:"
+                sudo tail -100 /var/log/nginx/error.log 2>/dev/null || true
+                echo ""
+                echo "Testing nginx config again:"
+                sudo nginx -t 2>&1 || true
                 exit 1
               fi
             fi
-            sleep 3
+            
             echo ""
-            echo "🔍 Verifying symlink exists after reload..."
-            if [ ! -L /etc/nginx/sites-enabled/frontend-new ]; then
-              echo "⚠️ Symlink disappeared after reload, recreating..."
-              ln -sf "\${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
-              systemctl reload "${{ env.NGINX_SERVICE }}"
-              sleep 2
+            echo "🔍 Verifying nginx is running..."
+            if systemctl is-active --quiet "\${NGINX_SERVICE}"; then
+              echo "✅ Nginx service is active"
+            else
+              echo "❌ Nginx service is not active!"
+              sudo systemctl status "\${NGINX_SERVICE}" --no-pager || true
+              exit 1
             fi
-            ls -la /etc/nginx/sites-enabled/ | grep frontend-new || echo "⚠️ Symlink still not found"
+            
             echo ""
             echo "🔍 Checking if nginx is listening on port \${FRONTEND_PORT}..."
+            sleep 2
             if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
               echo "✅ Nginx is listening on port \${FRONTEND_PORT}"
+              ss -tuln | grep ":\${FRONTEND_PORT} " || true
             else
               echo "⚠️ Nginx is not listening on port \${FRONTEND_PORT}"
+              echo ""
               echo "Checking nginx status..."
-              systemctl status "${{ env.NGINX_SERVICE }}" --no-pager || true
+              sudo systemctl status "\${NGINX_SERVICE}" --no-pager || true
               echo ""
               echo "Checking nginx error log..."
-              tail -30 /var/log/nginx/error.log || true
+              sudo tail -50 /var/log/nginx/error.log 2>/dev/null || true
               echo ""
-              echo "Trying full restart..."
-              systemctl restart "${{ env.NGINX_SERVICE }}"
+              echo "Listing enabled sites..."
+              ls -la /etc/nginx/sites-enabled/ || true
+              echo ""
+              echo "Testing nginx full config..."
+              sudo nginx -T 2>&1 | grep -A 15 "frontend-new" || echo "Config not found in nginx test"
+              echo ""
+              echo "Attempting one more restart..."
+              sudo systemctl restart "\${NGINX_SERVICE}"
               sleep 5
               if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
                 echo "✅ Nginx is now listening on port \${FRONTEND_PORT}"
               else
-                echo "❌ Nginx failed to listen on port \${FRONTEND_PORT}"
-                echo "Listing all nginx configs..."
-                ls -la /etc/nginx/sites-enabled/ || true
-                echo ""
-                echo "Testing nginx config..."
-                nginx -T 2>&1 | grep -A 10 "frontend-new" || echo "Config not found in nginx test"
+                echo "❌ Nginx failed to listen on port \${FRONTEND_PORT} after restart"
                 exit 1
               fi
             fi
+            echo ""
+            echo "✅ Nginx setup completed successfully"
           ENDSSH
 
       - name: ♻️ Deploy release
@@ -233,9 +290,22 @@ jobs:
             rm -f /tmp/frontend-dist.tar.gz
             ln -sfn "\${RELEASE_DIR}" "\${DEPLOY_PATH}/current"
             if command -v chown >/dev/null 2>&1; then
-              chown -R www-data:www-data "\${DEPLOY_PATH}" || true
+              sudo chown -R www-data:www-data "\${DEPLOY_PATH}" || true
             fi
-            systemctl reload "${{ env.NGINX_SERVICE }}"
+            echo ""
+            echo "🔄 Reloading nginx after deployment..."
+            if sudo systemctl reload "${{ env.NGINX_SERVICE }}" 2>&1; then
+              echo "✅ Nginx reloaded successfully"
+            else
+              echo "⚠️ Nginx reload failed, trying restart..."
+              if sudo systemctl restart "${{ env.NGINX_SERVICE }}" 2>&1; then
+                echo "✅ Nginx restarted successfully"
+              else
+                echo "❌ Nginx restart failed!"
+                sudo systemctl status "${{ env.NGINX_SERVICE }}" --no-pager || true
+                sudo journalctl -u "${{ env.NGINX_SERVICE }}" -n 20 --no-pager || true
+              fi
+            fi
             sleep 2
             echo "✅ Release deployed to \${RELEASE_DIR}"
             echo "🌐 Frontend available at: http://${{ secrets.SSH_HOST }}:\${FRONTEND_PORT}"
@@ -246,7 +316,7 @@ jobs:
             else
               echo "⚠️ Nginx is not listening on port \${FRONTEND_PORT}"
               echo "Checking nginx status..."
-              systemctl status "${{ env.NGINX_SERVICE }}" || true
+              sudo systemctl status "${{ env.NGINX_SERVICE }}" --no-pager || true
             fi
             echo ""
             echo "🏥 Testing frontend locally..."
