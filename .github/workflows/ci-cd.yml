@@ -12,7 +12,7 @@ on:
 
 env:
   NODE_VERSION: '20'
-  DEPLOY_PATH: /var/www/melking/frontend-new
+  DEPLOY_PATH: /var/www/melking/melking/frontend
   NGINX_SERVICE: nginx
 
 jobs:
