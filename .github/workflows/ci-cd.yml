@@ -14,6 +14,8 @@ env:
   NODE_VERSION: '20'
   DEPLOY_PATH: /var/www/melking/frontend-new
   NGINX_SERVICE: nginx
+  FRONTEND_PORT: 8080
+  BACKEND_PORT: 9000
 
 jobs:
   build:
@@ -83,6 +85,58 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no frontend-dist.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/frontend-dist.tar.gz
 
+      - name: 🔍 Check backend on port 9000
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << "ENDSSH"
+            set -euo pipefail
+            echo "Checking if backend is running on port ${{ env.BACKEND_PORT }}..."
+            if netstat -tuln | grep -q ":${{ env.BACKEND_PORT }} " || ss -tuln | grep -q ":${{ env.BACKEND_PORT }} "; then
+              echo "✅ Backend is running on port ${{ env.BACKEND_PORT }}"
+              curl -f http://localhost:${{ env.BACKEND_PORT }}/health/ || echo "⚠️ Backend health check failed, but port is open"
+            else
+              echo "❌ Backend is NOT running on port ${{ env.BACKEND_PORT }}"
+              exit 1
+            fi
+          ENDSSH
+
+      - name: ⚙️ Setup nginx config for frontend port
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << "ENDSSH"
+            set -euo pipefail
+            NGINX_CONFIG="/etc/nginx/sites-available/frontend-new"
+            cat > "${NGINX_CONFIG}" << 'NGINXEOF'
+            server {
+                listen ${{ env.FRONTEND_PORT }};
+                server_name _;
+                
+                root ${{ env.DEPLOY_PATH }}/current;
+                index index.html;
+                
+                location / {
+                    try_files \$uri \$uri/ /index.html;
+                }
+                
+                location /api/ {
+                    proxy_pass http://127.0.0.1:${{ env.BACKEND_PORT }}/api/;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                }
+                
+                location /static/ {
+                    proxy_pass http://127.0.0.1:${{ env.BACKEND_PORT }}/static/;
+                }
+                
+                location /media/ {
+                    proxy_pass http://127.0.0.1:${{ env.BACKEND_PORT }}/media/;
+                }
+            }
+            NGINXEOF
+            ln -sf "${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
+            nginx -t && echo "✅ Nginx config is valid"
+          ENDSSH
+
       - name: ♻️ Deploy release
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << "ENDSSH"
@@ -101,16 +155,15 @@ jobs:
               chown -R www-data:www-data "${DEPLOY_PATH}" || true
             fi
             systemctl reload "${{ env.NGINX_SERVICE }}"
-            echo "Release deployed to ${RELEASE_DIR}"
+            echo "✅ Release deployed to ${RELEASE_DIR}"
+            echo "🌐 Frontend available at: http://${{ secrets.SSH_HOST }}:${{ env.FRONTEND_PORT }}"
           ENDSSH
 
       - name: 🏥 Health check
         run: |
-          if [ -n "${{ secrets.DEPLOYMENT_URL }}" ]; then
-            curl -fsSL -o /dev/null "${{ secrets.DEPLOYMENT_URL }}"
-          else
-            echo "DEPLOYMENT_URL not set – skipping health check."
-          fi
+          FRONTEND_URL="http://${{ secrets.SSH_HOST }}:${{ env.FRONTEND_PORT }}"
+          echo "Checking frontend at ${FRONTEND_URL}..."
+          curl -fsSL -o /dev/null "${FRONTEND_URL}" && echo "✅ Frontend is accessible on port ${{ env.FRONTEND_PORT }}"
 
   notify:
     name: 🔔 Notify
