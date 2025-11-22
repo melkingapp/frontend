@@ -29,9 +29,6 @@ const distributionLabels = {
   area: "بر اساس متراژ",
   parking: "بر اساس تعداد پارکینگ",
 };
-  security: "امنیت",
-  other: "سایر",
-};
 
 const categoryLabels = {
   shared_bill: "قبض مشترک",
