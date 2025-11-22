@@ -26,7 +26,7 @@ export default function SurveyBase({ surveys: propSurveys, limit }) {
     
     const displayed = limit ? sorted.slice(0, limit) : sorted;
 
-    const resolveBuildingId = () => {
+    const resolveBuildingId = useCallback(() => {
         const raw = selectedBuilding?.building_id ?? selectedBuilding?.id;
         if (!raw) return undefined;
         if (typeof raw === 'string') {
@@ -38,7 +38,7 @@ export default function SurveyBase({ surveys: propSurveys, limit }) {
             return raw;
         }
         return raw;
-    };
+    }, [selectedBuilding]);
 
     // Fetch surveys when component mounts
     useEffect(() => {
