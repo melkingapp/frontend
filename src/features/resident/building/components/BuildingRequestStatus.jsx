@@ -4,9 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { 
     setSelectedBuilding, 
-    fetchApprovedBuildingsDetails,
-    selectResidentBuildingLoading: _selectResidentBuildingLoading,
-    selectResidentBuildingError: _selectResidentBuildingError
+    fetchApprovedBuildingsDetails
 } from "../residentBuildingSlice";
 import { 
     fetchMembershipRequests,
