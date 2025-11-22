@@ -49,7 +49,6 @@ const initialState = {
         { value: "repair", label: "تعمیرات" },
         { value: "cleaning", label: "نظافت" },
         { value: "purchases", label: "اقلام خریدنی" },
-        { value: "AddExpenseType", label: "افزودن نوع هزینه" },
         ...loadExpenseTypes(),
     ],
 };

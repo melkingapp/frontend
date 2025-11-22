@@ -46,14 +46,39 @@ client.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
+            // Check if error is about invalid token type
+            const errorMessage = error.response?.data?.detail || 
+                                error.response?.data?.message || 
+                                error.response?.data?.error || 
+                                '';
+            const isInvalidTokenType = errorMessage?.toLowerCase().includes('token not valid') || 
+                                      errorMessage?.toLowerCase().includes('invalid token');
+
+            // If it's an invalid token type error, don't try to refresh, just redirect
+            if (isInvalidTokenType) {
+                console.log('🚨 Invalid token type error - clearing auth and redirecting to login...');
+                clearTokens();
+                if (window.location.pathname !== '/login') {
+                    window.location.href = '/login';
+                }
+                return Promise.reject(error);
+            }
+
             try {
                 await refreshToken();
                 const newToken = getAccessToken();
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                return client(originalRequest);
+                if (newToken) {
+                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                    return client(originalRequest);
+                } else {
+                    throw new Error('No token after refresh');
+                }
             } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
                 clearTokens();
-                window.location.href = '/login';
+                if (window.location.pathname !== '/login') {
+                    window.location.href = '/login';
+                }
                 return Promise.reject(refreshError);
             }
         }
@@ -93,11 +118,24 @@ export const refreshToken = async () => {
             refresh: refreshTokenValue,
         });
 
-        const { access } = response.data;
+        const { access, refresh: newRefreshToken } = response.data;
         localStorage.setItem('access_token', access);
+        // اگر refresh token جدید برگردانده شد، آن را هم ذخیره کن
+        if (newRefreshToken) {
+            localStorage.setItem('refresh_token', newRefreshToken);
+        }
         return access;
     } catch (error) {
         console.error('Token refresh error:', error);
+        // اگر خطای "token not valid" است، tokens را clear کن
+        const errorMessage = error.response?.data?.detail || 
+                            error.response?.data?.message || 
+                            error.response?.data?.error || 
+                            '';
+        if (errorMessage?.toLowerCase().includes('token not valid') || 
+            errorMessage?.toLowerCase().includes('invalid token')) {
+            clearTokens();
+        }
         throw error;
     }
 };

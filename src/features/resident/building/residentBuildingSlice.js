@@ -57,9 +57,7 @@ export const fetchApprovedBuildings = createAsyncThunk(
 export const fetchApprovedBuildingsDetails = createAsyncThunk(
     'residentBuilding/fetchApprovedBuildingsDetails',
     async (buildingIds, { rejectWithValue, dispatch }) => {
-        try {
-            console.log('Fetching building details for IDs:', buildingIds);
-            
+        try {            
             const fetchBuildingDetails = async (buildingId) => {
                 try {
                     const response = await getBuildingDetails(buildingId);
@@ -264,9 +262,7 @@ const residentBuildingSlice = createSlice({
 export const refreshApprovedBuildings = createAsyncThunk(
     'residentBuilding/refreshApprovedBuildings',
     async (_, { rejectWithValue, dispatch, getState }) => {
-        try {
-            console.log('🔄 Refreshing approved buildings...');
-            
+        try {            
             // Get buildings directly from the building list API (which uses BuildingUser table)
             const response = await getApprovedBuildings();
             const buildings = response.results || response;
@@ -280,7 +276,6 @@ export const refreshApprovedBuildings = createAsyncThunk(
                 });
                 return buildings;
             } else {
-                console.log('⚠️ No buildings found from API - using current state as fallback...');
                 
                 // Fallback: Use current approved buildings from state if available
                 const state = getState();
@@ -290,9 +285,7 @@ export const refreshApprovedBuildings = createAsyncThunk(
                     console.log('🔄 Using current state as fallback:', currentApprovedBuildings.length, 'buildings');
                     return currentApprovedBuildings;
                 }
-                
-                console.log('⚠️ No fallback available - returning empty array');
-                return [];
+                  return [];
             }
         } catch (error) {
             console.error('❌ Error refreshing approved buildings:', error);

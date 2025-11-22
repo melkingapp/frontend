@@ -23,25 +23,12 @@ const statusStyles = {
   "ممتاز": "bg-yellow-100 text-yellow-700",
 };
 
-const allocationLabels = {
-  owner: "مالک",
-  resident: "ساکن",
-  both: "هردو",
-};
-
 const distributionLabels = {
   equal: "مساوی",
   per_person: "بر اساس تعداد نفر",
   area: "بر اساس متراژ",
   parking: "بر اساس تعداد پارکینگ",
 };
-
-const billTypeLabels = {
-  electricity: "قبض برق",
-  water: "قبض آب",
-  gas: "قبض گاز",
-  maintenance: "تعمیرات",
-  cleaning: "نظافت",
   security: "امنیت",
   other: "سایر",
 };

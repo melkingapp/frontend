@@ -45,7 +45,7 @@ export default function ServicesBase({ services: propServices, limit }) {
         if (bId !== undefined && bId !== null && bId !== '') {
             dispatch(fetchBuildingServices(bId));
         }
-    }, [dispatch, selectedBuilding]);
+    }, [dispatch, selectedBuilding, resolveBuildingId]);
 
     const handleRefresh = () => {
         const bId = resolveBuildingId();

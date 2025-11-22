@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Coins } from "lucide-react";
 import { toast } from "sonner";
+import moment from "moment-jalaali";
 import FinanceTableRow from "../components/overview/FinanceTableRow";
 import FinanceDetailsModal from "../components/overview/FinanceDetailsModal";
 import { selectSelectedBuilding } from "../../building/buildingSlice";
@@ -16,6 +17,7 @@ import { registerExpense, fetchTransactions, fetchCurrentFundBalance, selectCurr
 import { fetchBuildings, setSelectedBuilding } from "../../building/buildingSlice";
 import { addExpenseType } from "../slices/expenseTypesSlice";
 import { getPersianType } from "../../../../shared/utils/typeUtils";
+import PersianDatePicker from "../../../../shared/components/shared/inputs/PersianDatePicker";
 
 export default function FinanceTransactions() {
   const dispatch = useDispatch();
@@ -25,6 +27,9 @@ export default function FinanceTransactions() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeModal, setActiveModal] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateRange, setDateRange] = useState(null); // { from: 'YYYY-MM-DD', to: 'YYYY-MM-DD' }
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [tempDateRange, setTempDateRange] = useState({ from: '', to: '' });
   const building = useSelector(selectSelectedBuilding);
   const buildings = useSelector(state => state.building.data);
   const currentFundBalance = useSelector(selectCurrentFundBalance);
@@ -51,7 +56,7 @@ export default function FinanceTransactions() {
       const firstBuilding = buildings[0];
       dispatch(setSelectedBuilding(firstBuilding.building_id || firstBuilding.id));
     }
-  }, [dispatch, buildings.length, building]);
+  }, [dispatch, buildings, building]);
 
   // Fetch current fund balance when building changes
   useEffect(() => {
@@ -114,8 +119,18 @@ export default function FinanceTransactions() {
   const balance = currentFundBalance?.current_balance || building?.fund_balance || 0;
   console.log("🔥 Sorted data:", sortedData);
   console.log("🔥 Sorted data length:", sortedData.length);
-  const newestDate = sortedData.length > 0 ? sortedData[sortedData.length - 1].date : "-";
-  const oldestDate = sortedData.length > 0 ? sortedData[0].date : "-";
+  
+  // اگر هزینه‌ای وجود داشته باشد، از تاریخ‌های تراکنش‌ها استفاده کن
+  // در غیر این صورت از تاریخ ایجاد ساختمان استفاده کن
+  // توجه: sortedData به ترتیب نزولی است (جدیدترین اول)
+  const currentBuilding = building || (buildings.length > 0 ? buildings[0] : null);
+  const buildingCreatedAt = currentBuilding?.created_at || currentBuilding?.createdAt || null;
+  const newestDate = sortedData.length > 0 
+    ? sortedData[0].date  // جدیدترین تاریخ (اولین در sortedData)
+    : (buildingCreatedAt || "-");
+  const oldestDate = sortedData.length > 0 
+    ? sortedData[sortedData.length - 1].date  // قدیمی‌ترین تاریخ (آخرین در sortedData)
+    : (buildingCreatedAt || "-");
 
   const filteredData = sortedData.filter(item => {
     let matchesFilter = false;
@@ -196,7 +211,40 @@ export default function FinanceTransactions() {
       (item.date && item.date.toLowerCase().includes(search)) ||
       (item.amount && item.amount.toString().includes(search));
 
-    return matchesFilter && matchesSearch;
+    // فیلتر بر اساس تاریخ
+    let matchesDate = true;
+    if (dateRange && item.date) {
+      try {
+        // Parse item date and normalize to date only (ignore time)
+        const itemDateStr = moment(item.date).format('YYYY-MM-DD');
+        const itemDate = new Date(itemDateStr);
+        itemDate.setHours(0, 0, 0, 0);
+        
+        const fromDate = dateRange.from ? (() => {
+          const d = new Date(dateRange.from);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        })() : null;
+        
+        const toDate = dateRange.to ? (() => {
+          const d = new Date(dateRange.to);
+          d.setHours(23, 59, 59, 999); // Include the entire end date
+          return d;
+        })() : null;
+        
+        if (fromDate && itemDate < fromDate) {
+          matchesDate = false;
+        }
+        if (toDate && itemDate > toDate) {
+          matchesDate = false;
+        }
+      } catch (error) {
+        // If date parsing fails, don't filter out the item
+        console.warn('Error parsing date for filtering:', item.date, error);
+      }
+    }
+
+    return matchesFilter && matchesSearch && matchesDate;
   });
   
   console.log("🔥 Filtered data:", filteredData);
@@ -212,6 +260,101 @@ export default function FinanceTransactions() {
 
   const handleExpense = () => setActiveModal("expense");
   // const handleBill = () => setActiveModal("bill");
+
+  const handleDateClick = () => {
+    // Initialize temp date range with current date range or default values
+    if (dateRange) {
+      setTempDateRange({ from: dateRange.from, to: dateRange.to });
+    } else {
+      // Use oldest and newest dates as default
+      const fromDate = oldestDate && oldestDate !== "-" ? moment(oldestDate).format('YYYY-MM-DD') : '';
+      const toDate = newestDate && newestDate !== "-" ? moment(newestDate).format('YYYY-MM-DD') : '';
+      setTempDateRange({ from: fromDate, to: toDate });
+    }
+    setIsDateModalOpen(true);
+  };
+
+  const handleFromDateChange = (date) => {
+    // Convert Persian date to Gregorian for filtering
+    let gregorianDate = '';
+    if (date) {
+      try {
+        // react-multi-date-picker returns a DateObject or Date
+        if (date.toDate) {
+          // DateObject from react-multi-date-picker
+          const jsDate = date.toDate();
+          gregorianDate = moment(jsDate).format('YYYY-MM-DD');
+        } else if (date instanceof Date) {
+          gregorianDate = moment(date).format('YYYY-MM-DD');
+        } else if (typeof date === 'string') {
+          // Try to parse as Persian date first
+          const persianMoment = moment(date, 'jYYYY/jMM/jDD');
+          if (persianMoment.isValid()) {
+            gregorianDate = persianMoment.format('YYYY-MM-DD');
+          } else {
+            // Try as Gregorian
+            gregorianDate = moment(date).format('YYYY-MM-DD');
+          }
+        } else if (date.year && date.month && date.day) {
+          // DateObject with year, month, day properties
+          const persianMoment = moment().jYear(date.year).jMonth(date.month.number - 1).jDate(date.day);
+          gregorianDate = persianMoment.format('YYYY-MM-DD');
+        }
+      } catch (error) {
+        console.error('Error converting date:', error);
+      }
+    }
+    setTempDateRange({ ...tempDateRange, from: gregorianDate });
+  };
+
+  const handleToDateChange = (date) => {
+    // Convert Persian date to Gregorian for filtering
+    let gregorianDate = '';
+    if (date) {
+      try {
+        // react-multi-date-picker returns a DateObject or Date
+        if (date.toDate) {
+          // DateObject from react-multi-date-picker
+          const jsDate = date.toDate();
+          gregorianDate = moment(jsDate).format('YYYY-MM-DD');
+        } else if (date instanceof Date) {
+          gregorianDate = moment(date).format('YYYY-MM-DD');
+        } else if (typeof date === 'string') {
+          // Try to parse as Persian date first
+          const persianMoment = moment(date, 'jYYYY/jMM/jDD');
+          if (persianMoment.isValid()) {
+            gregorianDate = persianMoment.format('YYYY-MM-DD');
+          } else {
+            // Try as Gregorian
+            gregorianDate = moment(date).format('YYYY-MM-DD');
+          }
+        } else if (date.year && date.month && date.day) {
+          // DateObject with year, month, day properties
+          const persianMoment = moment().jYear(date.year).jMonth(date.month.number - 1).jDate(date.day);
+          gregorianDate = persianMoment.format('YYYY-MM-DD');
+        }
+      } catch (error) {
+        console.error('Error converting date:', error);
+      }
+    }
+    setTempDateRange({ ...tempDateRange, to: gregorianDate });
+  };
+
+  const handleApplyDateFilter = () => {
+    if (tempDateRange.from && tempDateRange.to) {
+      setDateRange({ from: tempDateRange.from, to: tempDateRange.to });
+    } else if (tempDateRange.from) {
+      setDateRange({ from: tempDateRange.from, to: tempDateRange.from });
+    } else if (tempDateRange.to) {
+      setDateRange({ from: tempDateRange.to, to: tempDateRange.to });
+    }
+    setIsDateModalOpen(false);
+  };
+
+  const handleClearDateFilter = () => {
+    setDateRange(null);
+    setIsDateModalOpen(false);
+  };
 
   const handleSubmitExpense = async (data) => {
     console.log("Expense Data:", data);
@@ -415,7 +558,16 @@ export default function FinanceTransactions() {
   return (
     <>
       <div className="p-4">
-        <FinanceSummary totalCost={totalCost} balance={balance} newestDate={newestDate} oldestDate={oldestDate} filter={filter} categories={categories} />
+        <FinanceSummary 
+          totalCost={totalCost} 
+          balance={balance} 
+          newestDate={newestDate} 
+          oldestDate={oldestDate} 
+          filter={filter} 
+          categories={categories}
+          onDateClick={handleDateClick}
+          dateRange={dateRange}
+        />
 
         <TransactionFilter filter={filter} setFilter={setFilter} categories={categories} />
         <SearchBox searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -459,6 +611,62 @@ export default function FinanceTransactions() {
         onClose={() => setActiveModal(null)}
         onPay={handleBillPaySubmit}
       />
+
+      {/* Date Range Filter Modal */}
+      {isDateModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">فیلتر بر اساس تاریخ</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  از تاریخ
+                </label>
+                <PersianDatePicker
+                  value={tempDateRange.from ? moment(tempDateRange.from).format('jYYYY/jMM/jDD') : ''}
+                  onChange={handleFromDateChange}
+                  placeholder="از تاریخ را انتخاب کنید"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  تا تاریخ
+                </label>
+                <PersianDatePicker
+                  value={tempDateRange.to ? moment(tempDateRange.to).format('jYYYY/jMM/jDD') : ''}
+                  onChange={handleToDateChange}
+                  placeholder="تا تاریخ را انتخاب کنید"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleApplyDateFilter}
+                className="flex-1 bg-melkingGold text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
+              >
+                اعمال فیلتر
+              </button>
+              {dateRange && (
+                <button
+                  onClick={handleClearDateFilter}
+                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                >
+                  حذف فیلتر
+                </button>
+              )}
+              <button
+                onClick={() => setIsDateModalOpen(false)}
+                className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                انصراف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

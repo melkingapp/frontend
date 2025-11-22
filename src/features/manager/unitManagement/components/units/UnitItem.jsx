@@ -1,4 +1,4 @@
-import { Home, Phone, Square, Car, Edit, CheckCircle2, XCircle } from "lucide-react";
+import { Home, Phone, Square, Car, Edit, CheckCircle2, XCircle, CircleSlash, Layers } from "lucide-react";
 import { useMemo } from "react";
 
 export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
@@ -12,7 +12,8 @@ export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
     const tenantPhoneNumber = unit.tenant_phone_number || "";
     const hasParking = unit.has_parking || false;
     const parkingCount = unit.parking_count || 0;
-    const residentCount = unit.resident_count || 1;
+    const residentCount = (unit.resident_count ?? 0);
+    const ownerType = unit.owner_type || "";
     
     // سازگاری با فیلدهای قدیمی
     const ownerName = unit.owner_name || fullName;
@@ -74,13 +75,10 @@ export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
                 {/* ردیف اول: مشخصات واحد */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-700 font-medium">
                     <div className="flex items-center gap-1">
-                        <Home size={16} /> واحد {unit.unit_number || unit.units_id}
-                    </div>
-                    <div className="flex items-center gap-1">
                         <Square size={16} /> {unit.area ? `${unit.area} متر` : "—"}
                     </div>
                     <div className="flex items-center gap-1">
-                        <Home size={16} /> طبقه {unit.floor}
+                        <Home size={16} /> واحد {unit.unit_number || unit.units_id}
                     </div>
                     <div className="flex items-center gap-1">
                         {hasParking && (
@@ -138,9 +136,16 @@ export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
 
                     {/* وضعیت + دکمه ویرایش */}
                     <div className="flex items-center justify-between sm:justify-end gap-2">
-                        <span className="px-3 py-1 rounded-full bg-gray-100 text-sm font-medium text-gray-700">
-                            {residentCount} نفر
-                        </span>
+                        {ownerType === 'empty' || Number(residentCount) === 0 ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-sm font-medium shadow-sm">
+                                <CircleSlash size={14} className="shrink-0" />
+                                واحد خالی
+                            </span>
+                        ) : (
+                            <span className="px-3 py-1 rounded-full bg-gray-100 text-sm font-medium text-gray-700">
+                                {residentCount} نفر
+                            </span>
+                        )}
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();

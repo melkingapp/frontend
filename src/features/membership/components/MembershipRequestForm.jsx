@@ -2,7 +2,8 @@ import { useState, Fragment, useEffect, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { createMembershipRequest, fetchUnitByPhone, clearUnitData, selectUnitData, selectUnitLoading } from "../membershipSlice";
+import { createMembershipRequest, fetchUnitByPhone, clearUnitData, selectUnitData, selectUnitLoading, fetchMembershipRequests } from "../membershipSlice";
+import { fetchApprovedBuildings } from "../../resident/building/residentBuildingSlice";
 import { X, Building, User, Home, Car, Users } from "lucide-react";
 
 // توابع تبدیل نقش و نوع مالک به فارسی
@@ -62,6 +63,8 @@ const FormField = ({ label, name, type = "text", placeholder, value, onChange, m
 export default function MembershipRequestForm({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const { createLoading } = useSelector(state => state.membership);
+  const membershipRequests = useSelector(state => state.membership.requests);
+  const approvedBuildings = useSelector(state => state.residentBuilding.approvedBuildings);
   const { user } = useSelector(state => state.auth);
   const unitData = useSelector(selectUnitData);
   const unitLoading = useSelector(selectUnitLoading);
@@ -98,6 +101,16 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
 
   // Resolve phone number: prefer user.phone_number, fallback to user.username
   const effectivePhoneNumber = user?.phone_number || user?.username || '';
+
+  // Fetch membership requests and approved buildings when form opens to check if user is already a member
+  useEffect(() => {
+    if (isOpen) {
+      // Fetch membership requests to check existing memberships
+      dispatch(fetchMembershipRequests());
+      // Also fetch approved buildings (from BuildingUser table) to check if manager added user
+      dispatch(fetchApprovedBuildings());
+    }
+  }, [isOpen, dispatch]);
 
   // Fetch unit data when form opens
   useEffect(() => {
@@ -227,28 +240,119 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   const handleAcceptPrefill = async () => {
     if (!unitData) return;
     try {
+      // Normalize role: 'tenant' -> 'resident', 'owner' -> 'owner', anything else -> 'resident'
       const normalizedRole = unitData.role === 'owner' ? 'owner' : 'resident';
-      const normalizedOwnerType = normalizedRole === 'owner' ? (unitData.owner_type || form.owner_type || '') : '';
+      
+      // owner_type should only be set if role is 'owner' and it has a value, otherwise null
+      // But if role is 'owner' and owner_type is missing, we should not send the request
+      const ownerTypeValue = unitData.owner_type || form.owner_type || '';
+      const normalizedOwnerType = normalizedRole === 'owner' 
+        ? (ownerTypeValue ? ownerTypeValue : null)
+        : null;
+      
+      // Validate owner_type for owner role
+      if (normalizedRole === 'owner' && !normalizedOwnerType) {
+        const errorMsg = 'نوع مالک برای نقش مالک الزامی است';
+        setErrors({ submit: errorMsg });
+        toast.error(errorMsg);
+        return;
+      }
+      
+      // Helper function to convert to number (required fields should not be null)
+      const toNumber = (value, required = false) => {
+        if (value === null || value === undefined || value === '') {
+          if (required) {
+            console.warn("⚠️ Required number field is missing:", value);
+            return 0; // Return 0 for required fields instead of null
+          }
+          return null;
+        }
+        const num = Number(value);
+        if (isNaN(num)) {
+          if (required) {
+            console.warn("⚠️ Required number field is NaN:", value);
+            return 0;
+          }
+          return null;
+        }
+        return num;
+      };
+      
+      // Helper function to convert empty strings to null for optional fields
+      const toNullIfEmpty = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        return value;
+      };
+      
+      // Validate required fields before creating payload
+      const buildingCode = (unitData.building_code || form.building_code || '').trim();
+      const fullName = (unitData.full_name || form.full_name || '').trim();
+      const phoneNumber = (unitData.phone_number || form.phone_number || '').trim();
+      const unitNumber = (unitData.unit_number || form.unit_number || '').trim();
+      const floorValue = toNumber(unitData.floor || form.floor, true);
+      const areaValue = toNumber(unitData.area || form.area, true);
+      const residentCountValue = toNumber(unitData.resident_count || form.resident_count, true) || 1;
+      
+      // Check all required fields
+      const missingFields = [];
+      if (!buildingCode) missingFields.push('کد ساختمان');
+      if (!fullName) missingFields.push('نام و نام خانوادگی');
+      if (!phoneNumber) missingFields.push('شماره تماس');
+      if (!unitNumber) missingFields.push('شماره واحد');
+      if (!floorValue) missingFields.push('شماره طبقه');
+      if (!areaValue) missingFields.push('متراژ');
+      
+      if (missingFields.length > 0) {
+        const errorMsg = `فیلدهای الزامی خالی هستند: ${missingFields.join(', ')}`;
+        console.error("❌ Missing required fields:", missingFields);
+        setErrors({ submit: errorMsg });
+        toast.error(errorMsg);
+        return;
+      }
+      
       const payload = {
-        building_code: unitData.building_code || form.building_code,
-        full_name: unitData.full_name || form.full_name,
-        phone_number: unitData.phone_number || form.phone_number,
-        unit_number: unitData.unit_number || form.unit_number,
-        floor: unitData.floor || form.floor,
-        area: unitData.area || form.area,
-        resident_count: unitData.resident_count || form.resident_count,
+        building_code: buildingCode,
+        full_name: fullName,
+        phone_number: phoneNumber,
+        unit_number: unitNumber,
+        floor: floorValue,
+        area: areaValue,
+        resident_count: residentCountValue,
         role: normalizedRole,
         owner_type: normalizedOwnerType,
-        tenant_full_name: unitData.tenant_full_name || form.tenant_full_name,
-        tenant_phone_number: unitData.tenant_phone_number || form.tenant_phone_number,
-        has_parking: unitData.has_parking ?? form.has_parking,
-        parking_count: unitData.parking_count ?? form.parking_count,
+        tenant_full_name: toNullIfEmpty(unitData.tenant_full_name || form.tenant_full_name),
+        tenant_phone_number: toNullIfEmpty(unitData.tenant_phone_number || form.tenant_phone_number),
+        has_parking: unitData.has_parking ?? form.has_parking ?? false,
+        parking_count: toNumber(unitData.parking_count ?? form.parking_count) || 0,
       };
+      
+      // Log payload for debugging
+      console.log("📤 handleAcceptPrefill - Payload being sent:", payload);
+      console.log("📤 handleAcceptPrefill - unitData:", unitData);
+      
       await dispatch(createMembershipRequest(payload)).unwrap();
       toast.success('درخواست عضویت با اطلاعات شناسایی‌شده ثبت شد');
       handleClose();
     } catch (error) {
-      setErrors({ submit: error });
+      console.error("❌ Error in handleAcceptPrefill:", error);
+      console.error("❌ Error details:", {
+        error,
+        message: error?.message,
+        payload: error?.payload
+      });
+      
+      // Extract error message
+      let errorMessage = 'خطا در ارسال درخواست عضویت';
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.payload) {
+        errorMessage = error.payload;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      setErrors({ submit: errorMessage });
+      toast.error(errorMessage);
     }
   };
 
@@ -382,45 +486,141 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                 )}
 
                 {/* Pre-filled data notification and quick action */}
-                {unitData && !unitLoading && (
-                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-start gap-2">
-                        <div className="mt-1 w-3 h-3 bg-green-500 rounded-full"></div>
-                        <div className="text-sm text-green-800">
-                          اطلاعات شما در سیستم یافت شد. آیا تایید می‌کنید این اطلاعات مربوط به شماست؟
+                {/* Show for each building where user is a member (via BuildingUser) but doesn't have approved membership request */}
+                {!unitLoading && (() => {
+                  // Debug logs (only in development)
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log("🔍 MembershipRequestForm - unitData:", unitData);
+                    console.log("🔍 MembershipRequestForm - approvedBuildings:", approvedBuildings);
+                    console.log("🔍 MembershipRequestForm - membershipRequests:", membershipRequests);
+                  }
+                  
+                  // Find buildings where user is a member but doesn't have approved membership request
+                  const buildingsNeedingRequest = approvedBuildings.filter(building => {
+                    const hasApprovedRequest = membershipRequests.some(req => 
+                      req.building_code === building.building_code &&
+                      (req.status === 'approved' || 
+                       req.status === 'owner_approved' || 
+                       req.status === 'manager_approved')
+                    );
+                    return !hasApprovedRequest;
+                  });
+                  
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log("🔍 buildingsNeedingRequest:", buildingsNeedingRequest);
+                  }
+                  
+                  // If no buildings need request, don't show anything
+                  if (buildingsNeedingRequest.length === 0) {
+                    return null;
+                  }
+                  
+                  // Show notification for each building that needs a request
+                  // For now, show the first one (or match with unitData if available)
+                  const targetBuilding = unitData && buildingsNeedingRequest.find(b => 
+                    b.building_code === unitData.building_code
+                  ) || buildingsNeedingRequest[0];
+                  
+                  // Use unitData if it matches the target building, otherwise use building info
+                  const displayData = (unitData && unitData.building_code === targetBuilding.building_code) 
+                    ? unitData 
+                    : {
+                        building_code: targetBuilding.building_code,
+                        building_title: targetBuilding.title,
+                        unit_number: targetBuilding.unit_number || '',
+                        floor: targetBuilding.floor || '',
+                        area: targetBuilding.area || '',
+                        role: targetBuilding.role || 'resident',
+                        owner_type: targetBuilding.owner_type || '',
+                        resident_count: targetBuilding.resident_count || 1,
+                        has_parking: targetBuilding.has_parking || false,
+                        parking_count: targetBuilding.parking_count || 0,
+                        full_name: user?.full_name || '',
+                        phone_number: effectivePhoneNumber,
+                      };
+                  
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log("🔍 Showing pre-fill notification for building:", targetBuilding.building_code);
+                  }
+                  
+                  return (
+                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-start gap-2">
+                          <div className="mt-1 w-3 h-3 bg-green-500 rounded-full"></div>
+                          <div className="text-sm text-green-800">
+                            اطلاعات شما در سیستم یافت شد. آیا تایید می‌کنید این اطلاعات مربوط به شماست؟
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-green-900">
+                          <div key="building-title">ساختمان: <span className="font-semibold">{displayData.building_title}</span></div>
+                          <div key="building-code">کد ساختمان: <span className="font-semibold">{displayData.building_code}</span></div>
+                          {displayData.unit_number && (
+                            <div key="unit-info">واحد: <span className="font-semibold">{displayData.unit_number} {displayData.floor ? `(طبقه ${displayData.floor})` : ''}</span></div>
+                          )}
+                          {displayData.area && (
+                            <div key="area">متراژ: <span className="font-semibold">{displayData.area}</span></div>
+                          )}
+                          {displayData.role && (
+                            <div key="role">نقش: <span className="font-semibold">{getPersianRole(displayData.role)}</span></div>
+                          )}
+                          {displayData.role === 'owner' && displayData.owner_type && (
+                            <div key="owner-type">نوع مالک: <span className="font-semibold">{getPersianOwnerType(displayData.owner_type)}</span></div>
+                          )}
+                          {displayData.resident_count && (
+                            <div key="resident-count">تعداد نفر: <span className="font-semibold">{displayData.resident_count}</span></div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Create a payload from displayData
+                              const payload = {
+                                building_code: displayData.building_code,
+                                full_name: displayData.full_name || user?.full_name || '',
+                                phone_number: displayData.phone_number || effectivePhoneNumber,
+                                unit_number: displayData.unit_number || '',
+                                floor: displayData.floor ? Number(displayData.floor) : null,
+                                area: displayData.area ? Number(displayData.area) : null,
+                                resident_count: displayData.resident_count || 1,
+                                role: displayData.role || 'resident',
+                                owner_type: displayData.role === 'owner' ? (displayData.owner_type || null) : null,
+                                tenant_full_name: displayData.tenant_full_name || null,
+                                tenant_phone_number: displayData.tenant_phone_number || null,
+                                has_parking: displayData.has_parking || false,
+                                parking_count: displayData.parking_count || 0,
+                              };
+                              
+                              // Use the same logic as handleAcceptPrefill
+                              dispatch(createMembershipRequest(payload))
+                                .unwrap()
+                                .then(() => {
+                                  toast.success('درخواست عضویت با اطلاعات شناسایی‌شده ثبت شد');
+                                  handleClose();
+                                })
+                                .catch((error) => {
+                                  console.error("❌ Error creating membership request:", error);
+                                  const errorMessage = typeof error === 'string' ? error : (error?.payload || error?.message || 'خطا در ارسال درخواست عضویت');
+                                  toast.error(errorMessage);
+                                });
+                            }}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            تایید و ارسال سریع درخواست
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRejectPrefill}
+                            className="px-4 py-2 border border-green-300 text-green-800 rounded-lg hover:bg-green-100 transition-colors"
+                          >
+                            این اطلاعات متعلق به من نیست
+                          </button>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-green-900">
-                        <div>ساختمان: <span className="font-semibold">{unitData.building_title}</span></div>
-                        <div>کد ساختمان: <span className="font-semibold">{unitData.building_code}</span></div>
-                        <div>واحد: <span className="font-semibold">{unitData.unit_number || '-'} (طبقه {unitData.floor || '-'})</span></div>
-                        <div>متراژ: <span className="font-semibold">{unitData.area || '-'}</span></div>
-                        <div>نقش: <span className="font-semibold">{getPersianRole(unitData.role) || '-'}</span></div>
-                        {unitData.role === 'owner' && (
-                          <div>نوع مالک: <span className="font-semibold">{getPersianOwnerType(unitData.owner_type) || '-'}</span></div>
-                        )}
-                        <div>تعداد نفر: <span className="font-semibold">{unitData.resident_count || '-'}</span></div>
-                      </div>
-                      <div className="flex items-center gap-3 mt-2">
-                        <button
-                          type="button"
-                          onClick={handleAcceptPrefill}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          تایید و ارسال سریع درخواست
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleRejectPrefill}
-                          className="px-4 py-2 border border-green-300 text-green-800 rounded-lg hover:bg-green-100 transition-colors"
-                        >
-                          این اطلاعات متعلق به من نیست
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* اطلاعات ساختمان */}

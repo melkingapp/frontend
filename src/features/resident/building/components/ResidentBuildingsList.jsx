@@ -26,10 +26,11 @@ export default function ResidentBuildingsList() {
     // This allows users with multiple units in the same building to see all units
     const buildings = useMemo(() => {
         return approvedRequests.map((request, index) => ({
-            id: `${request.building}-${request.unit_number}`, // Stable ID for each unit
+            id: `${request.building || 'unknown'}-${request.unit_number || 'unknown'}-${request.request_id || index}`, // Stable unique ID for each unit
             building_id: request.building,
             title: request.building_title,
             building_code: request.building_code,
+            request_id: request.request_id, // Store request_id for reference
             unit_info: {
                 unit_number: request.unit_number,
                 floor: request.floor,
@@ -165,7 +166,7 @@ export default function ResidentBuildingsList() {
             <div className="space-y-3">
                 {buildings.map((building, index) => (
                     <div
-                        key={building.building_id || building.id || index}
+                        key={building.id || `building-${building.building_id}-${building.unit_info?.unit_number}-${index}`}
                         className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
                             selectedBuilding?.building_id === building.building_id ||
                             selectedBuilding?.id === building.id

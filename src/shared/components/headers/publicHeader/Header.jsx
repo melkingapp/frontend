@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { LogIn, BellRing, UserCog, LogOut, Menu, User, Home, Building } from "lucide-react";
+import { LogIn, BellRing, UserCog, LogOut, Menu, User, Home, Building, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { logout } from "../../../../features/authentication/authSlice";
 import { navItems } from "../../../../constants/navigation";
@@ -34,15 +34,15 @@ export default function Header() {
 
     // آیکون‌های مشترک برای همه کاربران وارد شده
     const commonIcons = [
-        { id: "notifications", Icon: BellRing, label: "اعلانات", onClick: () => toast.info("نمایش نوتیفیکیشن") },
-        { id: "home", Icon: Home, label: "خانه", onClick: () => navigate("/") },
+        // { id: "notifications", Icon: BellRing, label: "اعلانات", onClick: () => toast.info("نمایش نوتیفیکیشن") },
+        { id: "home", Icon: Globe, label: "خانه", onClick: () => navigate("/") },
         { id: "logout", Icon: LogOut, label: "خروج", onClick: handleLogout },
     ];
 
     // آیکون‌های مخصوص نقش کاربر
     const roleSpecificIcons = [
         { id: "profile", Icon: User, label: "پروفایل", onClick: () => navigate(user?.role === 'resident' ? "/resident/profile" : "/manager/profile") },
-        { id: "panel", Icon: Building, label: user?.role === 'resident' ? "پنل ساکن" : "پنل مدیر", onClick: () => navigate(user?.role === 'resident' ? "/resident" : "/manager") },
+        { id: "panel", Icon: Home, label: user?.role === 'resident' ? "پنل ساکن" : "پنل مدیر", onClick: () => navigate(user?.role === 'resident' ? "/resident" : "/manager") },
     ];
 
     // ترکیب آیکون‌ها

@@ -59,7 +59,7 @@ export default function FinanceTransactions() {
       const firstBuilding = buildings[0];
       dispatch(setSelectedBuilding(firstBuilding.building_id || firstBuilding.id));
     }
-  }, [dispatch, buildings.length, building]);
+  }, [dispatch, buildings, building]);
 
   // Fetch current fund balance when building changes
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function FinanceTransactions() {
           console.error("🔥 Fetch all transactions error:", error);
         });
     }
-  }, [dispatch, building?.building_id, buildings.length, dateRange]);
+  }, [dispatch, building, buildings, dateRange]);
 
   // Get transactions from Redux state
   const transactionsData = useSelector(state => state.finance.transactions || []);

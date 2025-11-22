@@ -23,14 +23,8 @@ export default function BuildingRequestStatus() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const previousRequestsRef = useRef([]);
 
-    // Debug log
-    console.log("🔍 BuildingRequestStatus - requests:", requests);
-    console.log("🔍 BuildingRequestStatus - loading:", loading);
-    console.log("🔍 BuildingRequestStatus - error:", error);
-
     useEffect(() => {
         // Always fetch requests when component mounts
-        console.log("🔍 BuildingRequestStatus - fetching requests...");
         dispatch(fetchMembershipRequests());
     }, [dispatch]);
 
@@ -49,9 +43,7 @@ export default function BuildingRequestStatus() {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            console.log("🔍 BuildingRequestStatus - refreshing requests...");
             const result = await dispatch(fetchMembershipRequests()).unwrap();
-            console.log("🔍 BuildingRequestStatus - refresh result:", result);
         } catch (error) {
             console.error('Error refreshing requests:', error);
         } finally {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Home, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getApiUrl, getAuthHeaders, API_CONFIG } from "../../../../config/api";
@@ -10,11 +10,7 @@ export default function OwnerRentalRequestsManager() {
 
     const authToken = localStorage.getItem('access_token');
 
-    useEffect(() => {
-        fetchRentalRequests();
-    }, []);
-
-    const fetchRentalRequests = async () => {
+    const fetchRentalRequests = useCallback(async () => {
         setLoading(true);
         setError(null);
         

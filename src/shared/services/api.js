@@ -1,6 +1,9 @@
 // API Configuration and Base Service
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || 
+    (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+      ? 'http://127.0.0.1:8000/api/v1'
+      : `${window.location.protocol}//${window.location.host}/api/v1`),
   ENDPOINTS: {
     BUILDING_SETTINGS: (buildingId) => `/buildings/${buildingId}/settings/`,
     BUILDING_SETTINGS_UPDATE: (buildingId) => `/buildings/${buildingId}/settings/update/`,
@@ -39,10 +42,15 @@ class ApiService {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('access_token', data.access);
+        // اگر refresh token جدید برگردانده شد، آن را هم ذخیره کن
+        if (data.refresh) {
+          localStorage.setItem('refresh_token', data.refresh);
+        }
         console.log('Token refreshed successfully');
         return true;
       } else {
-        console.error('Token refresh failed with status:', response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Token refresh failed with status:', response.status, errorData);
         
         // Only redirect to login if it's a real authentication failure
         if (response.status === 401 || response.status === 403) {
@@ -134,19 +142,25 @@ class ApiService {
       if (!response.ok) {
         let errorMessage = data?.detail || data?.message || data?.error;
         
-        // Log the full error response for debugging
-        console.error('API Error Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: data,
-          url: url
-        });
+        // Log the full error response for debugging (only in development)
+        if (process.env.NODE_ENV === 'development') {
+          console.error('API Error Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            data: data,
+            url: url
+          });
+        }
         
         // Handle specific HTTP status codes
         switch (response.status) {
           case 401:
-            // Try to refresh token and retry once
-            if (await this.refreshToken()) {
+            // Check if error is about invalid token type
+            const isInvalidTokenType = errorMessage?.toLowerCase().includes('token not valid') || 
+                                      errorMessage?.toLowerCase().includes('invalid token');
+            
+            // Try to refresh token and retry once (unless it's an invalid token type error)
+            if (!isInvalidTokenType && await this.refreshToken()) {
               console.log('Retrying request with refreshed token...');
               const retryConfig = {
                 ...config,
@@ -164,11 +178,17 @@ class ApiService {
               }
             }
             
-            // If refresh failed, notify AuthMonitor
-            console.log('🚨 401 Unauthorized - notifying AuthMonitor...');
+            // If refresh failed or invalid token type, clear auth and redirect
+            console.log('🚨 401 Unauthorized - clearing auth data and redirecting to login...');
+            this.clearAuthData();
             window.dispatchEvent(new CustomEvent('api-unauthorized', {
-              detail: { status: 401, url: url }
+              detail: { status: 401, url: url, error: errorMessage }
             }));
+            
+            // Redirect to login if not already there
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
             
             errorMessage = errorMessage || 'Unauthorized';
             break;

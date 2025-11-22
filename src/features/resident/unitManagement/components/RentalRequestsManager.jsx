@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Home, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getApiUrl, getAuthHeaders, API_CONFIG } from "../../../../config/api";
@@ -19,11 +19,7 @@ export default function RentalRequestsManager() {
 
     const authToken = localStorage.getItem('access_token');
 
-    useEffect(() => {
-        fetchRentalRequests();
-    }, []);
-
-    const fetchRentalRequests = async () => {
+    const fetchRentalRequests = useCallback(async () => {
         setLoading(true);
         setError(null);
         
@@ -44,7 +40,11 @@ export default function RentalRequestsManager() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [authToken]);
+
+    useEffect(() => {
+        fetchRentalRequests();
+    }, [fetchRentalRequests]);
 
     const createRentalRequest = async () => {
         if (!newRequest.tenant_full_name || !newRequest.tenant_phone_number || 

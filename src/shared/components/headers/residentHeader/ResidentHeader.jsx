@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { LogOut, Menu, Home, BellRing, User, Building } from "lucide-react";
+import { LogOut, Menu, Home, BellRing, User, Globe } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -50,10 +50,10 @@ export default function ResidentHeader({ onOpenSidebar }) {
     };
 
     const icons = [
-        { id: "notifications", Icon: BellRing, label: "اعلانات", onClick: () => toast.info("نمایش اعلانات") },
+        // { id: "notifications", Icon: BellRing, label: "اعلانات", onClick: () => toast.info("نمایش اعلانات") },
         { id: "profile", Icon: User, label: "پروفایل", onClick: () => navigate("/resident/profile") },
-        { id: "panel", Icon: Building, label: "پنل ساکن", onClick: () => navigate("/resident") },
-        { id: "home", Icon: Home, label: "خانه", onClick: () => navigate("/") },
+        { id: "panel", Icon: Home, label: "پنل ساکن", onClick: () => navigate("/resident") },
+        { id: "home", Icon: Globe, label: "خانه", onClick: () => navigate("/") },
         { id: "logout", Icon: LogOut, label: "خروج", onClick: handleLogout },
     ];
 

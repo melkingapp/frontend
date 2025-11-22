@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest } from "../membershipSlice";
+import { selectSelectedBuilding } from "../../manager/building/buildingSlice";
 import MembershipRequestDetailsModal from "../components/MembershipRequestDetailsModal";
 import MembershipToUnitConverter from "../components/MembershipToUnitConverter";
 import ManagerMembershipApproval from "../components/ManagerMembershipApproval";
@@ -183,6 +184,7 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject }) 
 export default function ManagerMembershipPage() {
   const dispatch = useDispatch();
   const { requests, loading, error, count } = useSelector(state => state.membership);
+  const selectedBuilding = useSelector(selectSelectedBuilding);
   
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -237,15 +239,24 @@ export default function ManagerMembershipPage() {
     toast.success('درخواست عضویت تایید شد و واحد ایجاد شد');
   };
 
-  const filteredRequests = requests.filter(request => {
+  // فیلتر براساس ساختمان انتخاب شده (برای آمار)
+  const selectedBuildingId = selectedBuilding?.building_id || selectedBuilding?.id;
+  const buildingFilteredRequests = requests.filter(request => {
+    if (!selectedBuildingId) return false;
+    const requestBuildingId = request.building_id || request.building;
+    return requestBuildingId && requestBuildingId.toString() === selectedBuildingId.toString();
+  });
+
+  // فیلتر کامل (ساختمان + وضعیت + جستجو)
+  const filteredRequests = buildingFilteredRequests.filter(request => {
     // فیلتر براساس وضعیت
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
     
     // فیلتر براساس جستجو
     const matchesSearch = searchTerm === '' || 
-      request.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.building_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.unit_number.toLowerCase().includes(searchTerm.toLowerCase());
+      request.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.building_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.unit_number?.toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesStatus && matchesSearch;
   });
@@ -288,7 +299,9 @@ export default function ManagerMembershipPage() {
             مدیریت درخواست‌های عضویت
           </h1>
           <p className="text-gray-600">
-            بررسی و تایید درخواست‌های عضویت ساکنان و مالکان
+            {selectedBuildingId 
+              ? `بررسی و تایید درخواست‌های عضویت ساکنان و مالکان - ${selectedBuilding?.title || 'ساختمان انتخاب شده'}`
+              : 'لطفاً ابتدا یک ساختمان انتخاب کنید'}
           </p>
         </div>
         
@@ -342,53 +355,67 @@ export default function ManagerMembershipPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Clock size={20} className="text-yellow-600" />
+      {selectedBuildingId && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <Clock size={20} className="text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">در انتظار تایید</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {buildingFilteredRequests.filter(r => r.status === 'pending').length}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">در انتظار تایید</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'pending').length}
-              </p>
+          </div>
+          
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckCircle size={20} className="text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">تایید شده</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {buildingFilteredRequests.filter(r => r.status === 'approved' || r.status === 'owner_approved' || r.status === 'manager_approved').length}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <XCircle size={20} className="text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">رد شده</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {buildingFilteredRequests.filter(r => r.status === 'rejected').length}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-        
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle size={20} className="text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">تایید شده</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'approved' || r.status === 'owner_approved' || r.status === 'manager_approved').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <XCircle size={20} className="text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">رد شده</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'rejected').length}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* All Requests */}
       <div className="space-y-4">
-        {filteredRequests.length === 0 ? (
+        {!selectedBuildingId ? (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-12 text-center">
+            <div className="text-yellow-400 mb-4">
+              <Building size={48} className="mx-auto" />
+            </div>
+            <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+              لطفاً ابتدا یک ساختمان انتخاب کنید
+            </h3>
+            <p className="text-yellow-700">
+              برای مشاهده درخواست‌های عضویت، لطفاً از منوی بالا یک ساختمان انتخاب کنید.
+            </p>
+          </div>
+        ) : filteredRequests.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center">
             <div className="text-gray-400 mb-4">
               <Building size={48} className="mx-auto" />
@@ -397,7 +424,7 @@ export default function ManagerMembershipPage() {
               درخواستی یافت نشد
             </h3>
             <p className="text-gray-500">
-              {searchTerm ? 'هیچ درخواستی با این جستجو یافت نشد' : 'هنوز درخواست عضویتی ارسال نشده است'}
+              {searchTerm ? 'هیچ درخواستی با این جستجو یافت نشد' : `برای ساختمان "${selectedBuilding?.title || 'انتخاب شده'}" هنوز درخواست عضویتی ارسال نشده است`}
             </p>
           </div>
         ) : (

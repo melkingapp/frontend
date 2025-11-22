@@ -4,7 +4,7 @@ import moment from "moment-jalaali";
 
 moment.loadPersian({ dialect: "persian-modern" });
 
-export default function FinanceSummary({ totalCost, balance, newestDate, oldestDate, filter, categories }) {
+export default function FinanceSummary({ totalCost, balance, newestDate, oldestDate, filter, categories, onDateClick, dateRange }) {
   const selectedCategory = categories.find((cat) => cat.value === filter);
   const heading = filter === "all"
     ? "مجموع هزینه (ریال)"
@@ -41,11 +41,25 @@ export default function FinanceSummary({ totalCost, balance, newestDate, oldestD
       </div>
 
       {/* تاریخ */}
-      <div className="flex-1 min-w-[120px] p-4 rounded-lg text-center">
+      <div 
+        className="flex-1 min-w-[120px] p-4 rounded-lg text-center cursor-pointer hover:bg-melkingDarkBlue/80 transition-colors relative"
+        onClick={onDateClick}
+        title="کلیک کنید برای فیلتر بر اساس تاریخ"
+      >
         <Calendar className="mx-auto mb-2 text-melkingGold" size={32} />
         <h4 className="text-melkingGold font-bold mb-4">آخرین تاریخ</h4>
-        <p className="text-md font-bold text-white">از تاریخ {formatJalaliDate(newestDate)}</p>
-        <p className="text-md font-bold text-white">تا تاریخ {formatJalaliDate(oldestDate)}</p>
+        {dateRange ? (
+          <>
+            <p className="text-md font-bold text-white">از تاریخ {formatJalaliDate(dateRange.from)}</p>
+            <p className="text-md font-bold text-white">تا تاریخ {formatJalaliDate(dateRange.to)}</p>
+            <span className="absolute top-2 right-2 text-xs bg-melkingGold text-melkingDarkBlue px-2 py-1 rounded-full">فیلتر فعال</span>
+          </>
+        ) : (
+          <>
+            <p className="text-md font-bold text-white">از تاریخ {formatJalaliDate(oldestDate)}</p>
+            <p className="text-md font-bold text-white">تا تاریخ {formatJalaliDate(newestDate)}</p>
+          </>
+        )}
       </div>
     </div>
   );

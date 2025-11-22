@@ -177,13 +177,19 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                 </button>
 
                 <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center border-b pb-4">
-                    اطلاعات واحد <span className="text-melkingDarkBlue">{unit.unit_number || unit.units_id}</span>
+                    <div className="flex items-center justify-center gap-3 flex-wrap">
+                        <span>اطلاعات </span>
+                        <span className="text-melkingDarkBlue">واحد {unit.unit_number || unit.units_id}</span>
+                        {unit.floor && (
+                            <span className="text-gray-600">- طبقه {unit.floor}</span>
+                        )}
+                    </div>
                 </h2>
 
                 <div className="overflow-y-auto custom-scroll max-h-[70vh] pr-2">
                     {/* Owner Card */}
                     <EditableCard
-                        title={`مالک ${ownerData.role === 'owner' ? (ownerData.owner_type === 'landlord' ? '(دارای مستاجر)' : '(مقیم)') : ''}`}
+                        title={`مالک ${ownerData.role === 'owner' ? (ownerData.owner_type === 'landlord' ? '(دارای مستاجر)' : ownerData.owner_type === 'empty' ? '(خالی)' : '(مقیم)') : ''}`}
                         data={ownerData}
                         setData={setOwnerData}
                         isEditing={editingOwner}
@@ -207,6 +213,7 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                                 key: "owner_type", 
                                 label: "نوع مالک",
                                 options: [
+                                    { value: "empty", label: "واحد خالی" },
                                     { value: "resident", label: "مالک مقیم" },
                                     { value: "landlord", label: "دارای مستاجر" }
                                 ]

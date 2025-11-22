@@ -5,6 +5,7 @@ import ManagerHeader from "../../shared/components/headers/managerHeader/Manager
 import ManagerSidebar from "../../shared/components/headers/managerHeader/ManagerSidebar";
 import { navItemsManager } from "../../constants/navItemsManager";
 import { fetchBuildings, selectSelectedBuilding } from "../../features/manager/building/buildingSlice";
+import FloatingAIAssistant from "../../shared/components/shared/feedback/FloatingAIAssistant";
 
 export default function ManagerLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,6 +39,9 @@ export default function ManagerLayout() {
                     <Outlet />
                 </main>
             </div>
+
+            {/* Floating AI Assistant */}
+            <FloatingAIAssistant to="/manager/legal-ai" />
         </div>
     );
 }

@@ -36,7 +36,7 @@ export const fetchBuildingResidents = createAsyncThunk(
             
             console.log('Approved residents:', approvedResidents);
             return approvedResidents;
-        } catch (_error) {
+        } catch {
             return rejectWithValue('خطا در دریافت لیست ساکنان');
         }
     }
@@ -64,7 +64,7 @@ export const updateResidentStatus = createAsyncThunk(
             }
 
             return { requestId, status, data: data.request };
-        } catch (_error) {
+        } catch {
             return rejectWithValue('خطا در به‌روزرسانی وضعیت');
         }
     }

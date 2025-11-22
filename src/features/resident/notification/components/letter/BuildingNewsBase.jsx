@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Mail, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
         if (!membershipRequests || membershipRequests.length === 0) {
             dispatch(fetchMembershipRequests());
         }
-    }, [dispatch]);
+    }, [dispatch, membershipRequests]);
 
     // Auto-select resident building if none selected
     useEffect(() => {
@@ -47,7 +47,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
     }, [dispatch, selectedBuilding, membershipRequests]);
 
     // Normalize building id from selectedBuilding (may be composite "{id}-{unit}")
-    const resolveBuildingId = () => {
+    const resolveBuildingId = useCallback(() => {
         const raw = selectedBuilding?.building_id ?? selectedBuilding?.id;
         if (!raw) return undefined;
         if (typeof raw === 'string') {
@@ -60,7 +60,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
             return raw;
         }
         return raw;
-    };
+    }, [selectedBuilding]);
 
     // Fetch letters when building is available
     useEffect(() => {
@@ -68,7 +68,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
         if (bId !== undefined && bId !== null && bId !== '') {
             dispatch(fetchBuildingLetters(bId));
         }
-    }, [dispatch, selectedBuilding]);
+    }, [dispatch, selectedBuilding, resolveBuildingId]);
 
     const handleRefresh = () => {
         const bId = resolveBuildingId();

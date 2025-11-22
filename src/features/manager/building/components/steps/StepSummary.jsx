@@ -8,6 +8,7 @@ import Modal from "../../../../../shared/components/shared/feedback/Modal";
 import { formatNumber } from "../../../../../shared/utils/helper";
 import InfoCards from "../../../../../shared/components/shared/display/InfoCard";
 import { createBuilding } from "../../buildingSlice";
+import { createUnit } from "../../../unitManagement/slices/unitsSlice";
 
 export default function StepSummary({ formData, prev }) {
     const navigate = useNavigate();
@@ -27,17 +28,50 @@ export default function StepSummary({ formData, prev }) {
                 property_type: formData.property_type,
                 unit_count: parseInt(formData.unit_count) || 0,
                 is_owner_resident: formData.is_owner_resident,
-                resident_floor: formData.resident_floor || '',
+                resident_floor: formData.is_owner_resident 
+                    ? (formData.manager_floor || formData.resident_floor || '') 
+                    : '',
                 fund_balance: parseFloat(formData.fund_balance) || 0,
                 fund_sheba_number: formData.fund_sheba_number,
-                blocks_count: formData.blocks_count || '',
-                residential_type: formData.residential_type || 'apartment'
+                blocks_count: (formData.property_type === 'complex' || formData.property_type === 'community')
+                    ? (formData.blocks_count || '')
+                    : ''
             };
             
             console.log("🔥 Sending clean data:", cleanData);
             
             const result = await dispatch(createBuilding(cleanData)).unwrap();
             console.log("✅ Building created successfully:", result);
+            
+            // اگر مدیر ساکن است، واحد مدیر را ایجاد کن
+            const buildingId = result.building_id || result.id;
+            if (formData.is_owner_resident && buildingId) {
+                try {
+                    const unitData = {
+                        unit_number: formData.manager_unit_number || "مدیر",
+                        floor: parseInt(formData.manager_floor) || parseInt(formData.resident_floor) || 1,
+                        area: formData.manager_area ? parseFloat(formData.manager_area) : null,
+                        full_name: formData.name || '',
+                        phone_number: '', // شماره تماس مدیر از اطلاعات کاربر گرفته می‌شود
+                        role: formData.manager_role || 'owner',
+                        owner_type: formData.manager_owner_type || '',
+                        tenant_full_name: formData.manager_tenant_full_name || '',
+                        tenant_phone_number: formData.manager_tenant_phone_number || '',
+                        has_parking: formData.manager_has_parking || false,
+                        parking_count: parseInt(formData.manager_parking_count) || 0,
+                        resident_count: (formData.manager_role === 'owner' && formData.manager_owner_type === 'empty') 
+                            ? 0 
+                            : (parseInt(formData.manager_resident_count) || 1),
+                    };
+                    
+                    console.log("🔥 Creating manager unit:", unitData);
+                    await dispatch(createUnit({ buildingId, unitData })).unwrap();
+                    console.log("✅ Manager unit created successfully");
+                } catch (unitError) {
+                    console.error("❌ Manager unit creation failed:", unitError);
+                    toast.warning("ساختمان ایجاد شد اما خطا در ایجاد واحد مدیر: " + (unitError.message || 'خطای نامشخص'));
+                }
+            }
             
             setIsSuccessOpen(true);
             navigate('/manager');
@@ -60,13 +94,8 @@ export default function StepSummary({ formData, prev }) {
             block: "بلوک",
             tower: "برج",
             complex: "مجتمع",
-            community: "مجموعه",
+            community: "شهرک",
             building: "ساختمان",
-        },
-        residential_type: {
-            apartment: "آپارتمان",
-            villa: "ویلا",
-            mixed: "ترکیبی",
         },
     };
 
@@ -82,10 +111,6 @@ export default function StepSummary({ formData, prev }) {
         { label: "شماره شبا صندوق", value: formData.fund_sheba_number },
         ...(["complex", "community"].includes(formData.property_type)
             ? [{ label: "تعداد بلوک‌ها", value: formData.blocks_count }]
-            : []),
-        // Only show residential_type if usage_type is residential
-        ...(formData.usage_type === 'residential'
-            ? [{ label: "نوع سکونت مسکونی", value: labelsMap.residential_type[formData.residential_type] || formData.residential_type }]
             : []),
     ];
 

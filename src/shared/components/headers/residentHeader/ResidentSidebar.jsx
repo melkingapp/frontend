@@ -56,28 +56,18 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     // const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
 
     useEffect(() => {
-        console.log('🏠 ResidentSidebar useEffect triggered');
-        console.log('📊 Current state:', {
-            requestsCount: requests.length,
-            approvedBuildingsCount: approvedBuildings.length,
-            selectedBuilding: selectedBuilding ? selectedBuilding.title : 'None'
-        });
-        
         // Only fetch if we don't have requests in Redux store
         if (requests.length === 0) {
-            console.log('📝 Fetching resident requests...');
             dispatch(fetchResidentRequests());
         }
         
         // Fetch membership requests for unit selection
         if (membershipRequests.length === 0) {
-            console.log('📝 Fetching membership requests...');
             dispatch(fetchMembershipRequests());
         }
         
         // Fetch approved buildings directly from BuildingUser table
         if (approvedBuildings.length === 0) {
-            console.log('🏢 Fetching approved buildings...');
             dispatch(refreshApprovedBuildings()).catch(() => {
                 console.log('🔄 API failed, using maintain action...');
                 dispatch(maintainApprovedBuildings());
@@ -149,7 +139,6 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         if (!hasPendingRequests) return;
 
         const interval = setInterval(() => {
-            console.log('Auto-refreshing membership requests...');
             dispatch(fetchMembershipRequests());
         }, 30000); // 30 seconds
 

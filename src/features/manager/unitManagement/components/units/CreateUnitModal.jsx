@@ -6,7 +6,7 @@ import { createUnit } from "../../slices/unitsSlice";
 import SelectField from "../../../../../shared/components/shared/inputs/SelectField";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
 
-const FormField = ({ label, name, type = "text", placeholder, value, onChange, min, required, error }) => (
+const FormField = ({ label, name, type = "text", placeholder, value, onChange, min, required, error, disabled }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700">{label}</label>
     <input
@@ -17,6 +17,7 @@ const FormField = ({ label, name, type = "text", placeholder, value, onChange, m
       placeholder={placeholder}
       min={min}
       required={required}
+      disabled={disabled}
       className={`mt-2 block w-full rounded-2xl border shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3 ${
         error ? 'border-red-500' : 'border-gray-300'
       }`}
@@ -77,10 +78,22 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
 
   const handleSelectChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => {
+      // When selecting empty unit, clear person-related fields and set resident_count to 0
+      if (name === 'owner_type' && value === 'empty') {
+        return {
+          ...prev,
+          [name]: value,
+          tenant_full_name: '',
+          tenant_phone_number: '',
+          resident_count: 0,
+        };
+      }
+      return {
+        ...prev,
+        [name]: value,
+      };
+    });
     
     // Clear error when user selects
     if (errors[name]) {
@@ -94,7 +107,9 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
   const validateForm = () => {
     const newErrors = {};
     
-    // Required fields
+    const isEmptyOwner = form.role === 'owner' && form.owner_type === 'empty';
+
+    // Required fields (name/phone always required)
     if (!form.full_name.trim()) newErrors.full_name = 'نام و نام خانوادگی الزامی است';
     if (!form.phone_number.trim()) newErrors.phone_number = 'شماره تماس الزامی است';
     if (!form.unit_number.trim()) newErrors.unit_number = 'شماره واحد الزامی است';
@@ -126,6 +141,17 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
         } else if (!/^09\d{9}$/.test(form.tenant_phone_number)) {
           newErrors.tenant_phone_number = 'شماره تماس مستاجر باید با 09 شروع شود و 11 رقم باشد';
         }
+      }
+    }
+
+    // Resident count: allow 0 when empty owner, otherwise require >= 1
+    if (isEmptyOwner) {
+      if (Number(form.resident_count) !== 0) {
+        newErrors.resident_count = 'برای واحد خالی تعداد نفر باید ۰ باشد';
+      }
+    } else {
+      if (!form.resident_count || Number(form.resident_count) < 1) {
+        newErrors.resident_count = 'تعداد نفر باید حداقل ۱ باشد';
       }
     }
     
@@ -188,6 +214,7 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
 
   // گزینه‌های نوع مالک
   const ownerTypeOptions = [
+    { value: "empty", label: "واحد خالی" },
     { value: "resident", label: "مالک مقیم" },
     { value: "landlord", label: "دارای مستاجر" },
   ];
@@ -297,9 +324,10 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                     placeholder="مثلاً 3" 
                     value={form.resident_count} 
                     onChange={handleChange} 
-                    min="1"
+                    min={form.role === 'owner' && form.owner_type === 'empty' ? "0" : "1"}
                     error={errors.resident_count}
-                    required 
+                    required={!(form.role === 'owner' && form.owner_type === 'empty')} 
+                    disabled={form.role === 'owner' && form.owner_type === 'empty'}
                   />
                 </div>
 

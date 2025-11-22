@@ -13,7 +13,6 @@ export default function BuildingSelector() {
 
     // Fetch membership requests when component mounts
     useEffect(() => {
-        console.log("🔍 BuildingSelector - fetching membership requests...");
         dispatch(fetchMembershipRequests());
     }, [dispatch]);
 
@@ -24,10 +23,6 @@ export default function BuildingSelector() {
         req.status === 'owner_approved' || 
         req.status === 'manager_approved'
     );
-    
-    // Debug log to see what requests we have
-    console.log("🔍 BuildingSelector - All requests:", requests);
-    console.log("🔍 BuildingSelector - Approved requests:", approvedRequests);
     
     // Create a unique entry for each unit (not just each building)
     // اگر کاربر هم مالک و هم ساکن است، فقط نقش مالک را نشان بده
@@ -72,12 +67,6 @@ export default function BuildingSelector() {
             }
         }));
     }, [approvedRequests]);
-    
-    // Debug log
-    console.log("🔍 BuildingSelector - approvedBuildings:", approvedBuildings);
-    console.log("🔍 BuildingSelector - requests:", requests);
-    console.log("🔍 BuildingSelector - approvedRequests:", approvedRequests);
-    console.log("🔍 BuildingSelector - buildings:", buildings);
 
     // Auto-select first building if none selected (only once)
     useEffect(() => {

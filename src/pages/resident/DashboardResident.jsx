@@ -57,7 +57,6 @@ export default function ResidentDashboard() {
   
   // Load data when component mounts
   useEffect(() => {
-    console.log('🔍 DashboardResident - Loading data...');
     dispatch(fetchMembershipRequests());
     dispatch(fetchApprovedBuildings());
   }, [dispatch]);

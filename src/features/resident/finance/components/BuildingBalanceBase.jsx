@@ -30,7 +30,7 @@ export default function BuildingBalanceBase() {
             const firstBuilding = buildings[0];
             dispatch(setSelectedBuilding(firstBuilding.building_id || firstBuilding.id));
         }
-    }, [dispatch, buildings.length, building]);
+    }, [dispatch, buildings, building]);
 
     // Fetch current fund balance when building changes
     useEffect(() => {

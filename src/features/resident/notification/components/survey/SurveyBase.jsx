@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { BarChart3, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -46,7 +46,7 @@ export default function SurveyBase({ surveys: propSurveys, limit }) {
         if (bId !== undefined && bId !== null && bId !== '') {
             dispatch(fetchBuildingSurveys(bId));
         }
-    }, [dispatch, selectedBuilding]);
+    }, [dispatch, selectedBuilding, resolveBuildingId]);
 
     const handleRefresh = () => {
         const bId = resolveBuildingId();

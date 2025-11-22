@@ -4,11 +4,11 @@ export const navItemsManager = [
     {
         label: "مدیریت مالی",
         icon: <CreditCard size={20} />,
-        to: "/manager/finance",
+        // to: "/manager/finance",
         children: [
-            { label: "گردش مالی", to: "finance-reports" },
-            { label: "بیلان ساختمان", to: "finance/balance" },
-            { label: "بررسی پرداخت", to: "finance/payments" },
+            { label: "گردش مالی", to: "/manager/finance-reports" },
+            { label: "بیلان ساختمان", to: "/manager/finance/balance" },
+            { label: "بررسی پرداخت", to: "/manager/finance/payments" },
             // { label: "نمودار گزارش", to: "/manager/finance/charts" },
         ],
     },
@@ -23,15 +23,15 @@ export const navItemsManager = [
             // { label: "چت گروهی", to: "/manager/notifications/group-chat" },
         ],
     },
-    {
-        label: "خدمات ساختمانی",
-        icon: <Building2 size={20} />,
-        to: "/manager/building-services",
-        children: [
-            { label: "صفحه خدمات‌دهنده‌ها", to: "/manager/building-services/providers" },
-            { label: "گزارش خدمات انجام شده", to: "/manager/building-services/reports" },
-        ],
-    },
+    // {
+    //     label: "خدمات ساختمانی",
+    //     icon: <Building2 size={20} />,
+    //     to: "/manager/building-services",
+    //     children: [
+    //         { label: "صفحه خدمات‌دهنده‌ها", to: "/manager/building-services/providers" },
+    //         { label: "گزارش خدمات انجام شده", to: "/manager/building-services/reports" },
+    //     ],
+    // },
     {
         label: "دستیار حقوقی",
         icon: <BookOpen size={20} />, 
@@ -57,14 +57,14 @@ export const navItemsManager = [
         icon: <Settings size={20} />,
         to: "/manager/settings",
     },
-    {
-        label: "رفتار و امتیاز ساکنین",
-        icon: <User size={20} />,
-        to: "/manager/resident-behavior",
-        children: [
-            { label: "رتبه‌بندی ساختمان و واحد براساس مشارکت", to: "/manager/resident-behavior/ranking" },
-            { label: "ثبت نظر برای بقیه واحدها", to: "/manager/resident-behavior/feedback" },
-            { label: "دیدن نظرات خود", to: "/manager/resident-behavior/my-feedback" },
-        ],
-    },
+    // {
+    //     label: "رفتار و امتیاز ساکنین",
+    //     icon: <User size={20} />,
+    //     to: "/manager/resident-behavior",
+    //     children: [
+    //         { label: "رتبه‌بندی ساختمان و واحد براساس مشارکت", to: "/manager/resident-behavior/ranking" },
+    //         { label: "ثبت نظر برای بقیه واحدها", to: "/manager/resident-behavior/feedback" },
+    //         { label: "دیدن نظرات خود", to: "/manager/resident-behavior/my-feedback" },
+    //     ],
+    // },
 ];

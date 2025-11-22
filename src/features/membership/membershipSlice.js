@@ -9,7 +9,34 @@ export const createMembershipRequest = createAsyncThunk(
       const response = await membershipApi.createMembershipRequest(requestData);
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || error.message);
+      // Log error details for debugging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("❌ createMembershipRequest error:", error);
+        console.error("❌ Error data:", error.data);
+        console.error("❌ Error response:", error.response);
+      }
+      
+      // Handle Django REST Framework validation errors
+      const errorData = error.data || error.response?.data;
+      if (errorData) {
+        // If it's validation errors (object with field names as keys)
+        if (typeof errorData === 'object' && !errorData.error && !errorData.message && !errorData.detail) {
+          const validationErrors = Object.entries(errorData)
+            .map(([field, messages]) => {
+              const message = Array.isArray(messages) ? messages[0] : messages;
+              return `${field}: ${message}`;
+            })
+            .join(', ');
+          return rejectWithValue(validationErrors || 'خطا در اعتبارسنجی داده‌ها');
+        }
+        // If it's a simple error message
+        if (errorData.error) {
+          return rejectWithValue(errorData.error);
+        }
+        // If it's a detail or message field
+        return rejectWithValue(errorData.detail || errorData.message || 'خطا در ارسال درخواست');
+      }
+      return rejectWithValue(error.message || 'خطا در ارسال درخواست');
     }
   }
 );
@@ -22,24 +49,21 @@ export const fetchMembershipRequests = createAsyncThunk(
       
       // اگر owner_id مشخص شده، از API مخصوص مالک استفاده کن
       if (params.owner_id) {
-        console.log("🔍 Using getOwnerMembershipRequests API for owner_id:", params.owner_id);
         response = await membershipApi.getOwnerMembershipRequests();
       }
       // اگر status مشخص شده و owner_approved است، از API مخصوص مدیر استفاده کن
       else if (params.status === 'owner_approved') {
-        console.log("🔍 Using getManagerPendingRequests API for status:", params.status);
         response = await membershipApi.getManagerPendingRequests();
       }
       // در غیر این صورت از API عمومی استفاده کن
       else {
-        console.log("🔍 Using getMembershipRequests API with params:", params);
         response = await membershipApi.getMembershipRequests(params);
       }
-      
-      console.log("🔍 fetchMembershipRequests response:", response);
-      return response;
+            return response;
     } catch (error) {
-      console.error("❌ fetchMembershipRequests error:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("❌ fetchMembershipRequests error:", error);
+      }
       return rejectWithValue(error.response?.data?.error || error.message);
     }
   }
@@ -167,7 +191,9 @@ const membershipSlice = createSlice({
       })
       .addCase(createMembershipRequest.fulfilled, (state, action) => {
         state.createLoading = false;
-        console.log("🔍 createMembershipRequest.fulfilled payload:", action.payload);
+        if (process.env.NODE_ENV === 'development') {
+          console.log("🔍 createMembershipRequest.fulfilled payload:", action.payload);
+        }
         if (action.payload) {
           // اگر payload خود درخواست است
           if (action.payload.request_id) {
@@ -180,7 +206,6 @@ const membershipSlice = createSlice({
             state.count += 1;
           }
         }
-        console.log("🔍 Updated state.requests after create:", state.requests);
       })
       .addCase(createMembershipRequest.rejected, (state, action) => {
         state.createLoading = false;
@@ -194,10 +219,8 @@ const membershipSlice = createSlice({
       })
       .addCase(fetchMembershipRequests.fulfilled, (state, action) => {
         state.loading = false;
-        console.log("🔍 fetchMembershipRequests.fulfilled payload:", action.payload);
         state.requests = action.payload?.requests || [];
         state.count = action.payload?.count || 0;
-        console.log("🔍 Updated state.requests:", state.requests);
       })
       .addCase(fetchMembershipRequests.rejected, (state, action) => {
         state.loading = false;

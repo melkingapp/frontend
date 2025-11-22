@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectSelectedBuilding,
@@ -32,9 +32,49 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
         }));
     };
 
+    // Auto-open menu if current path matches any child
+    useEffect(() => {
+        navItems.forEach((item) => {
+            if (item.children && item.children.length > 0) {
+                // Normalize pathname for comparison
+                const normalizedPathname = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+                const isChildActive = item.children.some(child => {
+                    const normalizedChildTo = child.to.endsWith('/') ? child.to.slice(0, -1) : child.to;
+                    return normalizedPathname === normalizedChildTo || normalizedPathname.startsWith(normalizedChildTo + '/');
+                });
+                if (isChildActive) {
+                    setOpenMenus((prev) => {
+                        if (!prev[item.label]) {
+                            return {
+                                ...prev,
+                                [item.label]: true,
+                            };
+                        }
+                        return prev;
+                    });
+                }
+            }
+        });
+    }, [pathname, navItems]);
+
     const handleSelectBuilding = (id) => {
         dispatch(setSelectedBuilding(id));
         setDropdownOpen(false);
+    };
+
+    const handleItemClick = (item) => {
+        // اگر children دارد، زیرمنوها را باز کن
+        if (item.children && item.children.length > 0) {
+            setOpenMenus((prev) => {
+                if (!prev[item.label]) {
+                    return {
+                        ...prev,
+                        [item.label]: true,
+                    };
+                }
+                return prev;
+            });
+        }
     };
 
     const renderMenuItems = (isMobile = false) => {
@@ -50,9 +90,18 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
         }
 
         return navItems.map((item) => {
-            const isActive = pathname.startsWith(item.to);
             const hasChildren = item.children && item.children.length > 0;
             const isOpen = openMenus[item.label];
+            
+            // Check if any child is active
+            const normalizedPathname = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+            const isChildActive = hasChildren && item.children.some(child => {
+                const normalizedChildTo = child.to.endsWith('/') ? child.to.slice(0, -1) : child.to;
+                return normalizedPathname === normalizedChildTo || normalizedPathname.startsWith(normalizedChildTo + '/');
+            });
+            
+            // Parent is active if pathname starts with item.to OR any child is active
+            const isActive = pathname.startsWith(item.to) || isChildActive;
 
             return (
                 <div key={item.label} className="space-y-1 w-full">
@@ -64,6 +113,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
                     >
                         <Link
                             to={item.to}
+                            onClick={() => handleItemClick(item)}
                             className={clsx(
                                 "flex items-center px-3 py-2 rounded-xl transition-colors duration-300 w-full",
                                 isActive
@@ -100,30 +150,37 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
                         )}
                     </div>
 
-                    {hasChildren && isOpen && !isCollapsed && (
+                    {hasChildren && (isOpen || isChildActive) && !isCollapsed && (
                         <div
                             className={clsx(
                                 "pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"
                             )}
                         >
-                            {item.children.map((child, index) => (
-                                <Link
-                                    key={index}
-                                    to={child.to}
-                                    className={clsx(
-                                        "block text-sm px-3 py-1.5 rounded-lg transition-colors duration-200 select-none",
-                                        pathname === child.to
-                                            ? isMobile
-                                                ? "text-yellow-400 font-semibold shadow-inner"
-                                                : "text-yellow-400 font-semibold shadow-inner"
-                                            : isMobile
-                                                ? "hover:bg-gray-100 text-gray-700"
-                                                : "hover:bg-white/20 text-white/90"
-                                    )}
-                                >
-                                    {child.label}
-                                </Link>
-                            ))}
+                            {item.children.map((child, index) => {
+                                // Normalize paths for comparison
+                                const normalizedPathname = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+                                const normalizedChildTo = child.to.endsWith('/') ? child.to.slice(0, -1) : child.to;
+                                const isChildActive = normalizedPathname === normalizedChildTo || normalizedPathname.startsWith(normalizedChildTo + '/');
+                                
+                                return (
+                                    <Link
+                                        key={index}
+                                        to={child.to}
+                                        className={clsx(
+                                            "block text-sm px-3 py-1.5 rounded-lg transition-colors duration-200 select-none",
+                                            isChildActive
+                                                ? isMobile
+                                                    ? "bg-yellow-100 text-yellow-600 font-semibold"
+                                                    : "bg-yellow-400/30 text-yellow-300 font-semibold"
+                                                : isMobile
+                                                    ? "hover:bg-gray-100 text-gray-700"
+                                                    : "hover:bg-white/20 text-white/90"
+                                        )}
+                                    >
+                                        {child.label}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

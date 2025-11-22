@@ -32,7 +32,6 @@ export default function StepInfo({ formData, setFormData, next }) {
                         value={formData.usage_type}
                         onChange={(e) => setFormData({ ...formData, usage_type: e.target.value })}
                         options={[
-                            { value: "", label: "انتخاب کنید" },
                             { value: "residential", label: "مسکونی" },
                             { value: "commercial", label: "تجاری" },
                             { value: "office", label: "اداری" },
@@ -45,7 +44,6 @@ export default function StepInfo({ formData, setFormData, next }) {
                         value={formData.property_type}
                         onChange={(e) => setFormData({ ...formData, property_type: e.target.value })}
                         options={[
-                            { value: "", label: "انتخاب کنید" },
                             { value: "block", label: "بلوک" },
                             { value: "tower", label: "برج" },
                             { value: "complex", label: "مجتمع" },
