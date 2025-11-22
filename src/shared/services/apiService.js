@@ -1,10 +1,31 @@
 import axios from 'axios';
 
-// Configuration - Hardcoded for local development
-const baseURL = 'http://localhost:8000/api/v1';
-// Production fallback (when building for production)
-// const baseURL = import.meta.env.VITE_API_BASE_URL || 
-//     (window.location.protocol === 'https:' ? 'https://melkingapp.ir/api/v1' : 'http://melkingapp.ir/api/v1');
+// Configuration - Use environment variable or auto-detect
+const getBaseURL = () => {
+    // First priority: Environment variable
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL;
+    }
+    
+    // Second priority: Check if we're in development (localhost)
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+        
+        if (isLocalhost) {
+            // Development: use localhost:8000
+            return 'http://localhost:8000/api/v1';
+        } else {
+            // Production: use same domain (Nginx will proxy to backend on port 9000)
+            return `${window.location.protocol}//${window.location.host}/api/v1`;
+        }
+    }
+    
+    // Fallback
+    return 'http://localhost:8000/api/v1';
+};
+
+const baseURL = getBaseURL();
 
 console.log('🔧 API Configuration:', {
     'Environment': import.meta.env.MODE,
