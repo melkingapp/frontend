@@ -192,6 +192,7 @@ class ApiService {
             
             errorMessage = errorMessage || 'Unauthorized';
             break;
+          }
           case 403:
             errorMessage = errorMessage || 'Forbidden';
             break;
