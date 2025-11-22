@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { 
     setSelectedBuilding, 
     fetchApprovedBuildingsDetails,
-    selectResidentBuildingLoading,
-    selectResidentBuildingError
+    selectResidentBuildingLoading: _selectResidentBuildingLoading,
+    selectResidentBuildingError: _selectResidentBuildingError
 } from "../residentBuildingSlice";
 import { 
     fetchMembershipRequests,
@@ -43,7 +43,7 @@ export default function BuildingRequestStatus() {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            const result = await dispatch(fetchMembershipRequests()).unwrap();
+            await dispatch(fetchMembershipRequests()).unwrap();
         } catch (error) {
             console.error('Error refreshing requests:', error);
         } finally {

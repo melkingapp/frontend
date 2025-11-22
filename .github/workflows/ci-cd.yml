@@ -136,16 +136,40 @@ jobs:
                 }
             }
             NGINXEOF
+            echo "📝 Created nginx config at \${NGINX_CONFIG}"
+            cat "\${NGINX_CONFIG}"
+            echo ""
+            echo "🔗 Creating symlink..."
             ln -sf "\${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
+            if [ -L /etc/nginx/sites-enabled/frontend-new ]; then
+              echo "✅ Symlink created successfully"
+            else
+              echo "❌ Failed to create symlink"
+              exit 1
+            fi
+            echo ""
+            echo "🔍 Verifying nginx config..."
             nginx -t && echo "✅ Nginx config is valid"
+            echo ""
+            echo "🔄 Reloading nginx..."
             systemctl reload "${{ env.NGINX_SERVICE }}" && echo "✅ Nginx reloaded"
-            sleep 1
+            sleep 2
+            echo ""
+            echo "🔍 Checking if nginx is listening on port \${FRONTEND_PORT}..."
             if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
               echo "✅ Nginx is listening on port \${FRONTEND_PORT}"
             else
               echo "⚠️ Nginx is not listening on port \${FRONTEND_PORT}, trying restart..."
               systemctl restart "${{ env.NGINX_SERVICE }}" || true
-              sleep 2
+              sleep 3
+              if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
+                echo "✅ Nginx is now listening on port \${FRONTEND_PORT}"
+              else
+                echo "❌ Nginx failed to listen on port \${FRONTEND_PORT}"
+                echo "Checking nginx error log..."
+                tail -20 /var/log/nginx/error.log || true
+                exit 1
+              fi
             fi
           ENDSSH
 

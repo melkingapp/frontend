@@ -7,7 +7,7 @@ import { selectApprovedBuildings, selectSelectedResidentBuilding, setSelectedBui
 export default function BuildingSelector() {
     const dispatch = useDispatch();
     const requests = useSelector(selectMembershipRequests);
-    const approvedBuildings = useSelector(selectApprovedBuildings);
+    const _approvedBuildings = useSelector(selectApprovedBuildings);
     const selectedBuilding = useSelector(selectSelectedResidentBuilding);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -51,7 +51,7 @@ export default function BuildingSelector() {
             }
         });
         
-        return uniqueUnits.map((request, index) => ({
+        return uniqueUnits.map((request, _index) => ({
             id: `${request.building}-${request.unit_number}`, // Simple unique ID
             building_id: request.building,
             title: request.building_title,

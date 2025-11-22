@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getResidentRequests, getApprovedBuildings, getBuildingDetails } from '../../../shared/services/residentRequestsService';
 
 // Token refresh helper
-const handleTokenRefresh = async (dispatch) => {
+const _handleTokenRefresh = async (_dispatch) => {
     try {
         const refreshToken = localStorage.getItem('refresh_token');
         if (!refreshToken) {
