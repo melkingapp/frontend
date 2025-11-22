@@ -63,7 +63,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const InfoCard = ({ icon: _Icon, title, value, subtitle, color = "blue" }) => {
+const InfoCard = ({ icon: Icon, title, value, subtitle, color = "blue" }) => {
   const colorClasses = {
     blue: "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200",
     green: "bg-gradient-to-br from-green-50 to-emerald-50 border-green-200",
