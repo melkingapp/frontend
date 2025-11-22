@@ -101,39 +101,42 @@ jobs:
 
       - name: ⚙️ Setup nginx config for frontend port
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << "ENDSSH"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
             set -euo pipefail
             NGINX_CONFIG="/etc/nginx/sites-available/frontend-new"
-            cat > "${NGINX_CONFIG}" << 'NGINXEOF'
+            DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
+            FRONTEND_PORT="${{ env.FRONTEND_PORT }}"
+            BACKEND_PORT="${{ env.BACKEND_PORT }}"
+            cat > "\${NGINX_CONFIG}" << NGINXEOF
             server {
-                listen ${{ env.FRONTEND_PORT }};
+                listen \${FRONTEND_PORT};
                 server_name _;
                 
-                root ${{ env.DEPLOY_PATH }}/current;
+                root \${DEPLOY_PATH}/current;
                 index index.html;
                 
                 location / {
-                    try_files \$uri \$uri/ /index.html;
+                    try_files \\\$uri \\\$uri/ /index.html;
                 }
                 
                 location /api/ {
-                    proxy_pass http://127.0.0.1:${{ env.BACKEND_PORT }}/api/;
-                    proxy_set_header Host \$host;
-                    proxy_set_header X-Real-IP \$remote_addr;
-                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                    proxy_set_header X-Forwarded-Proto \$scheme;
+                    proxy_pass http://127.0.0.1:\${BACKEND_PORT}/api/;
+                    proxy_set_header Host \\\$host;
+                    proxy_set_header X-Real-IP \\\$remote_addr;
+                    proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \\\$scheme;
                 }
                 
                 location /static/ {
-                    proxy_pass http://127.0.0.1:${{ env.BACKEND_PORT }}/static/;
+                    proxy_pass http://127.0.0.1:\${BACKEND_PORT}/static/;
                 }
                 
                 location /media/ {
-                    proxy_pass http://127.0.0.1:${{ env.BACKEND_PORT }}/media/;
+                    proxy_pass http://127.0.0.1:\${BACKEND_PORT}/media/;
                 }
             }
             NGINXEOF
-            ln -sf "${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
+            ln -sf "\${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
             nginx -t && echo "✅ Nginx config is valid"
           ENDSSH
 
