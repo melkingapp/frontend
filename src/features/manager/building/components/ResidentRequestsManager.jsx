@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Clock, User, Building2, Calendar, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import Button from "../../../../shared/components/shared/feedback/Button";
@@ -9,19 +9,16 @@ export default function ResidentRequestsManager({ buildingId }) {
     const [error, setError] = useState("");
     const [processingRequest, setProcessingRequest] = useState(null);
 
-    const fetchRequests = useCallback(async () => {
+    useEffect(() => {
+        if (buildingId) {
+            fetchRequests();
+        }
+    }, [buildingId]);
+
+    const fetchRequests = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const getApiBaseURL = () => {
-                if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-                if (typeof window !== 'undefined') {
-                    const hostname = window.location.hostname;
-                    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-                    return isLocalhost ? 'http://localhost:8000/api/v1' : 'http://171.22.25.201:9000/api/v1';
-                }
-                return 'http://localhost:8000/api/v1';
-            };
-            const response = await fetch(`${getApiBaseURL()}/buildings/${buildingId}/resident-requests/`, {
+            const response = await fetch(`${window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir'}/api/v1/buildings/${buildingId}/resident-requests/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -40,29 +37,14 @@ export default function ResidentRequestsManager({ buildingId }) {
         } finally {
             setLoading(false);
         }
-    }, [buildingId]);
-
-    useEffect(() => {
-        if (buildingId) {
-            fetchRequests();
-        }
-    }, [buildingId, fetchRequests]);
+    };
 
     const handleRequestAction = async (requestId, status) => {
         setProcessingRequest(requestId);
         
         try {
             const token = localStorage.getItem('access_token');
-            const getApiBaseURL = () => {
-                if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-                if (typeof window !== 'undefined') {
-                    const hostname = window.location.hostname;
-                    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-                    return isLocalhost ? 'http://localhost:8000/api/v1' : 'http://171.22.25.201:9000/api/v1';
-                }
-                return 'http://localhost:8000/api/v1';
-            };
-            const response = await fetch(`${getApiBaseURL()}/buildings/resident-requests/${requestId}/update-status/`, {
+            const response = await fetch(`${window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir'}/api/v1/buildings/resident-requests/${requestId}/update-status/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

@@ -1,30 +1,6 @@
-const sanitizeBaseUrl = (value) => {
-    if (!value) return null;
-    return value.trim().replace(/\/+$/, '');
-};
-
-const inferBaseUrlFromWindow = () => {
-    if (typeof window === 'undefined' || !window.location) {
-        return 'http://171.22.25.201:9000/api/v1';
-    }
-
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-    
-    if (isLocalhost) {
-        return 'http://localhost:8000/api/v1';
-    } else {
-        // Production: always use server IP with port 9000 (override VITE_API_BASE_URL)
-        return 'http://171.22.25.201:9000/api/v1';
-    }
-};
-
-// In production, always use server IP, ignore VITE_API_BASE_URL
-const BASE_URL = inferBaseUrlFromWindow();
-
 // تنظیمات API
 export const API_CONFIG = {
-    BASE_URL,
+    BASE_URL: window.location.protocol === 'https:' ? 'https://melkingapp.ir/api/v1' : 'http://melkingapp.ir/api/v1',
     ENDPOINTS: {
         // Authentication
         LOGIN: '/auth/login/',
@@ -64,7 +40,9 @@ export const API_CONFIG = {
 };
 
 // Helper function to get full URL
-export const getApiUrl = (endpoint) => `${BASE_URL}${endpoint}`;
+export const getApiUrl = (endpoint) => {
+    return `${API_CONFIG.BASE_URL}${endpoint}`;
+};
 
 // Helper function to get headers with auth token
 export const getAuthHeaders = (token) => {

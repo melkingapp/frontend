@@ -1,27 +1,6 @@
 // API Configuration
-const getBaseURL = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-    
-    if (isLocalhost) {
-      return 'http://localhost:8000/api/v1';
-    } else {
-      // Production: always use server IP with port 9000 (override VITE_API_BASE_URL)
-      return 'http://171.22.25.201:9000/api/v1';
-    }
-  }
-  
-  // Fallback for SSR
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  
-  return 'http://localhost:8000/api/v1';
-};
-
 export const API_CONFIG = {
-  BASE_URL: getBaseURL(),
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || (window.location.protocol === 'https:' ? 'https://melkingapp.ir/api/v1' : 'http://melkingapp.ir/api/v1'),
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3,
 };

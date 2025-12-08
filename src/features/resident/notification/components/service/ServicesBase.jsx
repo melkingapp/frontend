@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ export default function ServicesBase({ services: propServices, limit }) {
     
     const displayed = limit ? sorted.slice(0, limit) : sorted;
 
-    const resolveBuildingId = useCallback(() => {
+    const resolveBuildingId = () => {
         const raw = selectedBuilding?.building_id ?? selectedBuilding?.id;
         if (!raw) return undefined;
         if (typeof raw === 'string') {
@@ -37,7 +37,7 @@ export default function ServicesBase({ services: propServices, limit }) {
             return raw;
         }
         return raw;
-    }, [selectedBuilding]);
+    };
 
     // Fetch services when component mounts
     useEffect(() => {
@@ -45,7 +45,7 @@ export default function ServicesBase({ services: propServices, limit }) {
         if (bId !== undefined && bId !== null && bId !== '') {
             dispatch(fetchBuildingServices(bId));
         }
-    }, [dispatch, selectedBuilding, resolveBuildingId]);
+    }, [dispatch, selectedBuilding]);
 
     const handleRefresh = () => {
         const bId = resolveBuildingId();

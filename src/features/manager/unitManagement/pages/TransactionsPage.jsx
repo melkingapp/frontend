@@ -9,7 +9,7 @@ export default function TransactionsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
+  const { selectedBuildingId, data: buildings, loading: buildingsLoading } = useSelector(state => state.building);
   const initialUnitNumber = location.state?.unitNumber || "";
 
   const [unitNumber, setUnitNumber] = useState(initialUnitNumber);

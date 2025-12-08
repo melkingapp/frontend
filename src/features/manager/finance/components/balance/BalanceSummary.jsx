@@ -7,8 +7,13 @@ import {
   ArrowDownRight
 } from "lucide-react";
 import CountUp from "react-countup";
+import { formatNumber } from "../../../../../shared/utils/helper";
 
 export default function BalanceSummary({ balance, income, expenses, isLoading }) {
+  const formatCurrency = (amount) => {
+    return formatNumber(Math.abs(amount));
+  };
+
   const getBalanceColor = (amount) => {
     if (amount > 0) return "text-green-600";
     if (amount < 0) return "text-red-600";

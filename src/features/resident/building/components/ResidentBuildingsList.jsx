@@ -82,7 +82,7 @@ export default function ResidentBuildingsList() {
                 dispatch(setSelectedBuilding(buildings[0]));
             }
         }
-    }, [buildings, selectedBuilding, dispatch]);
+    }, [buildings.length, selectedBuilding, dispatch]);
 
     // Validate selected building against current buildings list
     useEffect(() => {

@@ -36,6 +36,24 @@ export default function BalanceDetailsModal({ transaction, onClose }) {
     return null;
   }
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    try {
+      return moment(dateString).format("jYYYY/jMM/jDD");
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return "—";
+    try {
+      return moment(dateString).format("HH:mm");
+    } catch {
+      return "—";
+    }
+  };
+
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";
     try {
@@ -233,10 +251,29 @@ export default function BalanceDetailsModal({ transaction, onClose }) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 وضعیت پرداخت ساکنین
               </label>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-gray-900">
-                  {transaction.payment_status || "تکمیل شده"}
+              <div className="p-3 bg-gray-50 rounded-lg space-y-3">
+                <p className="text-gray-900 font-semibold">
+                  {transaction.payment_status || transaction.payment_status_label || "تکمیل شده"}
                 </p>
+                {transaction.payment_status_counts && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      { key: 'paid', label: 'پرداخت شده', color: 'text-green-700', bg: 'bg-green-50' },
+                      { key: 'awaiting_manager', label: 'منتظر تایید مدیر', color: 'text-yellow-700', bg: 'bg-yellow-50' },
+                      { key: 'pending', label: 'پرداخت نشده', color: 'text-red-700', bg: 'bg-red-50' },
+                    ].map((item) => (
+                      <div key={item.key} className={`p-2 rounded-lg text-center ${item.bg}`}>
+                        <p className="text-xs text-gray-500">{item.label}</p>
+                        <p className={`text-lg font-bold ${item.color}`}>
+                          {transaction.payment_status_counts[item.key] || 0}
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          از {transaction.payment_status_total || 0}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-import { CreditCard, MessageCircle, Bell, Settings, User, Home, Building2, Users, CheckCircle, UserPlus, Sparkles } from "lucide-react";
+import { CreditCard, MessageCircle, Bell, Settings, User, Home, Building2, Users, UserPlus, Sparkles } from "lucide-react";
 
 export const navItemsResident = [
     {
@@ -27,7 +27,6 @@ export const navItemsResident = [
         icon: <Home size={20} />,
         to: "/resident/unit-management",
         children: [
-            { label: "واحدهای من", to: "/resident/unit-management/units" },
             { label: "درخواست‌ها", to: "/resident/unit-management/requests" },
             { label: "تراکنش‌ها", to: "/resident/unit-management/transactions" },
         ],
@@ -36,11 +35,6 @@ export const navItemsResident = [
         label: "درخواست‌های عضویت من",
         icon: <UserPlus size={20} />,
         to: "/resident/membership",
-    },
-    {
-        label: "درخواست‌های عضویت ساکنان",
-        icon: <CheckCircle size={20} />,
-        to: "/resident/membership-approval",
     },
     {
         label: "دستیار حقوقی",

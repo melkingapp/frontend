@@ -102,6 +102,10 @@ export const getPersianStatus = (status) => {
     'Rejected': 'تایید نشده',
     'تایید نشده': 'تایید نشده',
     
+    'awaiting_manager': 'منتظر تایید مدیر',
+    'Awaiting_manager': 'منتظر تایید مدیر',
+    'منتظر تایید مدیر': 'منتظر تایید مدیر',
+    
     'excellent': 'ممتاز',
     'Excellent': 'ممتاز',
     'ممتاز': 'ممتاز',
@@ -133,6 +137,8 @@ export const getStatusColor = (status) => {
       return "text-red-600";
     case "ممتاز":
       return "text-yellow-600";
+    case "منتظر تایید مدیر":
+      return "text-yellow-600";
     default:
       return "text-gray-600";
   }
@@ -160,6 +166,8 @@ export const getStatusBgColor = (status) => {
     case "تایید نشده":
       return "bg-red-100 text-red-700";
     case "ممتاز":
+      return "bg-yellow-100 text-yellow-700";
+    case "منتظر تایید مدیر":
       return "bg-yellow-100 text-yellow-700";
     default:
       return "bg-gray-100 text-gray-700";

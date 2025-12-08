@@ -1,37 +1,8 @@
 import axios from 'axios';
 
-// Configuration - Use environment variable or auto-detect
-const getBaseURL = () => {
-    // Check if we're in development (localhost)
-    if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-        
-        if (isLocalhost) {
-            // Development: use localhost:8000
-            return 'http://localhost:8000/api/v1';
-        } else {
-            // Production: always use server IP with port 9000 (override VITE_API_BASE_URL)
-            return 'http://171.22.25.201:9000/api/v1';
-        }
-    }
-    
-    // Fallback for SSR or when window is not available
-    // Check environment variable only as fallback
-    if (import.meta.env.VITE_API_BASE_URL) {
-        return import.meta.env.VITE_API_BASE_URL;
-    }
-    
-    return 'http://localhost:8000/api/v1';
-};
-
-const baseURL = getBaseURL();
-
-console.log('🔧 API Configuration:', {
-    'Environment': import.meta.env.MODE,
-    'baseURL': baseURL,
-    'VITE_API_BASE_URL': import.meta.env.VITE_API_BASE_URL
-});
+// Configuration
+const baseURL = import.meta.env.VITE_API_BASE_URL || 
+    (window.location.protocol === 'https:' ? 'https://melkingapp.ir/api/v1' : 'http://melkingapp.ir/api/v1');
 
 // Create axios instance
 const client = axios.create({
@@ -48,6 +19,10 @@ client.interceptors.request.use(
         const token = getAccessToken();
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+        // If data is FormData, let axios set Content-Type automatically
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
         }
         return config;
     },

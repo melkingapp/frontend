@@ -13,13 +13,14 @@ import {
     fetchBuildingSettings,
     updateBuildingSettings,
     fetchBuildingDocuments,
+    deleteBuildingDocument,
     fetchNotificationSettings,
     updateNotificationSettings,
 } from '../../features/settings/settingsSlice';
 
 const ManagerSettings = () => {
     const dispatch = useDispatch();
-    const { buildingSettings, buildingDocuments, notificationSettings } = useSelector((state) => state.settings);
+    const { buildingSettings, buildingDocuments, notificationSettings, loading, error } = useSelector((state) => state.settings);
     const { selectedBuildingId, data: buildings } = useSelector((state) => state.building);
     
     const [activeTab, setActiveTab] = useState('building');
@@ -157,7 +158,7 @@ const ManagerSettings = () => {
         
         setIsSaving(true);
         try {
-            await dispatch(updateBuildingSettings({
+            const result = await dispatch(updateBuildingSettings({
                 buildingId: selectedBuildingId,
                 data: formData
             })).unwrap();

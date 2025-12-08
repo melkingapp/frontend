@@ -6,6 +6,7 @@ import OwnerMembershipRequestsManager from "../components/OwnerMembershipRequest
 
 export default function OwnerMembershipRequestsPage() {
   const navigate = useNavigate();
+  const { user } = useSelector(state => state.auth);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 

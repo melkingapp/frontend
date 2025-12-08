@@ -16,6 +16,7 @@ import BalanceFilters from "../components/balance/BalanceFilters";
 import BalanceDetailsModal from "../components/balance/BalanceDetailsModal";
 import SearchBox from "../../../../shared/components/shared/inputs/SearchBox";
 import { fetchBuildingBalance, fetchBalanceTransactions } from "../slices/financeSlice";
+import { getPersianType } from "../../../../shared/utils/typeUtils";
 import { exportBalanceData } from "../../../../shared/services/billingService";
 import moment from "moment-jalaali";
 
@@ -46,7 +47,6 @@ export default function BuildingBalance() {
     if (building?.building_id || building?.id) {
       loadBalanceData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [building, filter, dateRange]);
 
   const loadBalanceData = async () => {

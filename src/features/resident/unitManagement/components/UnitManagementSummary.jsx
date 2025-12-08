@@ -1,4 +1,4 @@
-import { Home, FileText, CreditCard, CheckCircle } from "lucide-react";
+import { Home, FileText, CreditCard } from "lucide-react";
 
 export default function UnitManagementSummary({ onItemClick, highlightableKeys = [] }) {
   const summaryItems = [
@@ -19,15 +19,6 @@ export default function UnitManagementSummary({ onItemClick, highlightableKeys =
       color: "bg-green-500",
       highlightable: highlightableKeys.includes("requests"),
       onClick: () => onItemClick && onItemClick("requests")
-    },
-    {
-      key: "membership-approval",
-      title: "تأیید عضویت",
-      description: "تأیید درخواست‌های عضویت مستاجر",
-      icon: <CheckCircle className="w-6 h-6" />,
-      color: "bg-orange-500",
-      highlightable: highlightableKeys.includes("membership-approval"),
-      onClick: () => onItemClick && onItemClick("membership-approval")
     },
     {
       key: "transactions",

@@ -91,6 +91,10 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     tenant_full_name: "",
     tenant_phone_number: "",
     
+    // اطلاعات مالک (اگر نقش ساکن باشد)
+    owner_full_name: "",
+    owner_phone_number: "",
+    
     // پارکینگ
     has_parking: false,
     parking_count: 0,
@@ -147,6 +151,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   // Pre-fill form when unit data is loaded
   useEffect(() => {
     if (unitData) {
+      const isOwnerWithLandlord = unitData.role === 'owner' && unitData.owner_type === 'landlord';
+      const isResidentRole = unitData.role === 'resident';
       setForm(prevForm => ({
         ...prevForm,
         building_code: unitData.building_code || "",
@@ -158,8 +164,12 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         resident_count: unitData.resident_count || 1,
         role: unitData.role || "",
         owner_type: unitData.owner_type || "",
-        tenant_full_name: unitData.tenant_full_name || "",
-        tenant_phone_number: unitData.tenant_phone_number || "",
+        // Only pre-fill tenant info if owner_type is 'landlord'
+        tenant_full_name: isOwnerWithLandlord ? (unitData.tenant_full_name || "") : "",
+        tenant_phone_number: isOwnerWithLandlord ? (unitData.tenant_phone_number || "") : "",
+        // Only pre-fill owner info if role is resident
+        owner_full_name: isResidentRole ? (unitData.owner_full_name || "") : "",
+        owner_phone_number: isResidentRole ? (unitData.owner_phone_number || "") : "",
         has_parking: unitData.has_parking || false,
         parking_count: unitData.parking_count || 0,
       }));
@@ -187,10 +197,34 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       processedValue = checked;
     }
     
-    setForm((prev) => ({
+    setForm((prev) => {
+      const updatedForm = {
       ...prev,
       [name]: processedValue,
-    }));
+      };
+      
+      if (name === 'role') {
+        // If role changes from 'owner' to something else, clear owner_type/tenant info
+        if (processedValue !== 'owner') {
+          updatedForm.owner_type = "";
+          updatedForm.tenant_full_name = "";
+          updatedForm.tenant_phone_number = "";
+        }
+        // If role changes away from resident, clear owner info
+        if (processedValue !== 'resident') {
+          updatedForm.owner_full_name = "";
+          updatedForm.owner_phone_number = "";
+        }
+      }
+      
+      // If owner_type changes from 'landlord' to something else, clear tenant info
+      if (name === 'owner_type' && processedValue !== 'landlord') {
+        updatedForm.tenant_full_name = "";
+        updatedForm.tenant_phone_number = "";
+      }
+      
+      return updatedForm;
+    });
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -213,6 +247,14 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     // Role-specific validations
     if (form.role === 'owner' && !form.owner_type) {
       newErrors.owner_type = 'نوع مالک برای نقش مالک الزامی است';
+    }
+    if (form.role === 'resident') {
+      if (!form.owner_full_name || !form.owner_full_name.trim()) {
+        newErrors.owner_full_name = 'نام مالک برای نقش ساکن الزامی است';
+      }
+      if (!form.owner_phone_number || !form.owner_phone_number.trim()) {
+        newErrors.owner_phone_number = 'شماره تماس مالک برای نقش ساکن الزامی است';
+      }
     }
     
     // Tenant validations - فقط اگر اطلاعات مستاجر وارد شده باشد
@@ -237,7 +279,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const _handleAcceptPrefill = async () => {
+  const handleAcceptPrefill = async () => {
     if (!unitData) return;
     try {
       // Normalize role: 'tenant' -> 'resident', 'owner' -> 'owner', anything else -> 'resident'
@@ -261,19 +303,17 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       // Helper function to convert to number (required fields should not be null)
       const toNumber = (value, required = false) => {
         if (value === null || value === undefined || value === '') {
-          if (required) {
+          if (required && process.env.NODE_ENV === 'development') {
             console.warn("⚠️ Required number field is missing:", value);
-            return 0; // Return 0 for required fields instead of null
           }
-          return null;
+          return required ? 0 : null; // Return 0 for required fields instead of null
         }
         const num = Number(value);
         if (isNaN(num)) {
-          if (required) {
+          if (required && process.env.NODE_ENV === 'development') {
             console.warn("⚠️ Required number field is NaN:", value);
-            return 0;
           }
-          return null;
+          return required ? 0 : null;
         }
         return num;
       };
@@ -292,6 +332,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       const floorValue = toNumber(unitData.floor || form.floor, true);
       const areaValue = toNumber(unitData.area || form.area, true);
       const residentCountValue = toNumber(unitData.resident_count || form.resident_count, true) || 1;
+      let ownerFullName = null;
+      let ownerPhoneNumber = null;
       
       // Check all required fields
       const missingFields = [];
@@ -301,14 +343,25 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       if (!unitNumber) missingFields.push('شماره واحد');
       if (!floorValue) missingFields.push('شماره طبقه');
       if (!areaValue) missingFields.push('متراژ');
+      if (normalizedRole === 'resident') {
+        ownerFullName = (unitData.owner_full_name || form.owner_full_name || '').trim();
+        ownerPhoneNumber = (unitData.owner_phone_number || form.owner_phone_number || '').trim();
+        if (!ownerFullName) missingFields.push('نام مالک');
+        if (!ownerPhoneNumber) missingFields.push('شماره تماس مالک');
+      }
       
       if (missingFields.length > 0) {
         const errorMsg = `فیلدهای الزامی خالی هستند: ${missingFields.join(', ')}`;
-        console.error("❌ Missing required fields:", missingFields);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("❌ Missing required fields:", missingFields);
+        }
         setErrors({ submit: errorMsg });
         toast.error(errorMsg);
         return;
       }
+      
+      // Only include tenant info if owner_type is 'landlord'
+      const isOwnerWithLandlord = normalizedRole === 'owner' && normalizedOwnerType === 'landlord';
       
       const payload = {
         building_code: buildingCode,
@@ -320,26 +373,33 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         resident_count: residentCountValue,
         role: normalizedRole,
         owner_type: normalizedOwnerType,
-        tenant_full_name: toNullIfEmpty(unitData.tenant_full_name || form.tenant_full_name),
-        tenant_phone_number: toNullIfEmpty(unitData.tenant_phone_number || form.tenant_phone_number),
+        owner_full_name: normalizedRole === 'resident' ? ownerFullName : null,
+        owner_phone_number: normalizedRole === 'resident' ? ownerPhoneNumber : null,
+        // Only include tenant info if owner_type is 'landlord'
+        tenant_full_name: isOwnerWithLandlord ? toNullIfEmpty(unitData.tenant_full_name || form.tenant_full_name) : null,
+        tenant_phone_number: isOwnerWithLandlord ? toNullIfEmpty(unitData.tenant_phone_number || form.tenant_phone_number) : null,
         has_parking: unitData.has_parking ?? form.has_parking ?? false,
         parking_count: toNumber(unitData.parking_count ?? form.parking_count) || 0,
       };
       
-      // Log payload for debugging
-      console.log("📤 handleAcceptPrefill - Payload being sent:", payload);
-      console.log("📤 handleAcceptPrefill - unitData:", unitData);
+      // Log payload for debugging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log("📤 handleAcceptPrefill - Payload being sent:", payload);
+        console.log("📤 handleAcceptPrefill - unitData:", unitData);
+      }
       
       await dispatch(createMembershipRequest(payload)).unwrap();
       toast.success('درخواست عضویت با اطلاعات شناسایی‌شده ثبت شد');
       handleClose();
     } catch (error) {
-      console.error("❌ Error in handleAcceptPrefill:", error);
-      console.error("❌ Error details:", {
-        error,
-        message: error?.message,
-        payload: error?.payload
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.error("❌ Error in handleAcceptPrefill:", error);
+        console.error("❌ Error details:", {
+          error,
+          message: error?.message,
+          payload: error?.payload
+        });
+      }
       
       // Extract error message
       let errorMessage = 'خطا در ارسال درخواست عضویت';
@@ -368,8 +428,31 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     }
     
     try {
-      const result = await dispatch(createMembershipRequest(form)).unwrap();
+      // Only include tenant info if owner_type is 'landlord'
+      const isOwnerWithLandlord = form.role === 'owner' && form.owner_type === 'landlord';
+      const ownerInfo =
+        form.role === 'resident'
+          ? {
+              owner_full_name: (form.owner_full_name || '').trim(),
+              owner_phone_number: (form.owner_phone_number || '').trim(),
+            }
+          : {
+              owner_full_name: null,
+              owner_phone_number: null,
+            };
+      const submitData = {
+        ...form,
+        owner_full_name: ownerInfo.owner_full_name,
+        owner_phone_number: ownerInfo.owner_phone_number,
+        // Only include tenant info if owner_type is 'landlord'
+        tenant_full_name: isOwnerWithLandlord ? form.tenant_full_name : null,
+        tenant_phone_number: isOwnerWithLandlord ? form.tenant_phone_number : null,
+      };
+      
+      const result = await dispatch(createMembershipRequest(submitData)).unwrap();
+      if (process.env.NODE_ENV === 'development') {
       console.log("✅ Membership request created successfully:", result);
+      }
       
       // Reset form
       setForm({
@@ -384,6 +467,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         owner_type: "",
         tenant_full_name: "",
         tenant_phone_number: "",
+        owner_full_name: "",
+        owner_phone_number: "",
         has_parking: false,
         parking_count: 0,
       });
@@ -398,7 +483,9 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       }
       
     } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
       console.error("❌ Error creating membership request:", error);
+      }
       setErrors({ submit: error });
     }
   };
@@ -416,6 +503,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       owner_type: "",
       tenant_full_name: "",
       tenant_phone_number: "",
+        owner_full_name: "",
+        owner_phone_number: "",
       has_parking: false,
       parking_count: 0,
     });
@@ -489,7 +578,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                 {/* Show for each building where user is a member (via BuildingUser) but doesn't have approved membership request */}
                 {!unitLoading && (() => {
                   // Debug logs (only in development)
-                  if (import.meta.env.DEV) {
+                  if (process.env.NODE_ENV === 'development') {
                     console.log("🔍 MembershipRequestForm - unitData:", unitData);
                     console.log("🔍 MembershipRequestForm - approvedBuildings:", approvedBuildings);
                     console.log("🔍 MembershipRequestForm - membershipRequests:", membershipRequests);
@@ -506,7 +595,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                     return !hasApprovedRequest;
                   });
                   
-                  if (import.meta.env.DEV) {
+                  if (process.env.NODE_ENV === 'development') {
                     console.log("🔍 buildingsNeedingRequest:", buildingsNeedingRequest);
                   }
                   
@@ -537,22 +626,24 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         parking_count: targetBuilding.parking_count || 0,
                         full_name: user?.full_name || '',
                         phone_number: effectivePhoneNumber,
+                        owner_full_name: targetBuilding.owner_full_name || '',
+                        owner_phone_number: targetBuilding.owner_phone_number || '',
                       };
                   
-                  if (import.meta.env.DEV) {
+                  if (process.env.NODE_ENV === 'development') {
                     console.log("🔍 Showing pre-fill notification for building:", targetBuilding.building_code);
                   }
                   
                   return (
-                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-start gap-2">
-                          <div className="mt-1 w-3 h-3 bg-green-500 rounded-full"></div>
-                          <div className="text-sm text-green-800">
-                            اطلاعات شما در سیستم یافت شد. آیا تایید می‌کنید این اطلاعات مربوط به شماست؟
-                          </div>
+                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start gap-2">
+                        <div className="mt-1 w-3 h-3 bg-green-500 rounded-full"></div>
+                        <div className="text-sm text-green-800">
+                          اطلاعات شما در سیستم یافت شد. آیا تایید می‌کنید این اطلاعات مربوط به شماست؟
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-green-900">
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-green-900">
                           <div key="building-title">ساختمان: <span className="font-semibold">{displayData.building_title}</span></div>
                           <div key="building-code">کد ساختمان: <span className="font-semibold">{displayData.building_code}</span></div>
                           {displayData.unit_number && (
@@ -566,16 +657,31 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                           )}
                           {displayData.role === 'owner' && displayData.owner_type && (
                             <div key="owner-type">نوع مالک: <span className="font-semibold">{getPersianOwnerType(displayData.owner_type)}</span></div>
-                          )}
+                        )}
                           {displayData.resident_count && (
                             <div key="resident-count">تعداد نفر: <span className="font-semibold">{displayData.resident_count}</span></div>
                           )}
-                        </div>
-                        <div className="flex items-center gap-3 mt-2">
-                          <button
-                            type="button"
+                      </div>
+                      <div className="flex items-center gap-3 mt-2">
+                        <button
+                          type="button"
                             onClick={() => {
                               // Create a payload from displayData
+                              const role = displayData.role || 'resident';
+                              const ownerType = role === 'owner' ? (displayData.owner_type || null) : null;
+                              const isOwnerWithLandlord = role === 'owner' && ownerType === 'landlord';
+                              const ownerFullNameQuick = role === 'resident'
+                                ? (displayData.owner_full_name || form.owner_full_name || '').trim()
+                                : null;
+                              const ownerPhoneQuick = role === 'resident'
+                                ? (displayData.owner_phone_number || form.owner_phone_number || '').trim()
+                                : null;
+                              
+                              if (role === 'resident' && (!ownerFullNameQuick || !ownerPhoneQuick)) {
+                                toast.error('لطفاً نام و شماره تماس مالک را تکمیل کنید');
+                                return;
+                              }
+                              
                               const payload = {
                                 building_code: displayData.building_code,
                                 full_name: displayData.full_name || user?.full_name || '',
@@ -584,10 +690,13 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                                 floor: displayData.floor ? Number(displayData.floor) : null,
                                 area: displayData.area ? Number(displayData.area) : null,
                                 resident_count: displayData.resident_count || 1,
-                                role: displayData.role || 'resident',
-                                owner_type: displayData.role === 'owner' ? (displayData.owner_type || null) : null,
-                                tenant_full_name: displayData.tenant_full_name || null,
-                                tenant_phone_number: displayData.tenant_phone_number || null,
+                                role: role,
+                                owner_type: ownerType,
+                                owner_full_name: role === 'resident' ? ownerFullNameQuick : null,
+                                owner_phone_number: role === 'resident' ? ownerPhoneQuick : null,
+                                // Only include tenant info if owner_type is 'landlord'
+                                tenant_full_name: isOwnerWithLandlord ? (displayData.tenant_full_name || null) : null,
+                                tenant_phone_number: isOwnerWithLandlord ? (displayData.tenant_phone_number || null) : null,
                                 has_parking: displayData.has_parking || false,
                                 parking_count: displayData.parking_count || 0,
                               };
@@ -600,25 +709,27 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                                   handleClose();
                                 })
                                 .catch((error) => {
-                                  console.error("❌ Error creating membership request:", error);
+                                  if (process.env.NODE_ENV === 'development') {
+                                    console.error("❌ Error creating membership request:", error);
+                                  }
                                   const errorMessage = typeof error === 'string' ? error : (error?.payload || error?.message || 'خطا در ارسال درخواست عضویت');
                                   toast.error(errorMessage);
                                 });
                             }}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                          >
-                            تایید و ارسال سریع درخواست
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleRejectPrefill}
-                            className="px-4 py-2 border border-green-300 text-green-800 rounded-lg hover:bg-green-100 transition-colors"
-                          >
-                            این اطلاعات متعلق به من نیست
-                          </button>
-                        </div>
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          تایید و ارسال سریع درخواست
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRejectPrefill}
+                          className="px-4 py-2 border border-green-300 text-green-800 rounded-lg hover:bg-green-100 transition-colors"
+                        >
+                          این اطلاعات متعلق به من نیست
+                        </button>
                       </div>
                     </div>
+                  </div>
                   );
                 })()}
 
@@ -766,6 +877,41 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                       </div>
                     )}
                   </div>
+                
+                {/* اطلاعات مالک برای نقش ساکن */}
+                {form.role === 'resident' && (
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <div className="flex items-center gap-2 mb-4">
+                      <User size={20} className="text-gray-600" />
+                      <h4 className="font-semibold text-gray-800">اطلاعات مالک</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="نام و نام خانوادگی مالک *"
+                        name="owner_full_name"
+                        placeholder="نام و نام خانوادگی مالک"
+                        value={form.owner_full_name}
+                        onChange={handleChange}
+                        required
+                      />
+                      <FormField
+                        label="شماره تماس مالک *"
+                        name="owner_phone_number"
+                        type="tel"
+                        placeholder="شماره تماس مالک"
+                        value={form.owner_phone_number}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {(errors.owner_full_name || errors.owner_phone_number) && (
+                      <div className="text-red-500 text-sm mt-1">
+                        {errors.owner_full_name && <p>{errors.owner_full_name}</p>}
+                        {errors.owner_phone_number && <p>{errors.owner_phone_number}</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                   {/* اطلاعات مستاجر */}
                   {form.owner_type === 'landlord' && (

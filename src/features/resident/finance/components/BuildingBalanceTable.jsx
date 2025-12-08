@@ -27,7 +27,7 @@ const getStartOfYear = () => {
 export default function BuildingBalanceTable() {
     const dispatch = useDispatch();
     const building = useSelector(selectSelectedBuilding);
-    const _currentFundBalance = useSelector(selectCurrentFundBalance);
+    const currentFundBalance = useSelector(selectCurrentFundBalance);
     const categories = useCategories();
     
     const [selected, setSelected] = useState(null);
@@ -140,7 +140,7 @@ export default function BuildingBalanceTable() {
     };
 
     // Helper function to get start/end of week
-    const _getWeekRange = () => {
+    const getWeekRange = () => {
         const today = new Date();
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
@@ -153,7 +153,7 @@ export default function BuildingBalanceTable() {
     };
 
     // Helper function to get start/end of month
-    const _getMonthRange = () => {
+    const getMonthRange = () => {
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -164,7 +164,7 @@ export default function BuildingBalanceTable() {
     };
 
     // Helper function to get start/end of year
-    const _getYearRange = () => {
+    const getYearRange = () => {
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);
         const endOfYear = new Date(today.getFullYear(), 11, 31);
@@ -175,7 +175,7 @@ export default function BuildingBalanceTable() {
     };
 
     // Helper function to get last month range
-    const _getLastMonthRange = () => {
+    const getLastMonthRange = () => {
         const today = new Date();
         const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);

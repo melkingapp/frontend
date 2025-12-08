@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Home, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 import UnitItem from "../../../manager/unitManagement/components/units/UnitItem";
 import UnitDetailsModal from "../../../manager/unitManagement/components/units/UnitDetailsModal";
 import { fetchUnits } from "../../../manager/unitManagement/slices/unitsSlice";
@@ -11,7 +12,7 @@ import { selectMembershipRequests } from "../../../membership/membershipSlice";
 export default function UnitsBase({ units: propUnits, limit }) {
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedBuilding);
-    const { units: reduxUnits, loading } = useSelector(state => state.units);
+    const { units: reduxUnits, loading, error } = useSelector(state => state.units);
     const membershipRequests = useSelector(selectMembershipRequests);
     const user = useSelector(state => state.auth.user);
     const [selectedUnit, setSelectedUnit] = useState(null);

@@ -9,7 +9,8 @@ import {
     selectBuildingResidents,
     selectBuildingResidentsLoading,
     selectBuildingResidentsError,
-    selectUpdatingResident
+    selectUpdatingResident,
+    clearError
 } from "../slices/buildingResidentsSlice";
 
 export default function ResidentUsersList({ buildingId }) {

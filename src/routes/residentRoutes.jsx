@@ -12,7 +12,6 @@ import UnitsPage from "../features/resident/unitManagement/pages/UnitsPage";
 import RequestsPage from "../features/resident/unitManagement/pages/RequestsPage";
 import TransactionsPage from "../features/resident/unitManagement/pages/TransactionsPage";
 import MembershipRequestsPage from "../features/membership/pages/MembershipRequestsPage";
-import MembershipApprovalPage from "../features/resident/unitManagement/pages/MembershipApprovalPage";
 import ResidentProfile from "../pages/resident/Profile";
 import ResidentSettings from "../pages/resident/Settings";
 import ResidentLegalAI from "../pages/resident/LegalAI";
@@ -42,7 +41,6 @@ export const residentRoutes = [
             { path: "unit-management/requests", element: <RequestsPage /> },
             { path: "unit-management/transactions", element: <TransactionsPage /> },
             { path: "membership", element: <MembershipRequestsPage /> },
-            { path: "membership-approval", element: <MembershipApprovalPage /> },
             { path: "profile", element: <ResidentProfile /> },
             { path: "settings", element: <ResidentSettings /> },
             { path: "legal-ai", element: <ResidentLegalAI /> },

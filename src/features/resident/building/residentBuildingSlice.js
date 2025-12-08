@@ -2,23 +2,14 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getResidentRequests, getApprovedBuildings, getBuildingDetails } from '../../../shared/services/residentRequestsService';
 
 // Token refresh helper
-const _handleTokenRefresh = async (_dispatch) => {
+const handleTokenRefresh = async (dispatch) => {
     try {
         const refreshToken = localStorage.getItem('refresh_token');
         if (!refreshToken) {
             throw new Error('No refresh token available');
         }
 
-        const getApiBaseURL = () => {
-            if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-            if (typeof window !== 'undefined') {
-                const hostname = window.location.hostname;
-                const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-                return isLocalhost ? 'http://localhost:8000/api/v1' : 'http://171.22.25.201:9000/api/v1';
-            }
-            return 'http://localhost:8000/api/v1';
-        };
-        const response = await fetch(`${getApiBaseURL()}/refresh/`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || (window.location.protocol === 'https:' ? 'https://melkingapp.ir/api/v1' : 'http://melkingapp.ir/api/v1')}/refresh/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh: refreshToken })
@@ -41,7 +32,7 @@ const _handleTokenRefresh = async (_dispatch) => {
 // Async thunks
 export const fetchResidentRequests = createAsyncThunk(
     'residentBuilding/fetchResidentRequests',
-    async (_, { rejectWithValue, dispatch: _dispatch }) => {
+    async (_, { rejectWithValue, dispatch }) => {
         try {
             const response = await getResidentRequests();
             return response;
@@ -65,7 +56,7 @@ export const fetchApprovedBuildings = createAsyncThunk(
 
 export const fetchApprovedBuildingsDetails = createAsyncThunk(
     'residentBuilding/fetchApprovedBuildingsDetails',
-    async (buildingIds, { rejectWithValue, dispatch: _dispatch }) => {
+    async (buildingIds, { rejectWithValue, dispatch }) => {
         try {            
             const fetchBuildingDetails = async (buildingId) => {
                 try {
@@ -270,7 +261,7 @@ const residentBuildingSlice = createSlice({
 // Action to refresh approved buildings (for when user is removed from a building)
 export const refreshApprovedBuildings = createAsyncThunk(
     'residentBuilding/refreshApprovedBuildings',
-    async (_, { rejectWithValue, dispatch: _dispatch, getState }) => {
+    async (_, { rejectWithValue, dispatch, getState }) => {
         try {            
             // Get buildings directly from the building list API (which uses BuildingUser table)
             const response = await getApprovedBuildings();

@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Home, Calendar, Check, X, Loader2 } from "lucide-react";
+import { Home, Calendar, Check, X, Loader2, ImageIcon } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../shared/utils";
 import DocumentViewer from "../../../../../shared/components/shared/display/DocumentViewer";
 import { useMemo, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../slices/paymentsSlice";
@@ -18,6 +18,7 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
+  const { loading } = useSelector(state => state.payments);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
@@ -189,8 +190,35 @@ export default function PaymentItem({ payment, buildingId }) {
       {/* جداکننده ظریف */}
       <div className="mt-3 md:mt-4 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent hidden sm:flex" />
 
-      <div className="pt-3 md:pt-4 ">
-        <DocumentViewer documentUrl={payment.invoice} title={`فاکتور ${getPersianType(payment?.title) ?? "پرداخت"}`} />
+      {/* توضیحات پرداخت */}
+      {payment?.description && (
+        <div className="pt-3 md:pt-4 px-3 md:px-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800 font-medium mb-1">توضیحات پرداخت:</p>
+            <p className="text-sm text-blue-700">{payment.description}</p>
+          </div>
+        </div>
+      )}
+
+      {/* شناسه پرداخت */}
+      {payment?.payment_reference && (
+        <div className="pt-2 px-3 md:px-4">
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">شناسه پرداخت:</span> {payment.payment_reference}
+          </div>
+        </div>
+      )}
+
+      {/* عکس رسید پرداخت */}
+      <div className="pt-3 md:pt-4 px-3 md:px-4">
+        {payment?.invoice ? (
+          <DocumentViewer documentUrl={payment.invoice} title={`عکس رسید پرداخت ${getPersianType(payment?.title) ?? ""}`} />
+        ) : (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+            <ImageIcon className="mx-auto text-gray-400 mb-2" size={32} />
+            <p className="text-sm text-gray-500">عکس رسید پرداخت آپلود نشده است</p>
+          </div>
+        )}
       </div>
 
       <div className="col-span-12 md:col-span-3 items-center justify-start md:justify-end gap-2 md:gap-2.5 mt-4 flex sm:hidden">

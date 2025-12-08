@@ -181,11 +181,11 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject }) 
 
 export default function MembershipRequestsList() {
   const dispatch = useDispatch();
-  const { requests, loading, error, count: _count } = useSelector(state => state.membership);
+  const { requests, loading, error, count } = useSelector(state => state.membership);
   
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [_selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
   useEffect(() => {
     dispatch(fetchMembershipRequests({ status: statusFilter === 'all' ? '' : statusFilter }));

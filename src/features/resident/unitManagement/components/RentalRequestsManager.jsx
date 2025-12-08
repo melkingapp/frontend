@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Home, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getApiUrl, getAuthHeaders, API_CONFIG } from "../../../../config/api";
@@ -7,6 +7,7 @@ export default function RentalRequestsManager() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [selectedRequest, setSelectedRequest] = useState(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newRequest, setNewRequest] = useState({
         tenant_full_name: '',
@@ -18,7 +19,11 @@ export default function RentalRequestsManager() {
 
     const authToken = localStorage.getItem('access_token');
 
-    const fetchRentalRequests = useCallback(async () => {
+    useEffect(() => {
+        fetchRentalRequests();
+    }, []);
+
+    const fetchRentalRequests = async () => {
         setLoading(true);
         setError(null);
         
@@ -39,11 +44,7 @@ export default function RentalRequestsManager() {
         } finally {
             setLoading(false);
         }
-    }, [authToken]);
-
-    useEffect(() => {
-        fetchRentalRequests();
-    }, [fetchRentalRequests]);
+    };
 
     const createRentalRequest = async () => {
         if (!newRequest.tenant_full_name || !newRequest.tenant_phone_number || 
@@ -66,7 +67,7 @@ export default function RentalRequestsManager() {
                 throw new Error(errorData.error || `HTTP ${response.status}`);
             }
 
-            await response.json();
+            const data = await response.json();
             toast.success('درخواست اجاره با موفقیت ارسال شد');
             setShowCreateForm(false);
             setNewRequest({

@@ -84,7 +84,7 @@ const InfoCard = ({ icon: Icon, title, value, subtitle, color = "blue" }) => {
     <div className={`rounded-lg p-2.5 border shadow-sm hover:shadow-md transition-shadow ${colorClasses[color]}`}>
       <div className="flex items-center gap-2">
         <div className={`p-1.5 rounded-lg ${iconColorClasses[color]}`}>
-          {Icon && <Icon size={14} />}
+          <Icon size={14} />
         </div>
         <div className="flex-1">
           <p className="text-xs font-medium text-gray-600 mb-0.5">{title}</p>

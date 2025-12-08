@@ -47,7 +47,7 @@ export default function FinanceTransactions() {
       console.log("🔥 Loading buildings...");
       dispatch(fetchBuildings());
     }
-  }, [dispatch, buildings]);
+  }, [dispatch, buildings.length]);
 
   // Auto-select first building if none selected
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function FinanceTransactions() {
       const firstBuilding = buildings[0];
       dispatch(setSelectedBuilding(firstBuilding.building_id || firstBuilding.id));
     }
-  }, [dispatch, buildings, building]);
+  }, [dispatch, buildings.length, building]);
 
   // Fetch current fund balance when building changes
   useEffect(() => {
@@ -96,7 +96,7 @@ export default function FinanceTransactions() {
           console.error("🔥 Fetch all transactions error:", error);
         });
     }
-  }, [dispatch, building, buildings]);
+  }, [dispatch, building?.building_id, buildings.length]);
 
   // Get transactions from Redux state
   const transactionsData = useSelector(state => state.finance.transactions || []);

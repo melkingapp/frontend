@@ -1,27 +1,9 @@
 // API Configuration and Base Service
-const getBaseURL = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-    
-    if (isLocalhost) {
-      return 'http://127.0.0.1:8000/api/v1';
-    } else {
-      // Production: always use server IP with port 9000 (override VITE_API_BASE_URL)
-      return 'http://171.22.25.201:9000/api/v1';
-    }
-  }
-  
-  // Fallback for SSR
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  
-  return 'http://127.0.0.1:8000/api/v1';
-};
-
 const API_CONFIG = {
-  BASE_URL: getBaseURL(),
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || 
+    (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+      ? 'http://127.0.0.1:8000/api/v1'
+      : `${window.location.protocol}//${window.location.host}/api/v1`),
   ENDPOINTS: {
     BUILDING_SETTINGS: (buildingId) => `/buildings/${buildingId}/settings/`,
     BUILDING_SETTINGS_UPDATE: (buildingId) => `/buildings/${buildingId}/settings/update/`,
@@ -161,7 +143,7 @@ class ApiService {
         let errorMessage = data?.detail || data?.message || data?.error;
         
         // Log the full error response for debugging (only in development)
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV === 'development') {
           console.error('API Error Response:', {
             status: response.status,
             statusText: response.statusText,
@@ -172,7 +154,7 @@ class ApiService {
         
         // Handle specific HTTP status codes
         switch (response.status) {
-          case 401: {
+          case 401:
             // Check if error is about invalid token type
             const isInvalidTokenType = errorMessage?.toLowerCase().includes('token not valid') || 
                                       errorMessage?.toLowerCase().includes('invalid token');
@@ -210,7 +192,6 @@ class ApiService {
             
             errorMessage = errorMessage || 'Unauthorized';
             break;
-          }
           case 403:
             errorMessage = errorMessage || 'Forbidden';
             break;

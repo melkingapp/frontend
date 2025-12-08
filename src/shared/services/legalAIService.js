@@ -7,21 +7,12 @@ export const legalAIService = {
       const response = await apiService.post('/legal-ai/ask/', { question });
       console.log('API Response:', response); // Debug log
       
-      // Check if response has legalQuestion object
-      if (response && response.legalQuestion) {
-        return {
-          success: true,
-          message: response.message || "سوال شما با موفقیت پردازش شد",
-          legalQuestion: response.legalQuestion
-        };
-      }
-      
       // apiService already returns response.data, so we access .response directly
       const apiResponse = response?.response || response?.data?.response;
       
       return {
         success: true,
-        message: "پاسخ دریافت شد",
+        message: "سوال شما با موفقیت پردازش شد",
         legalQuestion: {
           id: Date.now(),
           question: question,
@@ -32,7 +23,6 @@ export const legalAIService = {
       };
     } catch (error) {
       console.log('REST API failed, using fallback response:', error);
-      console.error('Error details:', error);
       // Fallback to local response
       return {
         success: true,
@@ -53,7 +43,7 @@ export const legalAIService = {
       const response = await apiService.get('/legal-ai/questions/');
       return response.data;
     } catch (error) {
-      console.log('Failed to get legal questions, returning empty array', error);
+      console.log('Failed to get legal questions, returning empty array');
       return [];
     }
   },
@@ -63,7 +53,7 @@ export const legalAIService = {
       const response = await apiService.get('/legal-ai/documents/');
       return response.data;
     } catch (error) {
-      console.log('Failed to get legal documents, returning empty array', error);
+      console.log('Failed to get legal documents, returning empty array');
       return [];
     }
   }

@@ -648,7 +648,7 @@ const financeSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(exportBalanceData.fulfilled, (state) => {
+            .addCase(exportBalanceData.fulfilled, (state, action) => {
                 state.loading = false;
                 state.error = null;
             })

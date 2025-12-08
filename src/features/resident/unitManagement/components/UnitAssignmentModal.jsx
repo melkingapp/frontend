@@ -25,7 +25,7 @@ export default function UnitAssignmentModal({ isOpen, onClose, unitData, suggest
       });
       onConfirmed?.(data);
       onClose?.();
-      } catch {
+    } catch (e) {
       setError("خطا در اتصال به سرور");
       setSubmitting(false);
     }

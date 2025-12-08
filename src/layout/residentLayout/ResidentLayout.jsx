@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ResidentHeader from "../../shared/components/headers/residentHeader/ResidentHeader";
 import ResidentSidebar from "../../shared/components/headers/residentHeader/ResidentSidebar";
 import { navItemsResident } from "../../constants/navItemsResident";

@@ -39,7 +39,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
                     console.error("🔥 BuildingNewsBase - Fetch letters error:", error);
                 });
         }
-    }, [dispatch, selectedBuilding]);
+    }, [dispatch, selectedBuilding?.building_id, selectedBuilding?.id]);
 
     const handleRefresh = () => {
         if (selectedBuilding?.building_id || selectedBuilding?.id) {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { fetchMembershipRequests, rejectMembershipRequest } from "../membershipSlice";
+import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest } from "../membershipSlice";
 import { selectSelectedBuilding } from "../../manager/building/buildingSlice";
 import MembershipRequestDetailsModal from "../components/MembershipRequestDetailsModal";
 import MembershipToUnitConverter from "../components/MembershipToUnitConverter";
@@ -183,7 +183,7 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject }) 
 
 export default function ManagerMembershipPage() {
   const dispatch = useDispatch();
-  const { requests, loading, error, count: _count } = useSelector(state => state.membership);
+  const { requests, loading, error, count } = useSelector(state => state.membership);
   const selectedBuilding = useSelector(selectSelectedBuilding);
   
   const [statusFilter, setStatusFilter] = useState('all');

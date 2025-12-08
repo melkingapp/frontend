@@ -8,6 +8,7 @@ import { fetchTransactionDetails, payBill } from "../../slices/financeSlice";
 import { useSelector as useReduxSelector } from "react-redux";
 import { selectMembershipRequests } from "../../../../membership/membershipSlice";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusIcon } from "../../../../../shared/utils";
+import PaymentModal from "./PaymentModal";
 
 const statusStyles = {
   "پرداخت شده": "bg-green-100 text-green-700",
@@ -23,11 +24,27 @@ const statusStyles = {
   "ممتاز": "bg-yellow-100 text-yellow-700",
 };
 
+const allocationLabels = {
+  owner: "مالک",
+  resident: "ساکن",
+  both: "هردو",
+};
+
 const distributionLabels = {
   equal: "مساوی",
   per_person: "بر اساس تعداد نفر",
   area: "بر اساس متراژ",
   parking: "بر اساس تعداد پارکینگ",
+};
+
+const billTypeLabels = {
+  electricity: "قبض برق",
+  water: "قبض آب",
+  gas: "قبض گاز",
+  maintenance: "تعمیرات",
+  cleaning: "نظافت",
+  security: "امنیت",
+  other: "سایر",
 };
 
 const categoryLabels = {
@@ -39,23 +56,76 @@ const categoryLabels = {
 
 export default function FinancenDetailsModal({ transaction, building, onClose, isResident = false }) {
   const [unitFilter, setUnitFilter] = useState("all"); // all, paid, unpaid
-  const [paymentId, setPaymentId] = useState("");
   const [isPaying, setIsPaying] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [localAwaitingApproval, setLocalAwaitingApproval] = useState(false);
   const dispatch = useDispatch();
   const { transactionDetails, loading } = useSelector(state => state.finance);
   const membershipRequests = useReduxSelector(selectMembershipRequests);
   
+  useEffect(() => {
+    setLocalAwaitingApproval(false);
+  }, [transaction?.id]);
+  
   // Fetch transaction details if transaction has an ID and no unit_details
+  // This hook must be called before any early returns to maintain hook order
   useEffect(() => {
     if (transaction?.id && !transaction?.unit_details) {
       dispatch(fetchTransactionDetails(transaction.id));
     }
-  }, [transaction?.id, transaction?.unit_details, dispatch]);
+    // Only depend on transaction.id to avoid infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transaction?.id, dispatch]);
   
+  // Early return if transaction is null (after ALL hooks)
   if (!transaction) return null;
+  
+  const unitDetails = transaction?.unit_details || transactionDetails?.unit_details || [];
+  const paymentStatusCounts = transaction?.payment_status_counts || transactionDetails?.payment_status_counts;
+  const paymentStatusTotal = transaction?.payment_status_total || transactionDetails?.payment_status_total;
+  const paymentStatusLabel = transaction?.payment_status || transactionDetails?.payment_status;
+  const paymentOverall = transaction?.payment_status_overall || transactionDetails?.payment_status_overall;
+  const paymentStatusBreakdown = [
+    { key: 'paid', label: 'پرداخت شده', color: 'text-green-700', bg: 'bg-green-50 border-green-100' },
+    { key: 'awaiting_manager', label: 'منتظر تایید مدیر', color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-100' },
+    { key: 'pending', label: 'پرداخت نشده', color: 'text-red-700', bg: 'bg-red-50 border-red-100' },
+  ];
+  
+  const normalizeStatus = (status) => {
+    if (!status) return 'pending';
+    return String(status).toLowerCase();
+  };
+  
+  // Try to infer current resident's unit_number from approved membership requests in the selected building
+  const residentUnitNumber = (() => {
+    try {
+      const approved = (membershipRequests || []).filter(req =>
+        (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved')
+        && (building?.building_id ? req.building === (building.building_id || building.id) : true)
+      );
+      // Prefer resident role entry
+      const preferred = approved.find(r => r.role === 'resident') || approved[0];
+      return preferred?.unit_number;
+    } catch {
+      return undefined;
+    }
+  })();
+  
+  const derivedAwaitingApproval = (() => {
+    if (!unitDetails?.length || !isResident) return false;
+    const myUnitNumber = residentUnitNumber;
+    if (!myUnitNumber) return false;
+    const targetUnit = unitDetails.find(
+      (unit) => String(unit.unit_number ?? unit.unitNumber ?? '') === String(myUnitNumber)
+    );
+    if (!targetUnit) return false;
+    return normalizeStatus(targetUnit.status) === 'awaiting_manager';
+  })();
+  
+  const showAwaitingBanner = localAwaitingApproval || derivedAwaitingApproval;
 
   // Use real data from transaction.unit_details or transactionDetails, otherwise fallback to mock data
-  const units = transaction.unit_details || transactionDetails?.unit_details || [
+  const units = unitDetails.length > 0 ? unitDetails : [
     { units_id: 1, unit_number: "1", status: "paid", amount: 250000 },
     { units_id: 2, unit_number: "2", status: "unpaid", amount: 250000 },
     { units_id: 3, unit_number: "3", status: "paid", amount: 250000 },
@@ -65,17 +135,22 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
 
   // Filter units based on selected filter
   const filteredUnits = units.filter(unit => {
-    if (unitFilter === "paid") return unit.status === "paid" || unit.status === "پرداخت شده";
-    if (unitFilter === "unpaid") return unit.status === "unpaid" || unit.status === "منتظر پرداخت" || unit.status === "pending";
+    const normalized = normalizeStatus(unit.status);
+    if (unitFilter === "paid") return normalized === "paid";
+    if (unitFilter === "awaiting") return normalized === "awaiting_manager";
+    if (unitFilter === "unpaid") return normalized === "pending";
     return true; // all
   });
-
+  
   const getUnitStatusStyle = (status) => {
-    if (status === "paid" || status === "پرداخت شده") {
+    const normalized = normalizeStatus(status);
+    if (normalized === "paid" || normalized === "پرداخت شده") {
       return "bg-green-50 border-green-200 text-green-800";
-    } else {
-      return "bg-red-50 border-red-200 text-red-800";
     }
+    if (normalized === "awaiting_manager" || normalized === "منتظر تایید مدیر") {
+      return "bg-yellow-50 border-yellow-200 text-yellow-800";
+    }
+    return "bg-red-50 border-red-200 text-red-800";
   };
 
   const getUnitStatusIcon = (status) => {
@@ -84,7 +159,9 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
 
   const getUnitStatusText = (status) => {
     const persianStatus = getPersianStatus(status);
-    return persianStatus === "پرداخت شده" ? "پرداخت شده" : "پرداخت نشده";
+    if (persianStatus === "پرداخت شده") return "پرداخت شده";
+    if (persianStatus === "منتظر تایید مدیر") return "منتظر تایید مدیر";
+    return "پرداخت نشده";
   };
 
   const infoGroups = [
@@ -128,22 +205,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
 
   const canPay = isResident && (transaction.status !== "پرداخت شده" && transaction.status !== "paid");
 
-  // Try to infer current resident's unit_number from approved membership requests in the selected building
-  const residentUnitNumber = (() => {
-    try {
-      const approved = (membershipRequests || []).filter(req =>
-        (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved')
-        && (building?.building_id ? req.building === (building.building_id || building.id) : true)
-      );
-      // Prefer resident role entry
-      const preferred = approved.find(r => r.role === 'resident') || approved[0];
-      return preferred?.unit_number;
-    } catch {
-      return undefined;
-    }
-  })();
-
-  const handlePay = async () => {
+  const handlePaymentConfirm = async (paymentData) => {
     if (!transaction?.id) return;
     
     let targetId = transaction.id;
@@ -159,20 +221,35 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
       }
     }
 
-    const finalPaymentId = paymentId?.trim() || `invoice_${targetId}`;
     try {
       setIsPaying(true);
+      
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('bill_id', targetId);
+      if (unitId) {
+        formData.append('unit_id', unitId);
+      }
+      if (paymentData.description) {
+        formData.append('description', paymentData.description);
+      }
+      if (paymentData.receiptImage) {
+        formData.append('receipt_image', paymentData.receiptImage);
+      }
+      
       // ارسال unit_id برای پرداخت واحد خاص
-      await dispatch(payBill({ 
-        bill_id: targetId, 
-        payment_id: finalPaymentId,
-        unit_id: unitId 
-      })).unwrap();
-      setPaymentId("");
-      onClose && onClose();
+      await dispatch(payBill(formData)).unwrap();
+      setShowPaymentModal(false);
+      setLocalAwaitingApproval(true);
+      
+      // Refresh transaction details to show updated status
+      if (transaction?.id) {
+        await dispatch(fetchTransactionDetails(transaction.id));
+      }
+      
+      toast.success('پرداخت با موفقیت ثبت شد');
     } catch (e) {
       console.error("Pay bill error:", e);
-      // optional: surface error via alert to keep dependencies minimal
       toast.error(typeof e === 'string' ? e : 'خطا در پرداخت');
     } finally {
       setIsPaying(false);
@@ -215,6 +292,26 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                 </button>
               </div>
 
+              {/* دکمه پرداخت یا وضعیت در انتظار تایید */}
+              {(canPay || showAwaitingBanner) && (
+                <div className="border-b p-4 bg-green-50 space-y-3">
+                  {showAwaitingBanner ? (
+                    <div className="flex items-center gap-3 text-green-800">
+                      <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse"></div>
+                      <span className="font-semibold">پرداخت شما ثبت شد و منتظر تایید مدیر است</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowPaymentModal(true)}
+                      className="w-full px-4 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-2"
+                    >
+                      <Wallet size={20} />
+                      پرداخت
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="overflow-y-auto p-4 space-y-4 text-sm text-gray-700 flex-1">
                 {infoGroups.map((group, i) => (
                   <div key={`info-group-${i}`} className="grid grid-cols-2 gap-x-4 gap-y-3 border rounded-lg p-3">
@@ -226,6 +323,28 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                     ))}
                   </div>
                 ))}
+                
+                {paymentStatusCounts && (
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">وضعیت کلی پرداخت</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {paymentStatusLabel || getPersianStatus(paymentOverall)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {paymentStatusBreakdown.map((item) => (
+                        <div key={item.key} className={`p-2 rounded-lg border text-center ${item.bg}`}>
+                          <p className="text-xs text-gray-500">{item.label}</p>
+                          <p className={`text-lg font-bold ${item.color}`}>
+                            {paymentStatusCounts?.[item.key] || 0}
+                          </p>
+                          <p className="text-[10px] text-gray-400">از {paymentStatusTotal || 0}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {transaction.invoiceImageUrl && (
                   <>
@@ -234,7 +353,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                   </>
                 )}
 
-                {transaction.unit_count > 0 && (
+                {units.length > 0 && (
                   <>
                     <h2 className="mb-3 text-lg font-semibold text-melkingDarkBlue">واحدهای مشمول</h2>
                     <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
@@ -264,7 +383,17 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                               : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
                           }`}
                         >
-                          پرداخت شده ({units.filter(u => u.status === "paid" || u.status === "پرداخت شده").length})
+                          پرداخت شده ({units.filter(u => normalizeStatus(u.status) === "paid").length})
+                        </button>
+                        <button
+                          onClick={() => setUnitFilter("awaiting")}
+                          className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
+                            unitFilter === "awaiting"
+                              ? "bg-yellow-500 text-white border-yellow-500"
+                              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          منتظر تایید ({units.filter(u => normalizeStatus(u.status) === "awaiting_manager").length})
                         </button>
                         <button
                           onClick={() => setUnitFilter("unpaid")}
@@ -274,7 +403,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                               : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
                           }`}
                         >
-                          پرداخت نشده ({units.filter(u => u.status !== "paid" && u.status !== "پرداخت شده").length})
+                          پرداخت نشده ({units.filter(u => normalizeStatus(u.status) === "pending").length})
                         </button>
                       </div>
                     </div>
@@ -297,12 +426,14 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">
-                              {parseFloat(unit.amount || transaction.amount).toLocaleString('fa-IR')} تومان
+                              {parseFloat(unit.amount || 0).toLocaleString('fa-IR')} تومان
                             </span>
                             <span className={`px-2 py-1 text-xs rounded-full ${
-                              unit.status === "paid" || unit.status === "پرداخت شده"
-                                ? "bg-green-100 text-green-700" 
-                                : "bg-red-100 text-red-700"
+                              normalizeStatus(unit.status) === "paid"
+                                ? "bg-green-100 text-green-700"
+                                : normalizeStatus(unit.status) === "awaiting_manager"
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : "bg-red-100 text-red-700"
                             }`}>
                               {getUnitStatusText(unit.status)}
                             </span>
@@ -320,29 +451,19 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                   </>
                 )}
               </div>
-
-              {canPay && (
-                <div className="border-t p-4 flex items-center gap-3">
-                  <input
-                    type="text"
-                    placeholder="شناسه پرداخت (اختیاری)"
-                    value={paymentId}
-                    onChange={(e) => setPaymentId(e.target.value)}
-                    className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-melkingGold"
-                  />
-                  <button
-                    disabled={isPaying}
-                    onClick={handlePay}
-                    className="px-4 py-2 rounded-lg bg-melkingDarkBlue text-white disabled:opacity-60"
-                  >
-                    {isPaying ? "در حال پرداخت..." : "پرداخت"}
-                  </button>
-                </div>
-              )}
             </Dialog.Panel>
           </Transition.Child>
         </div>
       </Dialog>
+
+      {/* مدال پرداخت */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={handlePaymentConfirm}
+        transaction={transaction}
+        isPaying={isPaying}
+      />
     </Transition>
   );
 }

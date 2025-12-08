@@ -10,7 +10,7 @@ export const createMembershipRequest = createAsyncThunk(
       return response;
     } catch (error) {
       // Log error details for debugging (only in development)
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV === 'development') {
         console.error("❌ createMembershipRequest error:", error);
         console.error("❌ Error data:", error.data);
         console.error("❌ Error response:", error.response);
@@ -59,10 +59,10 @@ export const fetchMembershipRequests = createAsyncThunk(
       else {
         response = await membershipApi.getMembershipRequests(params);
       }
-            return response;
+      return response;
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error("❌ fetchMembershipRequests error:", error);
+      if (process.env.NODE_ENV === 'development') {
+      console.error("❌ fetchMembershipRequests error:", error);
       }
       return rejectWithValue(error.response?.data?.error || error.message);
     }
@@ -191,8 +191,8 @@ const membershipSlice = createSlice({
       })
       .addCase(createMembershipRequest.fulfilled, (state, action) => {
         state.createLoading = false;
-        if (import.meta.env.DEV) {
-          console.log("🔍 createMembershipRequest.fulfilled payload:", action.payload);
+        if (process.env.NODE_ENV === 'development') {
+        console.log("🔍 createMembershipRequest.fulfilled payload:", action.payload);
         }
         if (action.payload) {
           // اگر payload خود درخواست است

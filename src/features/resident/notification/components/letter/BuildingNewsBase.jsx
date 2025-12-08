@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 import LetterItem from "../../../../manager/notification/components/letter/LetterItem";
 import LetterModal from "../../../../manager/notification/components/letter/LetterModal";
 import { fetchBuildingLetters } from "../../../../manager/notification/slices/lettersSlice";
@@ -11,7 +12,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedResidentBuilding);
     const membershipRequests = useSelector(selectMembershipRequests);
-    const { letters: reduxLetters, loading, error: _error } = useSelector(state => state.letters);
+    const { letters: reduxLetters, loading, error } = useSelector(state => state.letters);
     const [selectedLetter, setSelectedLetter] = useState(null);
 
     // Use Redux data if available, otherwise fall back to props
@@ -31,7 +32,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
         if (!membershipRequests || membershipRequests.length === 0) {
             dispatch(fetchMembershipRequests());
         }
-    }, [dispatch, membershipRequests]);
+    }, [dispatch]);
 
     // Auto-select resident building if none selected
     useEffect(() => {
@@ -46,7 +47,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
     }, [dispatch, selectedBuilding, membershipRequests]);
 
     // Normalize building id from selectedBuilding (may be composite "{id}-{unit}")
-    const resolveBuildingId = useCallback(() => {
+    const resolveBuildingId = () => {
         const raw = selectedBuilding?.building_id ?? selectedBuilding?.id;
         if (!raw) return undefined;
         if (typeof raw === 'string') {
@@ -59,7 +60,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
             return raw;
         }
         return raw;
-    }, [selectedBuilding]);
+    };
 
     // Fetch letters when building is available
     useEffect(() => {
@@ -67,7 +68,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
         if (bId !== undefined && bId !== null && bId !== '') {
             dispatch(fetchBuildingLetters(bId));
         }
-    }, [dispatch, selectedBuilding, resolveBuildingId]);
+    }, [dispatch, selectedBuilding]);
 
     const handleRefresh = () => {
         const bId = resolveBuildingId();

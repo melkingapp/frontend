@@ -32,7 +32,7 @@ export default function UnitManagement() {
         const data = await checkUnitAssignment();
         const shouldShow = data.has_unit && !data.is_confirmed;
         setAssignment({ loading: false, show: shouldShow, unit: data.unit, role: data.suggested_role });
-      } catch {
+      } catch (e) {
         setAssignment((s) => ({ ...s, loading: false }));
       }
     };

@@ -4,7 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { 
     setSelectedBuilding, 
-    fetchApprovedBuildingsDetails
+    fetchApprovedBuildingsDetails,
+    selectResidentBuildingLoading,
+    selectResidentBuildingError
 } from "../residentBuildingSlice";
 import { 
     fetchMembershipRequests,
@@ -41,7 +43,7 @@ export default function BuildingRequestStatus() {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            await dispatch(fetchMembershipRequests()).unwrap();
+            const result = await dispatch(fetchMembershipRequests()).unwrap();
         } catch (error) {
             console.error('Error refreshing requests:', error);
         } finally {
@@ -101,7 +103,7 @@ export default function BuildingRequestStatus() {
                     console.error('Error fetching building details:', error);
                 });
         }
-    }, [requests, dispatch]);
+    }, [requests.length, dispatch]); // Only depend on requests length, not the full requests array
 
 
     const getStatusIcon = (status) => {

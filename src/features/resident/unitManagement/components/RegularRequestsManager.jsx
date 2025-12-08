@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Building, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCircle, Home, Car, Users } from "lucide-react";
+import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMembershipRequests } from "../../../membership/membershipSlice";
 import moment from "moment-jalaali";
@@ -59,8 +60,10 @@ const RoleBadge = ({ role }) => {
 export default function RegularRequestsManager() {
   const dispatch = useDispatch();
   const { requests, loading, error } = useSelector(state => state.membership);
+  const { user } = useSelector(state => state.auth);
   
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
     // دریافت درخواست‌های عادی (غیر عضویت)
