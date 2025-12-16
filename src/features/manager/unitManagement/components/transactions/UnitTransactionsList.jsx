@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import moment from "moment-jalaali";
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
@@ -8,13 +8,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchUnitTransactions, clearUnitTransactions } from "../../slices/transactionsSlice";
 import { getPersianType, getPersianStatus, getStatusBgColor } from "../../../../../shared/utils/typeUtils";
 import { getTypeIcon } from "../../../../../shared/utils/iconUtils.jsx";
+import { formatJalaliDate } from "../../../../../shared/utils/dateUtils";
 import unitsApi from "../../../../../shared/services/unitsApi";
 
 
 export default function UnitTransactionsList({ unitNumber, buildingId = null }) {
     const dispatch = useDispatch();
     const { unitTransactions, unitLoading, error } = useSelector(state => state.transactions);
-    const [filteredTx, setFilteredTx] = useState([]);
     const [statusFilter, setStatusFilter] = useState("");
     const [dateRange, setDateRange] = useState(null); // بازه زمانی
     const [unitInfo, setUnitInfo] = useState(null); // اطلاعات واحد
@@ -23,7 +23,6 @@ export default function UnitTransactionsList({ unitNumber, buildingId = null }) 
     useEffect(() => {
         if (!unitNumber.trim()) {
             dispatch(clearUnitTransactions());
-            setFilteredTx([]);
             setUnitInfo(null);
             return;
         }
@@ -69,62 +68,34 @@ export default function UnitTransactionsList({ unitNumber, buildingId = null }) 
         fetchUnitInfo();
     }, [dispatch, unitNumber, buildingId]);
 
-    useEffect(() => {
-        if (unitTransactions.length === 0) {
-            setFilteredTx([]);
-            return;
+    // Optimize sorting and filtering using useMemo
+    const filteredTx = useMemo(() => {
+        if (!unitTransactions || unitTransactions.length === 0) return [];
+
+        let result = unitTransactions.map(tx => ({
+            ...tx,
+            // Pre-calculate timestamp for sorting/filtering to avoid O(N log N) moment creations
+            _timestamp: moment(tx.date || tx.created_at).valueOf()
+        }));
+
+        // Filter by Status
+        if (statusFilter) {
+            result = result.filter(tx => tx.status === statusFilter);
         }
 
-        // Sort transactions by date
-        const sorted = [...unitTransactions].sort((a, b) => {
-            const dateA = moment(a.date || a.created_at).valueOf();
-            const dateB = moment(b.date || b.created_at).valueOf();
-            return dateB - dateA;
-        });
-
-        setFilteredTx(sorted);
-    }, [unitTransactions]);
-
-    useEffect(() => {
-        let result = [...unitTransactions];
-
-        // فیلتر بر اساس وضعیت
-        if (statusFilter) result = result.filter(tx => tx.status === statusFilter);
-
-        // فیلتر بر اساس بازه زمانی
+        // Filter by Date Range
         if (dateRange && dateRange.length === 2) {
+            // Note: dateRange elements are DateObject from react-multi-date-picker
             const startDate = moment(dateRange[0].toDate()).startOf("day").valueOf();
             const endDate = moment(dateRange[1].toDate()).endOf("day").valueOf();
-            result = result.filter(tx => {
-                const txDate = moment(tx.date || tx.created_at).valueOf();
-                return txDate >= startDate && txDate <= endDate;
-            });
+            result = result.filter(tx => tx._timestamp >= startDate && tx._timestamp <= endDate);
         }
 
-        setFilteredTx(result);
-    }, [statusFilter, dateRange, unitTransactions]);
+        // Sort by date descending (newest first)
+        result.sort((a, b) => b._timestamp - a._timestamp);
 
-
-    // Format date to Persian
-    const formatJalaliDate = (dateString) => {
-        if (!dateString) return "بدون تاریخ";
-        try {
-            // Try to parse as English date first (YYYY-MM-DD)
-            const date = moment(dateString);
-            if (date.isValid()) {
-                return date.format("jYYYY/jMM/jDD");
-            }
-            // If not valid, try Persian format
-            const persianDate = moment(dateString, "jYYYY/jMM/jDD");
-            if (persianDate.isValid()) {
-                return persianDate.format("jYYYY/jMM/jDD");
-            }
-            return dateString;
-        } catch {
-            return dateString;
-        }
-    };
-
+        return result;
+    }, [unitTransactions, statusFilter, dateRange]);
 
     return (
         <div className="mt-6">
