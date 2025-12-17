@@ -6,10 +6,11 @@
  * - payment_status: وضعیت پرداخت ساکنین (همه پرداخت کردند، X از Y پرداخت کردند)
  */
 
+import { memo } from "react";
 import { Crown } from "lucide-react";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusColor } from "../../../../../shared/utils";
 
-export default function FinanceTableRow({ transaction, onSelect }) {
+const FinanceTableRow = memo(({ transaction, onSelect }) => {
     // getStatusColor and formatJalaliDate are now imported from utils
 
     // Safe data extraction with fallbacks
@@ -33,4 +34,8 @@ export default function FinanceTableRow({ transaction, onSelect }) {
             </span>
         </button>
     );
-}
+});
+
+FinanceTableRow.displayName = 'FinanceTableRow';
+
+export default FinanceTableRow;

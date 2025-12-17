@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Coins } from "lucide-react";
 import { toast } from "sonner";
@@ -100,7 +100,11 @@ export default function FinanceTransactions() {
 
   // Get transactions from Redux state
   const transactionsData = useSelector(state => state.finance.transactions || []);
-  const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+
+  const transactions = useMemo(() => {
+    return Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+  }, [transactionsData]);
+
   console.log("🔥 Transactions from Redux:", transactions);
   console.log("🔥 Finance state:", useSelector(state => state.finance));
   
@@ -111,9 +115,12 @@ export default function FinanceTransactions() {
     console.log("🔥 First transaction keys:", Object.keys(transactions[0]));
   }
   
-  const sortedData = [...transactions].sort(
-    (a, b) => new Date(b.date) - new Date(a.date)
-  );
+  const sortedData = useMemo(() => {
+    return [...transactions].sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
+  }, [transactions]);
+
   console.log("🔥 Sorted data length:", sortedData.length);
 
   const balance = currentFundBalance?.current_balance || building?.fund_balance || 0;
@@ -132,120 +139,122 @@ export default function FinanceTransactions() {
     ? sortedData[sortedData.length - 1].date  // قدیمی‌ترین تاریخ (آخرین در sortedData)
     : (buildingCreatedAt || "-");
 
-  const filteredData = sortedData.filter(item => {
-    let matchesFilter = false;
-    
-    if (filter === "all") {
-      matchesFilter = true;
-    } else if (filter === "purchases") {
-      // For purchase items, check if title starts with "اقلام خریدنی"
-      matchesFilter = item.title && item.title.startsWith("اقلام خریدنی");
-    } else if (filter.startsWith("custom_")) {
-      // For custom expense types, check if title matches the custom type
-      const customType = filter.replace("custom_", "").replace(/_/g, " ");
-      matchesFilter = item.title === customType || 
-                     item.bill_type === customType ||
-                     (item.bill_type === 'other' && item.description === customType);
-    } else {
-      // Get the label from categories to match with title
-      const filterLabel = categories.find(cat => cat.value === filter)?.label;
+  const filteredData = useMemo(() => {
+    return sortedData.filter(item => {
+      let matchesFilter = false;
       
-      // Map expense type filters to actual data
-      const filterMapping = {
-        'water_bill': 'قبض آب',
-        'electricity_bill': 'قبض برق',
-        'gas': 'قبض گاز',
-        'maintenance': 'تعمیرات',
-        'cleaning': 'نظافت',
-        'security': 'امنیت',
-        'camera': 'دوربین',
-        'parking': 'پارکینگ',
-        'charge': 'شارژ',
-        'repair': 'تعمیرات',
-        'rent': 'اجاره',
-        'service': 'خدمات',
-        'other': 'سایر'
-      };
-      
-      const expectedTitle = filterMapping[filter];
-      
-      // Also map filter to backend bill_type values
-      const billTypeMapping = {
-        'water_bill': 'water',
-        'electricity_bill': 'electricity',
-        'gas': 'gas',
-        'maintenance': 'maintenance',
-        'cleaning': 'cleaning',
-        'security': 'security',
-        'camera': 'camera',
-        'parking': 'parking',
-        'charge': 'charge',
-        'repair': 'maintenance',
-        'rent': 'other',
-        'service': 'other',
-        'other': 'other'
-      };
-      
-      const expectedBillType = billTypeMapping[filter];
-      
-      // Multiple matching strategies
-      matchesFilter = 
-        // Match by title (Persian label)
-        (item.title && item.title === expectedTitle) ||
-        // Match by bill_type (backend value)
-        (item.bill_type && item.bill_type === expectedBillType) ||
-        // Match by category (filter value)
-        (item.category && item.category === filter) ||
-        // Match by filter label from categories
-        (item.title && item.title === filterLabel) ||
-        // Match by expense_type if it exists
-        (item.expense_type && item.expense_type === expectedBillType);
-    }
-    
-    const search = searchTerm.trim().toLowerCase();
+      if (filter === "all") {
+        matchesFilter = true;
+      } else if (filter === "purchases") {
+        // For purchase items, check if title starts with "اقلام خریدنی"
+        matchesFilter = item.title && item.title.startsWith("اقلام خریدنی");
+      } else if (filter.startsWith("custom_")) {
+        // For custom expense types, check if title matches the custom type
+        const customType = filter.replace("custom_", "").replace(/_/g, " ");
+        matchesFilter = item.title === customType ||
+                       item.bill_type === customType ||
+                       (item.bill_type === 'other' && item.description === customType);
+      } else {
+        // Get the label from categories to match with title
+        const filterLabel = categories.find(cat => cat.value === filter)?.label;
+        
+        // Map expense type filters to actual data
+        const filterMapping = {
+          'water_bill': 'قبض آب',
+          'electricity_bill': 'قبض برق',
+          'gas': 'قبض گاز',
+          'maintenance': 'تعمیرات',
+          'cleaning': 'نظافت',
+          'security': 'امنیت',
+          'camera': 'دوربین',
+          'parking': 'پارکینگ',
+          'charge': 'شارژ',
+          'repair': 'تعمیرات',
+          'rent': 'اجاره',
+          'service': 'خدمات',
+          'other': 'سایر'
+        };
+        
+        const expectedTitle = filterMapping[filter];
+        
+        // Also map filter to backend bill_type values
+        const billTypeMapping = {
+          'water_bill': 'water',
+          'electricity_bill': 'electricity',
+          'gas': 'gas',
+          'maintenance': 'maintenance',
+          'cleaning': 'cleaning',
+          'security': 'security',
+          'camera': 'camera',
+          'parking': 'parking',
+          'charge': 'charge',
+          'repair': 'maintenance',
+          'rent': 'other',
+          'service': 'other',
+          'other': 'other'
+        };
 
-    const matchesSearch =
-      search === "" ||
-      (item.title && item.title.toLowerCase().includes(search)) ||
-      (item.status && item.status.toLowerCase().includes(search)) ||
-      (item.date && item.date.toLowerCase().includes(search)) ||
-      (item.amount && item.amount.toString().includes(search));
+        const expectedBillType = billTypeMapping[filter];
 
-    // فیلتر بر اساس تاریخ
-    let matchesDate = true;
-    if (dateRange && item.date) {
-      try {
-        // Parse item date and normalize to date only (ignore time)
-        const itemDateStr = moment(item.date).format('YYYY-MM-DD');
-        const itemDate = new Date(itemDateStr);
-        itemDate.setHours(0, 0, 0, 0);
-        
-        const fromDate = dateRange.from ? (() => {
-          const d = new Date(dateRange.from);
-          d.setHours(0, 0, 0, 0);
-          return d;
-        })() : null;
-        
-        const toDate = dateRange.to ? (() => {
-          const d = new Date(dateRange.to);
-          d.setHours(23, 59, 59, 999); // Include the entire end date
-          return d;
-        })() : null;
-        
-        if (fromDate && itemDate < fromDate) {
-          matchesDate = false;
-        }
-        if (toDate && itemDate > toDate) {
-          matchesDate = false;
-        }
-      } catch (error) {
-        // If date parsing fails, don't filter out the item
-        console.warn('Error parsing date for filtering:', item.date, error);
+        // Multiple matching strategies
+        matchesFilter =
+          // Match by title (Persian label)
+          (item.title && item.title === expectedTitle) ||
+          // Match by bill_type (backend value)
+          (item.bill_type && item.bill_type === expectedBillType) ||
+          // Match by category (filter value)
+          (item.category && item.category === filter) ||
+          // Match by filter label from categories
+          (item.title && item.title === filterLabel) ||
+          // Match by expense_type if it exists
+          (item.expense_type && item.expense_type === expectedBillType);
       }
-    }
 
-    return matchesFilter && matchesSearch && matchesDate;
-  });
+      const search = searchTerm.trim().toLowerCase();
+
+      const matchesSearch =
+        search === "" ||
+        (item.title && item.title.toLowerCase().includes(search)) ||
+        (item.status && item.status.toLowerCase().includes(search)) ||
+        (item.date && item.date.toLowerCase().includes(search)) ||
+        (item.amount && item.amount.toString().includes(search));
+
+      // فیلتر بر اساس تاریخ
+      let matchesDate = true;
+      if (dateRange && item.date) {
+        try {
+          // Parse item date and normalize to date only (ignore time)
+          const itemDateStr = moment(item.date).format('YYYY-MM-DD');
+          const itemDate = new Date(itemDateStr);
+          itemDate.setHours(0, 0, 0, 0);
+
+          const fromDate = dateRange.from ? (() => {
+            const d = new Date(dateRange.from);
+            d.setHours(0, 0, 0, 0);
+            return d;
+          })() : null;
+
+          const toDate = dateRange.to ? (() => {
+            const d = new Date(dateRange.to);
+            d.setHours(23, 59, 59, 999); // Include the entire end date
+            return d;
+          })() : null;
+
+          if (fromDate && itemDate < fromDate) {
+            matchesDate = false;
+          }
+          if (toDate && itemDate > toDate) {
+            matchesDate = false;
+          }
+        } catch (error) {
+          // If date parsing fails, don't filter out the item
+          console.warn('Error parsing date for filtering:', item.date, error);
+        }
+      }
+
+      return matchesFilter && matchesSearch && matchesDate;
+    });
+  }, [sortedData, filter, categories, searchTerm, dateRange]);
   
   console.log("🔥 Filtered data:", filteredData);
   console.log("🔥 Current filter:", filter);
@@ -255,7 +264,7 @@ export default function FinanceTransactions() {
     console.log("🔥 Sample transaction keys:", Object.keys(sortedData[0]));
   }
   // محاسبه مجموع هزینه
-  const totalCost = filteredData.reduce((sum, t) => sum + t.amount, 0);
+  const totalCost = useMemo(() => filteredData.reduce((sum, t) => sum + t.amount, 0), [filteredData]);
   console.log("🔥 Total cost:", totalCost);
 
   const handleExpense = () => setActiveModal("expense");
