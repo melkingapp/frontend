@@ -34,6 +34,9 @@ export const API_ENDPOINTS = {
   // Billing/Finance
   BILLING: {
     REGISTER_EXPENSE: '/billing/register-expense/',
+    UPDATE_EXPENSE: '/billing/update-expense/',
+    DELETE_EXPENSE: '/billing/delete-expense/',
+    REGISTER_CHARGE: '/billing/register-charge/',
     PAY_BILL: '/billing/pay-bill/',
     FINANCIAL_SUMMARY: '/billing/financial-summary/',
     TRANSACTIONS: '/billing/transactions/',
