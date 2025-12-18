@@ -46,6 +46,9 @@ export default function FloatingActionButton({ items = [], color = "bg-yellow-50
                 <button
                     onClick={() => setOpen((o) => !o)}
                     className={`w-14 h-14 flex items-center justify-center ${color} text-white rounded-full shadow-lg hover:opacity-90 transition`}
+                    aria-label={open ? "بستن منو" : "باز کردن منو"}
+                    aria-expanded={open}
+                    aria-haspopup="true"
                 >
                     <Plus className={`w-6 h-6 transform transition-transform duration-300 ${open ? "rotate-45" : "rotate-0"}`} />
                 </button>
