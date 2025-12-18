@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { publicRoutes } from "./routes/publicRoutes";
@@ -5,6 +6,7 @@ import { managerRoutes } from "./routes/managerRoutes";
 import { residentRoutes } from "./routes/residentRoutes";
 import ScrollToTop from "./shared/components/shared/display/ScrollToTop";
 import AuthMonitor from "./shared/components/AuthMonitor";
+import SuspenseLoader from "./shared/components/shared/SuspenseLoader";
 
 export default function App() {
   return (
@@ -20,20 +22,22 @@ export default function App() {
           }
         }} />
 
-      <Routes>
-        {[...publicRoutes, ...managerRoutes, ...residentRoutes].map((route, index) => (
-          <Route key={index} path={route.path} element={route.element}>
-            {route.children?.map((child, i) => (
-              <Route
-                key={i}
-                index={child.index}
-                path={child.path}
-                element={child.element}
-              />
-            ))}
-          </Route>
-        ))}
-      </Routes>
+      <Suspense fallback={<SuspenseLoader />}>
+        <Routes>
+          {[...publicRoutes, ...managerRoutes, ...residentRoutes].map((route, index) => (
+            <Route key={index} path={route.path} element={route.element}>
+              {route.children?.map((child, i) => (
+                <Route
+                  key={i}
+                  index={child.index}
+                  path={child.path}
+                  element={child.element}
+                />
+              ))}
+            </Route>
+          ))}
+        </Routes>
+      </Suspense>
     </>
   );
 }
