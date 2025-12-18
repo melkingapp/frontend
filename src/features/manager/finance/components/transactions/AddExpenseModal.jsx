@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { X } from "lucide-react";
 import ExpenseForm from "./ExpenseForm";
 import useClickOutside from "../../../../../shared/hooks/useClickOutside";
 import { addExpenseType } from "../../slices/expenseTypesSlice";
@@ -18,7 +19,6 @@ const paymentTargets = [
 const allocationMethods = [
     { value: "owner", label: "مالک" },
     { value: "resident", label: "ساکن" },
-    { value: "both", label: "هردو" },
 ];
 
 const distributionMethods = [
@@ -64,14 +64,11 @@ function generateValue(label) {
         .replace(/[^\w]/g, "") + "_" + Date.now(); // یکتا
 }
 
-export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading = false, buildingId }) {
-    console.log("🔥 AddExpenseModal props:", { isOpen, buildingId, isLoading });
+export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading = false, buildingId, editingExpense }) {
     const dispatch = useDispatch();
     const expenseTypes = useSelector((state) => state.expenseTypes.expenseTypes);
     const buildingUnits = useSelector((state) => {
-        console.log("🔥 Selector called with buildingId:", buildingId);
         const units = selectBuildingUnits(state, buildingId);
-        console.log("🔥 Units from selector:", units);
         return units;
     }, (a, b) => {
         if (!a && !b) return true;
@@ -85,7 +82,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
         amount: "",
         target: "all",
         selectedUnits: [],
-        allocation: "both",
+        allocation: "",
         distribution: "equal",
         description: "",
     });
@@ -96,14 +93,74 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
     const modalRef = useRef(null);
     useClickOutside(modalRef, () => { if (isOpen) onClose(); });
 
+    // پر کردن فرم با مقادیر expense در حالت ویرایش
+    useEffect(() => {
+        if (editingExpense && isOpen) {
+            // Mapping از transaction به form
+            const typeMapping = {
+                'water': 'water_bill',
+                'electricity': 'electricity_bill',
+                'gas': 'gas_bill',
+                'maintenance': 'repair',
+                'cleaning': 'cleaning',
+                'security': 'security',
+                'camera': 'camera',
+                'parking': 'parking',
+                'purchases': 'purchases',
+                'charge': 'charge',
+                'other': 'other',
+            };
+
+            const mappedType = typeMapping[editingExpense.bill_type] || editingExpense.bill_type;
+            
+            // تعیین target بر اساس unit_count
+            let target = "all";
+            if (editingExpense.unit_count === buildingUnits?.length) {
+                target = "all";
+            } else if (editingExpense.unit_count > 0) {
+                target = "custom";
+            }
+
+            // تعیین allocation (فقط یکی: ساکن یا مالک)
+            let allocation = '';
+            if (editingExpense.allocation === 'both') {
+                // اگر both بود، به صورت پیش‌فرض مالک انتخاب می‌شود
+                allocation = 'owner';
+            } else if (editingExpense.allocation) {
+                allocation = editingExpense.allocation;
+            }
+
+            setForm({
+                type: mappedType,
+                customType: "",
+                amount: editingExpense.amount?.toString() || "",
+                target: target,
+                selectedUnits: editingExpense.selectedUnits || [],
+                allocation: allocation,
+                distribution: editingExpense.distribution_method || "equal",
+                description: editingExpense.description || "",
+            });
+        } else if (!isOpen) {
+            // Reset form وقتی modal بسته میشه
+            setForm({
+                type: "",
+                customType: "",
+                amount: "",
+                target: "all",
+                selectedUnits: [],
+                allocation: "",
+                distribution: "equal",
+                description: "",
+            });
+            setUploadedFiles([]);
+        }
+    }, [editingExpense, isOpen, buildingUnits]);
+
     // Fetch building units when modal opens
     useEffect(() => {
         if (isOpen && buildingId) {
-            console.log("🔥 Fetching building units for buildingId:", buildingId);
             dispatch(fetchBuildingUnits(buildingId))
                 .then((result) => {
-                    console.log("🔥 Fetch building units result:", result);
-                    console.log("🔥 Units in result:", result.payload?.units);
                 })
                 .catch((error) => {
                     console.error("🔥 Fetch building units error:", error);
@@ -113,12 +170,8 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
 
     // Filter units based on target selection
     useEffect(() => {
-        console.log("🔥 Building units in AddExpenseModal:", buildingUnits);
-        console.log("🔥 Building units type:", typeof buildingUnits);
-        console.log("🔥 Building units is array:", Array.isArray(buildingUnits));
         
         if (!buildingUnits || !Array.isArray(buildingUnits) || buildingUnits.length === 0) {
-            console.log("🔥 No valid building units, setting empty array");
             setFilteredUnits([]);
             return;
         }
@@ -130,7 +183,6 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
             unit: unit
         }));
 
-        console.log("🔥 Units list created:", unitsList);
 
         switch (form.target) {
             case "full":
@@ -157,7 +209,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
                 amount: "",
                 target: "all",
                 selectedUnits: [],
-                allocation: "both",
+                allocation: "",
                 distribution: "equal",
                 description: "",
             });
@@ -199,7 +251,10 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
             dispatch(addExpenseType({ value: finalValue, label: finalType }));
         }
 
-        onSubmit({ ...form, type: finalType, value: finalValue, files: uploadedFiles });
+        // allocation حالا یک مقدار واحد است (owner یا resident)
+        const finalAllocation = form.allocation;
+
+        onSubmit({ ...form, type: finalType, value: finalValue, allocation: finalAllocation, files: uploadedFiles });
         onClose();
     }, [form, onSubmit, onClose, uploadedFiles, dispatch]);
 
@@ -208,7 +263,18 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
             <div ref={modalRef} className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
-                <h2 className="text-2xl font-bold mb-5 text-gray-800 border-b pb-3">ثبت هزینه</h2>
+                <div className="flex items-center justify-between mb-5 border-b pb-3">
+                    <h2 className="text-2xl font-bold text-gray-800">
+                        {editingExpense ? 'ویرایش هزینه' : 'ثبت هزینه'}
+                    </h2>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="بستن"
+                    >
+                        <X className="w-6 h-6 text-gray-500 hover:text-red-500" />
+                    </button>
+                </div>
                 <ExpenseForm
                     form={form}
                     errors={errors}
@@ -225,6 +291,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
                     onSubmit={handleSubmit}
                     onCancel={onClose}
                     isLoading={isLoading}
+                    isEditing={!!editingExpense}
                 />
             </div>
         </div>

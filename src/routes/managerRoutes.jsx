@@ -17,6 +17,7 @@ import ManagerMembershipPage from "../features/membership/pages/ManagerMembershi
 import ManagerProfile from "../pages/manager/Profile";
 import ManagerSettings from "../pages/manager/Settings";
 import LegalAI from "../pages/manager/LegalAI";
+import AnnounceCharge from "../pages/manager/AnnounceCharge";
 import ProtectedRoute from "../shared/components/shared/ProtectedRoute";
 
 export const managerRoutes = [
@@ -35,6 +36,7 @@ export const managerRoutes = [
             { path: "finance-reports", element: <FinanceTransactions /> },
             { path: "finance/balance", element: <BuildingBalance /> },
             { path: "finance/payments", element: <FinancePaymentsPage /> },
+            { path: "announce-charge", element: <AnnounceCharge /> },
             { path: "notifications", element: <Notifications /> },
             { path: "notifications/news", element: <BuildingNews /> },
             { path: "notifications/services", element: <ServicesPage /> },

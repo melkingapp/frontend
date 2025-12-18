@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { uploadBuildingDocument, deleteBuildingDocument } from '../../../features/settings/settingsSlice';
 import { toast } from 'sonner';
-import { FileText, Upload, Trash2, Download, X, File } from 'lucide-react';
+import { FileText, Upload, Trash2, Download, X, File, Loader2, AlertTriangle } from 'lucide-react';
 import { API_CONFIG } from '../../../config/api';
 
 const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumentDeleted }) => {
@@ -12,6 +12,10 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
     const [documentTitle, setDocumentTitle] = useState('');
     const [documentType, setDocumentType] = useState('rules');
     const [isDragging, setIsDragging] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [documentToDelete, setDocumentToDelete] = useState(null);
     const fileInputRef = useRef(null);
 
     const handleFileChange = (event) => {
@@ -59,28 +63,96 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
         formData.append('file', selectedFile);
 
         try {
+            setIsUploading(true);
+            setUploadProgress(0);
+            
+            // Simulate progress (since we don't have real upload progress)
+            const progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    if (prev >= 90) {
+                        clearInterval(progressInterval);
+                        return 90;
+                    }
+                    return prev + 10;
+                });
+            }, 200);
+
             await dispatch(uploadBuildingDocument({ buildingId, data: formData })).unwrap();
-            toast.success('سند با موفقیت آپلود شد.');
-            setDocumentTitle('');
-            setSelectedFile(null);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
+            
+            clearInterval(progressInterval);
+            setUploadProgress(100);
+            
+            toast.success('✅ سند با موفقیت آپلود شد.');
+            
+            // Reset form
+            setTimeout(() => {
+                setDocumentTitle('');
+                setSelectedFile(null);
+                setUploadProgress(0);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            }, 500);
+            
             onDocumentUploaded(); // Refresh documents list
         } catch (error) {
-            toast.error(`خطا در آپلود سند: ${error.detail || error.message || 'خطای ناشناخته'}`);
+            toast.error(`❌ خطا در آپلود سند: ${error.detail || error.message || 'خطای ناشناخته'}`);
+            setUploadProgress(0);
+        } finally {
+            setIsUploading(false);
         }
     };
 
-    const handleDelete = async (docId) => {
-        if (window.confirm('آیا از حذف این سند اطمینان دارید؟')) {
-            try {
-                await dispatch(deleteBuildingDocument({ buildingId, documentId: docId })).unwrap();
-                toast.success('سند با موفقیت حذف شد.');
-                onDocumentDeleted(); // Refresh documents list
-            } catch (error) {
-                toast.error(`خطا در حذف سند: ${error.detail || error.message || 'خطای ناشناخته'}`);
-            }
+    const confirmDelete = (doc) => {
+        setDocumentToDelete(doc);
+        setShowDeleteModal(true);
+    };
+
+    const handleDelete = async () => {
+        if (!documentToDelete) return;
+
+        try {
+            await dispatch(deleteBuildingDocument({ 
+                buildingId, 
+                documentId: documentToDelete.document_id 
+            })).unwrap();
+            toast.success('✅ سند با موفقیت حذف شد.');
+            setShowDeleteModal(false);
+            setDocumentToDelete(null);
+            onDocumentDeleted(); // Refresh documents list
+        } catch (error) {
+            toast.error(`❌ خطا در حذف سند: ${error.detail || error.message || 'خطای ناشناخته'}`);
+        }
+    };
+
+    const handleDownload = (fileUrl, title) => {
+        try {
+            // استخراج نام فایل از URL
+            const fileName = fileUrl.split('/').pop() || title;
+            
+            // ساخت URL کامل - استفاده از MEDIA_URL بجای BASE_URL
+            const fullUrl = `${API_CONFIG.MEDIA_URL}${fileUrl}`;
+            
+            // ایجاد link با download attribute
+            const link = document.createElement('a');
+            link.href = fullUrl;
+            link.download = fileName;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            
+            // اضافه کردن به DOM و کلیک
+            document.body.appendChild(link);
+            link.click();
+            
+            // حذف از DOM
+            setTimeout(() => {
+                document.body.removeChild(link);
+            }, 100);
+            
+            toast.success('✅ دانلود فایل آغاز شد');
+        } catch (error) {
+            console.error('Download error:', error);
+            toast.error('❌ خطا در دانلود فایل');
         }
     };
 
@@ -184,13 +256,38 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                 )}
             </div>
 
+            {/* Progress Bar */}
+            {isUploading && uploadProgress > 0 && (
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700 font-medium">در حال آپلود...</span>
+                        <span className="text-indigo-600 font-bold">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div 
+                            className="bg-gradient-to-r from-indigo-500 to-blue-600 h-3 rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${uploadProgress}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+
             <button
                 onClick={handleUpload}
-                disabled={loading || !selectedFile || !documentTitle}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                disabled={isUploading || !selectedFile || !documentTitle}
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 border border-transparent text-sm font-semibold rounded-lg shadow-md text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-indigo-600 disabled:hover:to-blue-600 transition-all duration-200 transform hover:scale-105 disabled:transform-none"
             >
-                <Upload size={18} />
-                {loading ? 'در حال آپلود...' : 'آپلود سند'}
+                {isUploading ? (
+                    <>
+                        <Loader2 size={18} className="animate-spin" />
+                        در حال آپلود...
+                    </>
+                ) : (
+                    <>
+                        <Upload size={18} />
+                        آپلود سند
+                    </>
+                )}
             </button>
 
             {/* Documents List */}
@@ -218,18 +315,27 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                 </div>
                                 <div className="flex items-center gap-2 mr-4">
                                     {doc.file_url && (
-                                        <a
-                                            href={`${API_CONFIG.BASE_URL}${doc.file_url}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                            title="دانلود سند"
-                                        >
-                                            <Download size={18} />
-                                        </a>
+                                        <>
+                                            <a
+                                                href={`${API_CONFIG.MEDIA_URL}${doc.file_url}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="مشاهده سند"
+                                            >
+                                                <FileText size={18} />
+                                            </a>
+                                            <button
+                                                onClick={() => handleDownload(doc.file_url, doc.title)}
+                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                title="دانلود سند"
+                                            >
+                                                <Download size={18} />
+                                            </button>
+                                        </>
                                     )}
                                     <button
-                                        onClick={() => handleDelete(doc.document_id)}
+                                        onClick={() => confirmDelete(doc)}
                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="حذف سند"
                                         disabled={loading}
@@ -247,6 +353,94 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        {/* Background overlay */}
+                        <div 
+                            className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+                            onClick={() => {
+                                setShowDeleteModal(false);
+                                setDocumentToDelete(null);
+                            }}
+                        ></div>
+
+                        {/* Modal panel */}
+                        <div className="inline-block align-bottom bg-white rounded-2xl text-right overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div className="bg-gradient-to-br from-red-50 to-orange-50 px-6 pt-6 pb-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-shrink-0 w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                                        <AlertTriangle size={28} className="text-red-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-xl font-bold text-gray-900" id="modal-title">
+                                            تایید حذف سند
+                                        </h3>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            این عمل قابل بازگشت نیست
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white px-6 py-6">
+                                <div className="space-y-4">
+                                    <p className="text-base text-gray-700">
+                                        آیا از حذف سند <span className="font-bold text-gray-900">"{documentToDelete?.title}"</span> اطمینان دارید؟
+                                    </p>
+                                    
+                                    <div className="bg-amber-50 border-r-4 border-amber-400 p-4 rounded-lg">
+                                        <div className="flex">
+                                            <div className="flex-shrink-0">
+                                                <AlertTriangle size={20} className="text-amber-600" />
+                                            </div>
+                                            <div className="mr-3">
+                                                <p className="text-sm text-amber-800">
+                                                    با حذف این سند، تمام کاربران دسترسی به آن را از دست خواهند داد.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row gap-3 justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowDeleteModal(false);
+                                        setDocumentToDelete(null);
+                                    }}
+                                    disabled={loading}
+                                    className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-2.5 border-2 border-gray-300 text-sm font-semibold rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 disabled:opacity-50 transition-all duration-200"
+                                >
+                                    انصراف
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleDelete}
+                                    disabled={loading}
+                                    className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-6 py-2.5 border-2 border-transparent text-sm font-bold rounded-xl shadow-md text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:transform-none"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 size={18} className="animate-spin" />
+                                            در حال حذف...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 size={18} />
+                                            حذف سند
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,22 +1,8 @@
-// API Configuration and Base Service
-const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 
-    (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-      ? 'http://127.0.0.1:8000/api/v1'
-      : `${window.location.protocol}//${window.location.host}/api/v1`),
-  ENDPOINTS: {
-    BUILDING_SETTINGS: (buildingId) => `/buildings/${buildingId}/settings/`,
-    BUILDING_SETTINGS_UPDATE: (buildingId) => `/buildings/${buildingId}/settings/update/`,
-    BUILDING_DOCUMENTS: (buildingId) => `/buildings/${buildingId}/documents/`,
-    BUILDING_DOCUMENTS_UPLOAD: (buildingId) => `/buildings/${buildingId}/documents/upload/`,
-    BUILDING_DOCUMENTS_DELETE: (buildingId, documentId) => `/buildings/${buildingId}/documents/${documentId}/delete/`,
-    NOTIFICATION_SETTINGS: '/notification/settings/',
-    NOTIFICATION_SETTINGS_UPDATE: '/notification/settings/update/',
-    UNIT_RESIDENT_COUNT_UPDATE: (buildingId, unitId) => `/buildings/${buildingId}/units/${unitId}/update-resident-count/`,
-  }
-};
-
-const API_BASE_URL = API_CONFIG.BASE_URL;
+// API Base URL Configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://127.0.0.1:8000/api/v1'
+    : `${window.location.protocol}//${window.location.host}/api/v1`);
 
 class ApiService {
   constructor() {
@@ -295,9 +281,14 @@ class ApiService {
   // Upload file
   async uploadFile(endpoint, formData, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Get fresh auth header
+    const authHeader = await this.getFreshAuthHeader();
+    
     const config = {
       headers: {
-        ...await this.getFreshAuthHeader(),
+        // Don't set Content-Type for FormData - browser will set it with boundary
+        ...authHeader,
         ...options.headers,
       },
       method: 'POST',
@@ -307,14 +298,63 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      
+      // Handle different response types
+      let data;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
 
       if (!response.ok) {
-        let errorMessage = data?.detail || data?.message;
+        let errorMessage = data?.detail || data?.message || data?.error;
+        
+        // Log the full error response for debugging (only in development)
+        if (process.env.NODE_ENV === 'development') {
+          console.error('File Upload Error Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            data: data,
+            url: url
+          });
+        }
         
         // Handle specific HTTP status codes
         switch (response.status) {
           case 401:
+            // Try to refresh token and retry once
+            if (await this.refreshToken()) {
+              console.log('Retrying file upload with refreshed token...');
+              const retryConfig = {
+                ...config,
+                headers: {
+                  ...await this.getFreshAuthHeader(),
+                  ...options.headers,
+                }
+              };
+              const retryResponse = await fetch(url, retryConfig);
+              if (retryResponse.ok) {
+                const retryData = retryResponse.headers.get('content-type')?.includes('application/json') 
+                  ? await retryResponse.json() 
+                  : await retryResponse.text();
+                return { data: retryData, status: retryResponse.status };
+              }
+            }
+            
+            // If refresh failed, clear auth and redirect
+            console.log('🚨 401 Unauthorized on file upload - clearing auth data...');
+            this.clearAuthData();
+            window.dispatchEvent(new CustomEvent('api-unauthorized', {
+              detail: { status: 401, url: url, error: errorMessage }
+            }));
+            
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
+            
             errorMessage = errorMessage || 'Unauthorized';
             break;
           case 403:
@@ -330,7 +370,12 @@ class ApiService {
             errorMessage = errorMessage || `HTTP error! status: ${response.status}`;
         }
         
-        throw new Error(errorMessage);
+        // Create a more detailed error object
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.data = data;
+        error.response = response;
+        throw error;
       }
 
       return { data, status: response.status };

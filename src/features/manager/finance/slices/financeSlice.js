@@ -71,6 +71,32 @@ export const registerExpense = createAsyncThunk(
     }
 );
 
+export const updateExpense = createAsyncThunk(
+    "finance/updateExpense",
+    async (expenseData, { rejectWithValue }) => {
+        try {
+            const { updateExpense } = await import("../../../../shared/services/billingService");
+            const response = await updateExpense(expenseData);
+            return response;
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const deleteExpense = createAsyncThunk(
+    "finance/deleteExpense",
+    async (expenseId, { rejectWithValue }) => {
+        try {
+            const { deleteExpense } = await import("../../../../shared/services/billingService");
+            const response = await deleteExpense(expenseId);
+            return { ...response, expenseId };
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
 export const payBill = createAsyncThunk(
     "finance/payBill",
     async (paymentData, { rejectWithValue }) => {
@@ -391,6 +417,51 @@ const financeSlice = createSlice({
                 state.error = null;
             })
             .addCase(registerExpense.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Update expense
+            .addCase(updateExpense.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateExpense.fulfilled, (state, action) => {
+                state.loading = false;
+                // Update expense in transactions list
+                if (Array.isArray(state.transactions)) {
+                    const index = state.transactions.findIndex(
+                        t => t.id === action.payload.shared_bill_id
+                    );
+                    if (index !== -1) {
+                        // Merge updated data with existing transaction
+                        state.transactions[index] = {
+                            ...state.transactions[index],
+                            ...action.payload.expense
+                        };
+                    }
+                }
+                state.error = null;
+            })
+            .addCase(updateExpense.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Delete expense
+            .addCase(deleteExpense.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(deleteExpense.fulfilled, (state, action) => {
+                state.loading = false;
+                // Remove expense from transactions list
+                if (Array.isArray(state.transactions)) {
+                    state.transactions = state.transactions.filter(
+                        t => t.id !== action.payload.expenseId
+                    );
+                }
+                state.error = null;
+            })
+            .addCase(deleteExpense.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })

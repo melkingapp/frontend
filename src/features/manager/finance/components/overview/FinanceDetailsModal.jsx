@@ -1,10 +1,10 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState, useEffect } from "react";
-import { X, Wallet } from "lucide-react";
+import { X, Wallet, Edit2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import DocumentViewer from "../../../../../shared/components/shared/display/DocumentViewer";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchTransactionDetails, payBill } from "../../slices/financeSlice";
+import { fetchTransactionDetails, payBill, deleteExpense } from "../../slices/financeSlice";
 import { useSelector as useReduxSelector } from "react-redux";
 import { selectMembershipRequests } from "../../../../membership/membershipSlice";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusIcon } from "../../../../../shared/utils";
@@ -54,14 +54,18 @@ const categoryLabels = {
 
 // formatJalaliDate is now imported from utils
 
-export default function FinancenDetailsModal({ transaction, building, onClose, isResident = false }) {
+export default function FinancenDetailsModal({ transaction, building, onClose, isResident = false, onEdit }) {
   const [unitFilter, setUnitFilter] = useState("all"); // all, paid, unpaid
   const [isPaying, setIsPaying] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [localAwaitingApproval, setLocalAwaitingApproval] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const dispatch = useDispatch();
   const { transactionDetails, loading } = useSelector(state => state.finance);
   const membershipRequests = useReduxSelector(selectMembershipRequests);
+  const user = useSelector(state => state.auth.user);
+  const userRole = user?.role;
   
   useEffect(() => {
     setLocalAwaitingApproval(false);
@@ -96,15 +100,26 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     return String(status).toLowerCase();
   };
   
-  // Try to infer current resident's unit_number from approved membership requests in the selected building
+  // تعیین اینکه آیا کاربر می‌تونه پرداخت کنه
+  // 1. resident همیشه می‌تونه پرداخت کنه
+  // 2. owner همیشه می‌تونه پرداخت کنه
+  // 3. manager فقط اگه خودش مالک یا ساکن باشه می‌تونه پرداخت کنه (is_owner_resident)
+  const isOwner = userRole === 'owner';
+  const isManager = userRole === 'manager';
+  const isManagerOwnerResident = isManager && building?.is_owner_resident === true;
+  
+  // Try to infer current user's unit_number from approved membership requests in the selected building
+  // این برای resident، owner و manager که مالک یا ساکن هستن کار می‌کنه
   const residentUnitNumber = (() => {
     try {
       const approved = (membershipRequests || []).filter(req =>
         (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved')
         && (building?.building_id ? req.building === (building.building_id || building.id) : true)
       );
-      // Prefer resident role entry
-      const preferred = approved.find(r => r.role === 'resident') || approved[0];
+      // ترجیح: اول resident، بعد owner، بعد اولین مورد
+      const preferred = approved.find(r => r.role === 'resident') || 
+                       approved.find(r => r.role === 'owner') || 
+                       approved[0];
       return preferred?.unit_number;
     } catch {
       return undefined;
@@ -112,7 +127,8 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
   })();
   
   const derivedAwaitingApproval = (() => {
-    if (!unitDetails?.length || !isResident) return false;
+    // برای resident، owner و manager که می‌تونن پرداخت کنن
+    if (!unitDetails?.length || !(isResident || isOwner || isManagerOwnerResident)) return false;
     const myUnitNumber = residentUnitNumber;
     if (!myUnitNumber) return false;
     const targetUnit = unitDetails.find(
@@ -178,11 +194,11 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
       { label: "📊 دسته‌بندی", value: categoryLabels[transaction.category] || "—" },
     ],
     [
-      { label: "🧱 تعداد واحدها", value: transaction.unit_count ? `${transaction.unit_count} واحد` : "—" },
+      { label: "👤 مسئول پرداخت", value: allocationLabels[transaction.allocation] || allocationLabels[transaction.role] || "—" },
       { label: "💳 روش پرداخت", value: transaction.payment_method === 'online' ? 'آنلاین' : "—" },
     ],
     [
-      { label: "📅 تاریخ سررسید", value: formatJalaliDate(transaction.bill_due) },
+      { label: "🧱 تعداد واحدها", value: transaction.unit_count ? `${transaction.unit_count} واحد` : "—" },
       { label: "🔍 کد پیگیری", value: transaction.tracking_code || "—" },
     ],
     [
@@ -203,7 +219,30 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     ],
   ];
 
-  const canPay = isResident && (transaction.status !== "پرداخت شده" && transaction.status !== "paid");
+  const canPay = (isResident || isOwner || isManagerOwnerResident) && 
+                 (transaction.status !== "پرداخت شده" && transaction.status !== "paid");
+
+  const handleEdit = () => {
+    onClose();
+    if (onEdit) {
+      onEdit(transaction);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteExpense(transaction.id)).unwrap();
+      toast.success('هزینه با موفقیت حذف شد');
+      setShowDeleteConfirm(false);
+      onClose();
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('خطا در حذف هزینه');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handlePaymentConfirm = async (paymentData) => {
     if (!transaction?.id) return;
@@ -287,9 +326,29 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                   <Wallet className="text-primary" />
                   <Dialog.Title className="text-lg font-bold">{transaction.title}</Dialog.Title>
                 </div>
-                <button onClick={onClose}>
-                  <X className="text-gray-500 hover:text-red-500" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {isManager && (
+                    <>
+                      <button
+                        onClick={handleEdit}
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="ویرایش"
+                      >
+                        <Edit2 className="w-5 h-5 text-blue-600" />
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                        title="حذف"
+                      >
+                        <Trash2 className="w-5 h-5 text-red-600" />
+                      </button>
+                    </>
+                  )}
+                  <button onClick={onClose}>
+                    <X className="text-gray-500 hover:text-red-500" />
+                  </button>
+                </div>
               </div>
 
               {/* دکمه پرداخت یا وضعیت در انتظار تایید */}
@@ -350,6 +409,52 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                   <>
                     <h2 className="mb-2 text-lg font-semibold text-melkingDarkBlue">فاکتور</h2>
                     <DocumentViewer documentUrl={transaction.invoiceImageUrl} />
+                  </>
+                )}
+
+                {transaction.attachments && transaction.attachments.length > 0 && (
+                  <>
+                    <h2 className="mb-3 text-lg font-semibold text-melkingDarkBlue">📎 فایل‌های پیوست</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+                      {transaction.attachments.map((attachment, index) => (
+                        <a
+                          key={index}
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative group flex flex-col items-center justify-center p-2 border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                          title={attachment.name}
+                        >
+                          {attachment.type && attachment.type.startsWith('image/') ? (
+                            <img
+                              src={attachment.url}
+                              alt={attachment.name}
+                              className="w-full h-20 object-cover rounded-md mb-2"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center w-full h-20 bg-gray-100 rounded-md mb-2 text-gray-500">
+                              {attachment.type === 'application/pdf' ? (
+                                <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                                </svg>
+                              ) : (
+                                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"/>
+                                </svg>
+                              )}
+                              <span className="text-xs mt-1">{attachment.type?.split('/')[1]?.toUpperCase() || 'FILE'}</span>
+                            </div>
+                          )}
+                          <span className="text-xs text-gray-700 truncate w-full text-center">{attachment.name}</span>
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
                   </>
                 )}
 
@@ -455,6 +560,60 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
           </Transition.Child>
         </div>
       </Dialog>
+
+      {/* دیالوگ تایید حذف */}
+      <Transition show={showDeleteConfirm} as={Fragment}>
+        <Dialog onClose={() => setShowDeleteConfirm(false)} className="relative z-50">
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                <Dialog.Title className="text-lg font-bold mb-4 text-right">
+                  تایید حذف هزینه
+                </Dialog.Title>
+                <p className="text-gray-600 mb-6 text-right">
+                  آیا از حذف این هزینه اطمینان دارید؟ این عمل قابل بازگشت نیست.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                    disabled={isDeleting}
+                  >
+                    انصراف
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'در حال حذف...' : 'حذف'}
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition>
 
       {/* مدال پرداخت */}
       <PaymentModal

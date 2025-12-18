@@ -1,4 +1,4 @@
-import { CreditCard, PieChart, MessageCircle, Bell, Settings, User, Home, Building2, Users, CheckCircle, UserPlus, BookOpen } from "lucide-react";
+import { CreditCard, PieChart, MessageCircle, Bell, Settings, User, Home, Building2, Users, CheckCircle, UserPlus, BookOpen, DollarSign } from "lucide-react";
 
 export const navItemsManager = [
     {
@@ -11,6 +11,11 @@ export const navItemsManager = [
             { label: "بررسی پرداخت", to: "/manager/finance/payments" },
             // { label: "نمودار گزارش", to: "/manager/finance/charts" },
         ],
+    },
+    {
+        label: "اعلام شارژ",
+        icon: <DollarSign size={20} />,
+        to: "/manager/announce-charge",
     },
     {
         label: "اطلاع‌رسانی",

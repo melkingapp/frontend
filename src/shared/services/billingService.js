@@ -3,10 +3,75 @@ import { get, post, put, deleteRequest } from './apiService';
 // Register new expense
 export const registerExpense = async (expenseData) => {
     try {
-        const response = await post('/billing/register-expense/', expenseData);
+        // اگر فایل داریم، باید از FormData استفاده کنیم
+        const formData = new FormData();
+        
+        for (const key in expenseData) {
+            if (expenseData[key] !== undefined && expenseData[key] !== null) {
+                if (key === 'specific_units' && Array.isArray(expenseData[key])) {
+                    // آرایه‌ها رو به JSON تبدیل می‌کنیم
+                    formData.append(key, JSON.stringify(expenseData[key]));
+                } else if (expenseData[key] instanceof File) {
+                    // فایل‌ها رو مستقیماً اضافه می‌کنیم
+                    formData.append(key, expenseData[key], expenseData[key].name);
+                } else {
+                    // بقیه فیلدها رو به صورت عادی اضافه می‌کنیم
+                    formData.append(key, expenseData[key]);
+                }
+            }
+        }
+        
+        // بذار axios خودش Content-Type رو با boundary مناسب set کنه
+        const response = await post('/billing/register-expense/', formData);
         return response;
     } catch (error) {
         console.error('Register expense error:', error);
+        // نمایش پیام خطای Backend اگر موجود باشد
+        if (error.response?.data?.error) {
+            console.error('Backend error:', error.response.data.error);
+        }
+        throw error;
+    }
+};
+
+// Update expense
+export const updateExpense = async (expenseData) => {
+    try {
+        // اگر فایل داریم، باید از FormData استفاده کنیم
+        const formData = new FormData();
+        
+        for (const key in expenseData) {
+            if (expenseData[key] !== undefined && expenseData[key] !== null) {
+                if (key === 'specific_units' && Array.isArray(expenseData[key])) {
+                    formData.append(key, JSON.stringify(expenseData[key]));
+                } else if (expenseData[key] instanceof File) {
+                    formData.append(key, expenseData[key], expenseData[key].name);
+                } else {
+                    formData.append(key, expenseData[key]);
+                }
+            }
+        }
+        
+        const response = await put('/billing/update-expense/', formData);
+        return response;
+    } catch (error) {
+        console.error('Update expense error:', error);
+        if (error.response?.data?.error) {
+            console.error('Backend error:', error.response.data.error);
+        }
+        throw error;
+    }
+};
+
+// Delete expense
+export const deleteExpense = async (expenseId) => {
+    try {
+        const response = await deleteRequest('/billing/delete-expense/', { 
+            data: { shared_bill_id: expenseId } 
+        });
+        return response;
+    } catch (error) {
+        console.error('Delete expense error:', error);
         throw error;
     }
 };

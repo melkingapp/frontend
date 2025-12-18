@@ -22,6 +22,7 @@ export default function ExpenseForm({
     onSubmit,
     onCancel,
     isLoading = false,
+    isEditing = false,
 }) {
     return (
         <>
@@ -111,26 +112,20 @@ export default function ExpenseForm({
                     options={distributionMethods}
                     error={errors.distribution}
                 />
-                {/* توضیح نحوه تخصیص */}
-                <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p className="text-sm text-gray-700">
-                        📊 <strong>توضیح:</strong>
-                        {form.distribution === 'equal' && ' تقسیم مساوی بین همه واحدها'}
-                        {form.distribution === 'per_person' && ' تقسیم بر اساس تعداد نفر (هر واحد 2 نفر)'}
-                        {form.distribution === 'area' && ' تقسیم بر اساس متراژ (هر واحد 75 متر)'}
-                        {form.distribution === 'parking' && ' تقسیم بر اساس تعداد پارکینگ (هر واحد 1 پارکینگ)'}
-                    </p>
-                </div>
             </div>
 
-            <SelectField
-                label="مسئول پرداخت"
-                name="allocation"
-                value={form.allocation}
-                onChange={onChange}
-                options={allocationMethods}
-                error={errors.allocation}
-            />
+            <div className="mb-6">
+                <RadioGroup
+                    label="مسئول پرداخت"
+                    name="allocation"
+                    options={allocationMethods}
+                    value={Array.isArray(form.allocation) ? form.allocation[0] || '' : form.allocation || ''}
+                    onChange={(e) => {
+                        onChange({ target: { name: 'allocation', value: e.target.value } });
+                    }}
+                    error={errors.allocation}
+                />
+            </div>
 
             <div className="mb-6">
                 <label
@@ -165,7 +160,10 @@ export default function ExpenseForm({
                     disabled={isLoading}
                     className="px-5 py-2 rounded-xl bg-melkingDarkBlue text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isLoading ? "در حال ثبت..." : "ثبت هزینه"}
+                    {isLoading 
+                        ? (isEditing ? "در حال ویرایش..." : "در حال ثبت...") 
+                        : (isEditing ? "ویرایش هزینه" : "ثبت هزینه")
+                    }
                 </button>
             </div>
         </>

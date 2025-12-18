@@ -15,11 +15,7 @@ const SettingsService = {
         return ApiService.get(API_CONFIG.ENDPOINTS.BUILDING_DOCUMENTS(buildingId));
     },
     uploadBuildingDocument: async (buildingId, data) => {
-        return ApiService.post(API_CONFIG.ENDPOINTS.BUILDING_DOCUMENTS_UPLOAD(buildingId), data, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        return ApiService.uploadFile(API_CONFIG.ENDPOINTS.BUILDING_DOCUMENTS_UPLOAD(buildingId), data);
     },
     deleteBuildingDocument: async (buildingId, documentId) => {
         return ApiService.delete(API_CONFIG.ENDPOINTS.BUILDING_DOCUMENTS_DELETE(buildingId, documentId));

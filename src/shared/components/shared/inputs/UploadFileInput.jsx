@@ -1,19 +1,52 @@
-import { useState } from "react";
-import { UploadCloud, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { UploadCloud, X, FileText, File } from "lucide-react";
 
 export default function UploadFileInput({ label, onFilesChange, accept = "image/*,application/pdf" }) {
     const [files, setFiles] = useState([]);
+    const [previews, setPreviews] = useState([]);
 
     const handleFiles = (e) => {
         const selectedFiles = Array.from(e.target.files);
         setFiles(selectedFiles);
         if (onFilesChange) onFilesChange(selectedFiles);
+
+        // ایجاد preview برای فایل‌های تصویری
+        const newPreviews = selectedFiles.map(file => {
+            if (file.type.startsWith('image/')) {
+                return URL.createObjectURL(file);
+            }
+            return null;
+        });
+        setPreviews(newPreviews);
     };
 
     const removeFile = (index) => {
+        // پاکسازی URL preview
+        if (previews[index]) {
+            URL.revokeObjectURL(previews[index]);
+        }
+        
         const newFiles = files.filter((_, i) => i !== index);
+        const newPreviews = previews.filter((_, i) => i !== index);
         setFiles(newFiles);
+        setPreviews(newPreviews);
         if (onFilesChange) onFilesChange(newFiles);
+    };
+
+    // پاکسازی URL ها هنگام unmount
+    useEffect(() => {
+        return () => {
+            previews.forEach(preview => {
+                if (preview) URL.revokeObjectURL(preview);
+            });
+        };
+    }, [previews]);
+
+    const getFileIcon = (file) => {
+        if (file.type === 'application/pdf') {
+            return <FileText className="w-8 h-8 text-red-500" />;
+        }
+        return <File className="w-8 h-8 text-gray-500" />;
     };
 
     return (
@@ -37,24 +70,49 @@ export default function UploadFileInput({ label, onFilesChange, accept = "image/
             />
 
             {files.length > 0 && (
-                <ul className="mt-3 max-h-36 overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50">
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {files.map((file, idx) => (
-                        <li
+                        <div
                             key={file.name + idx}
-                            className="flex items-center justify-between text-sm text-gray-700 mb-1 last:mb-0"
+                            className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition"
                         >
-                            <span className="truncate max-w-[80%]">{file.name}</span>
+                            {/* دکمه حذف */}
                             <button
                                 type="button"
                                 onClick={() => removeFile(idx)}
-                                className="text-red-500 hover:text-red-700 transition"
+                                className="absolute top-1 left-1 z-10 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition hover:bg-red-600"
                                 aria-label="حذف فایل"
                             >
                                 <X className="w-4 h-4" />
                             </button>
-                        </li>
+
+                            {/* محتوای فایل */}
+                            <div className="aspect-square flex items-center justify-center bg-gray-50 p-2">
+                                {previews[idx] ? (
+                                    // نمایش تصویر
+                                    <img
+                                        src={previews[idx]}
+                                        alt={file.name}
+                                        className="w-full h-full object-cover rounded"
+                                    />
+                                ) : (
+                                    // نمایش آیکون برای فایل‌های غیر تصویری
+                                    getFileIcon(file)
+                                )}
+                            </div>
+
+                            {/* نام فایل */}
+                            <div className="p-2 bg-white border-t border-gray-100">
+                                <p className="text-xs text-gray-600 truncate" title={file.name}>
+                                    {file.name}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                    {(file.size / 1024).toFixed(1)} KB
+                                </p>
+                            </div>
+                        </div>
                     ))}
-                </ul>
+                </div>
             )}
         </div>
     );

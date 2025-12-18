@@ -13,7 +13,7 @@ import FloatingActionButton from "../../../../shared/components/shared/feedback/
 import AddExpenseModal from "../components/transactions/AddExpenseModal";
 import PayBillModal from "../components/transactions/PayBillModal";
 import useCategories from "../../../../shared/hooks/useCategories";
-import { registerExpense, fetchTransactions, fetchCurrentFundBalance, selectCurrentFundBalance } from "../slices/financeSlice";
+import { registerExpense, updateExpense, deleteExpense, fetchTransactions, fetchCurrentFundBalance, selectCurrentFundBalance } from "../slices/financeSlice";
 import { fetchBuildings, setSelectedBuilding } from "../../building/buildingSlice";
 import { addExpenseType } from "../slices/expenseTypesSlice";
 import { getPersianType } from "../../../../shared/utils/typeUtils";
@@ -30,21 +30,22 @@ export default function FinanceTransactions() {
   const [dateRange, setDateRange] = useState(null); // { from: 'YYYY-MM-DD', to: 'YYYY-MM-DD' }
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [tempDateRange, setTempDateRange] = useState({ from: '', to: '' });
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [deletingExpenseId, setDeletingExpenseId] = useState(null);
   const building = useSelector(selectSelectedBuilding);
   const buildings = useSelector(state => state.building.data);
   const currentFundBalance = useSelector(selectCurrentFundBalance);
+  const user = useSelector(state => state.auth.user);
+  const isManager = user?.role === 'manager';
   const buildingUnits = useSelector(state => {
     const buildingId = building?.building_id || building?.id;
     return buildingId ? state.building.units[buildingId] || [] : [];
   });
   
-  console.log("🔥 Building state:", building);
-  console.log("🔥 Buildings list:", buildings);
   
   // Load buildings if not loaded
   useEffect(() => {
     if (buildings.length === 0) {
-      console.log("🔥 Loading buildings...");
       dispatch(fetchBuildings());
     }
   }, [dispatch, buildings.length]);
@@ -52,7 +53,6 @@ export default function FinanceTransactions() {
   // Auto-select first building if none selected
   useEffect(() => {
     if (buildings.length > 0 && !building) {
-      console.log("🔥 No building selected, auto-selecting first building...");
       const firstBuilding = buildings[0];
       dispatch(setSelectedBuilding(firstBuilding.building_id || firstBuilding.id));
     }
@@ -70,27 +70,20 @@ export default function FinanceTransactions() {
     // Check if user is authenticated
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
-      console.log("🔥 No access token found, skipping transactions fetch");
       return;
     }
 
     if (building && building.building_id) {
-      console.log("🔥 Building selected, loading transactions for building:", building.building_id);
       dispatch(fetchTransactions({ building_id: building.building_id }))
         .then((result) => {
-          console.log("🔥 Fetch transactions result:", result);
-          console.log("🔥 Payload:", result.payload);
-          console.log("🔥 Transactions in payload:", result.payload?.transactions);
         })
         .catch((error) => {
           console.error("🔥 Fetch transactions error:", error);
         });
     } else if (buildings.length > 0 && !building) {
       // If no building selected but buildings are available, load all transactions
-      console.log("🔥 No building selected, loading all transactions...");
       dispatch(fetchTransactions({}))
         .then((result) => {
-          console.log("🔥 Fetch all transactions result:", result);
         })
         .catch((error) => {
           console.error("🔥 Fetch all transactions error:", error);
@@ -101,24 +94,16 @@ export default function FinanceTransactions() {
   // Get transactions from Redux state
   const transactionsData = useSelector(state => state.finance.transactions || []);
   const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
-  console.log("🔥 Transactions from Redux:", transactions);
-  console.log("🔥 Finance state:", useSelector(state => state.finance));
   
   // Debug first transaction
   if (transactions.length > 0) {
-    console.log("🔥 First transaction:", transactions[0]);
-    console.log("🔥 First transaction amount:", transactions[0].amount);
-    console.log("🔥 First transaction keys:", Object.keys(transactions[0]));
   }
   
   const sortedData = [...transactions].sort(
     (a, b) => new Date(b.date) - new Date(a.date)
   );
-  console.log("🔥 Sorted data length:", sortedData.length);
 
   const balance = currentFundBalance?.current_balance || building?.fund_balance || 0;
-  console.log("🔥 Sorted data:", sortedData);
-  console.log("🔥 Sorted data length:", sortedData.length);
   
   // اگر هزینه‌ای وجود داشته باشد، از تاریخ‌های تراکنش‌ها استفاده کن
   // در غیر این صورت از تاریخ ایجاد ساختمان استفاده کن
@@ -247,16 +232,10 @@ export default function FinanceTransactions() {
     return matchesFilter && matchesSearch && matchesDate;
   });
   
-  console.log("🔥 Filtered data:", filteredData);
-  console.log("🔥 Current filter:", filter);
-  console.log("🔥 Categories:", categories);
   if (sortedData.length > 0) {
-    console.log("🔥 Sample transaction:", sortedData[0]);
-    console.log("🔥 Sample transaction keys:", Object.keys(sortedData[0]));
   }
   // محاسبه مجموع هزینه
   const totalCost = filteredData.reduce((sum, t) => sum + t.amount, 0);
-  console.log("🔥 Total cost:", totalCost);
 
   const handleExpense = () => setActiveModal("expense");
   // const handleBill = () => setActiveModal("bill");
@@ -356,6 +335,33 @@ export default function FinanceTransactions() {
     setIsDateModalOpen(false);
   };
 
+  const handleEditExpense = (expense) => {
+    setEditingExpense(expense);
+    setActiveModal("expense");
+  };
+
+  const handleDeleteExpense = async (expense) => {
+    const confirmed = window.confirm(`آیا مطمئن هستید که می‌خواهید این هزینه را حذف کنید؟\n\nنوع: ${getPersianType(expense.title || expense.bill_type)}\nمبلغ: ${expense.amount?.toLocaleString()} تومان`);
+    if (!confirmed) return;
+
+    try {
+      setDeletingExpenseId(expense.id);
+      await dispatch(deleteExpense(expense.id)).unwrap();
+      toast.success('هزینه با موفقیت حذف شد');
+      
+      // Refresh transactions
+      const buildingId = building?.building_id || building?.id;
+      if (buildingId) {
+        await dispatch(fetchTransactions({ building_id: buildingId }));
+      }
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('خطا در حذف هزینه');
+    } finally {
+      setDeletingExpenseId(null);
+    }
+  };
+
   const handleSubmitExpense = async (data) => {
     console.log("Expense Data:", data);
     setIsSubmitting(true);
@@ -370,17 +376,9 @@ export default function FinanceTransactions() {
       
       // Use the selected building ID
       const buildingId = selectedBuilding.building_id || selectedBuilding.id;
-      console.log("🔥 Selected building object:", selectedBuilding);
-      console.log("🔥 Building ID extracted:", buildingId);
-      console.log("🔥 Building ID type:", typeof buildingId);
       
       
-      console.log("🔥 Building ID from selectedBuilding:", selectedBuilding.building_id);
-      console.log("🔥 Building ID from selectedBuilding.id:", selectedBuilding.id);
-      console.log("🔥 Final building ID:", buildingId);
       
-      console.log("🔥 Selected building:", selectedBuilding);
-      console.log("🔥 Building ID:", buildingId);
       
       // Mapping frontend values to backend values
       const expenseTypeMapping = {
@@ -415,8 +413,6 @@ export default function FinanceTransactions() {
         mappedExpenseType = expenseTypeMapping[data.type] || data.type || "other";
       }
       
-      console.log("🔥 Original expense type:", data.type);
-      console.log("🔥 Mapped expense type:", mappedExpenseType);
       
       // تبدیل داده‌های فرم به فرمت API
       let unitSelection = "all_units";
@@ -441,12 +437,22 @@ export default function FinanceTransactions() {
             const unit = buildingUnits?.find(u => u.unit_number === unitNumber || u.id === unitNumber);
             return unit?.units_id || unit?.id || unitNumber;
           }) || [];
-          console.log("🔥 Custom units selected:", data.selectedUnits);
-          console.log("🔥 Building units:", buildingUnits);
-          console.log("🔥 Specific units array (converted to IDs):", specificUnits);
           break;
         default:
           unitSelection = "all_units";
+      }
+
+      // تبدیل allocation از آرایه به string
+      let finalAllocation = "both"; // پیش‌فرض
+      if (Array.isArray(data.allocation)) {
+        if (data.allocation.length === 2 && 
+            data.allocation.includes("owner") && data.allocation.includes("resident")) {
+          finalAllocation = "both";
+        } else if (data.allocation.length === 1) {
+          finalAllocation = data.allocation[0];
+        }
+      } else if (data.allocation) {
+        finalAllocation = data.allocation;
       }
 
       const expenseData = {
@@ -455,9 +461,11 @@ export default function FinanceTransactions() {
         unit_selection: unitSelection,
         specific_units: specificUnits,
         distribution_method: data.distribution || "equal",
-        role: data.allocation || "both",
+        role: finalAllocation,
         description: description,
-        building_id: parseInt(buildingId)
+        building_id: parseInt(buildingId),
+        // اضافه کردن فایل اول از لیست فایل‌ها
+        ...(data.files && data.files.length > 0 && { attachment: data.files[0] })
       };
       
       // Validate required fields
@@ -480,17 +488,18 @@ export default function FinanceTransactions() {
         return;
       }
       
-      console.log("🔥 Validated expense data:", expenseData);
-      
-      console.log("🔥 Final expense data:", expenseData);
-      console.log("🔥 Expense data JSON:", JSON.stringify(expenseData, null, 2));
-      
-      console.log("🔥 Sending expense data:", expenseData);
-      console.log("🔥 Selected building:", selectedBuilding);
-      console.log("🔥 Building ID:", selectedBuilding.building_id);
-      
-      const result = await dispatch(registerExpense(expenseData)).unwrap();
-      console.log("✅ Expense created successfully:", result);
+      // اگر در حال ویرایش هستیم، shared_bill_id اضافه کن
+      let result;
+      if (editingExpense) {
+        const updateData = {
+          ...expenseData,
+          shared_bill_id: editingExpense.id
+        };
+        result = await dispatch(updateExpense(updateData)).unwrap();
+        toast.success('هزینه با موفقیت ویرایش شد');
+      } else {
+        result = await dispatch(registerExpense(expenseData)).unwrap();
+      }
       
       // بررسی اینکه آیا هزینه بدون واحد ثبت شده یا نه
       if (result.building_level) {
@@ -515,35 +524,28 @@ export default function FinanceTransactions() {
       } else {
         displayType = getPersianType(expenseData.expense_type);
       }
-      toast.success(`هزینه با موفقیت ثبت شد!\nنوع: ${displayType}\nمبلغ: ${expenseData.total_amount.toLocaleString()} تومان`);
+      
+      // نمایش پیام موفقیت فقط برای ثبت جدید (ویرایش خودش پیام نمایش میده)
+      if (!editingExpense) {
+        toast.success(`هزینه با موفقیت ثبت شد!\nنوع: ${displayType}\nمبلغ: ${expenseData.total_amount.toLocaleString()} تومان`);
+      }
       
       // Refresh expenses list
-      console.log("🔄 Refreshing expenses list...");
       dispatch(fetchTransactions({ building_id: buildingId }));
       
       setActiveModal(null);
+      setEditingExpense(null);
     } catch (error) {
-      console.error("❌ Expense creation failed:", error);
-      console.error("❌ Error details:", error);
-      console.error("❌ Error response:", error.response);
-      console.error("❌ Error data:", error.data);
-      console.error("❌ Error status:", error.status);
-      
+      const errorData = error.response?.data;
       let errorMessage = "خطا در ثبت هزینه";
-      if (error.message) {
+      if (errorData?.error) {
+        errorMessage = errorData.error;
+      } else if (errorData?.detail) {
+        errorMessage = errorData.detail;
+      } else if (error.message) {
         errorMessage += ": " + error.message;
       }
-      if (error.data?.detail) {
-        errorMessage += "\nجزئیات: " + error.data.detail;
-      }
-      if (error.data?.error) {
-        errorMessage += "\nخطا: " + error.data.error;
-      }
-      if (error.data?.valid_options) {
-        errorMessage += "\nگزینه‌های معتبر: " + JSON.stringify(error.data.valid_options);
-      }
       
-      console.error("❌ Final error message:", errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -583,11 +585,23 @@ export default function FinanceTransactions() {
           <p className="text-sm text-gray-400 mt-4">موردی برای نمایش وجود ندارد.</p>
         ) : (
           filteredData.map((item, index) => (
-            <FinanceTableRow key={`${item.id}-${item.category}-${item.title}-${index}`} transaction={item} onSelect={setSelected} />
+            <FinanceTableRow 
+              key={`${item.id}-${item.category}-${item.title}-${index}`} 
+              transaction={item} 
+              onSelect={setSelected} 
+              onEdit={handleEditExpense}
+              onDelete={handleDeleteExpense}
+              isManager={isManager}
+            />
           ))
         )}
         {/* Modal */}
-        <FinanceDetailsModal building={building} transaction={selected} onClose={() => setSelected(null)} />
+        <FinanceDetailsModal 
+          building={building} 
+          transaction={selected} 
+          onClose={() => setSelected(null)} 
+          onEdit={handleEditExpense}
+        />
       </div>
 
       <FloatingActionButton
@@ -600,10 +614,14 @@ export default function FinanceTransactions() {
 
         <AddExpenseModal
           isOpen={activeModal === "expense"}
-          onClose={() => setActiveModal(null)}
+          onClose={() => {
+            setActiveModal(null);
+            setEditingExpense(null);
+          }}
           onSubmit={handleSubmitExpense}
           isLoading={isSubmitting}
           buildingId={building?.building_id || building?.id}
+          editingExpense={editingExpense}
         />
 
       <PayBillModal
