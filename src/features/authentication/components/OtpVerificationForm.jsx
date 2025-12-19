@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RefreshCcw, Edit3 } from "lucide-react";
 
-export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
+export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack, loading }) {
     const inputsRef = useRef([]);
     const [timer, setTimer] = useState(60);
     const [resendVisible, setResendVisible] = useState(false);
@@ -32,8 +32,12 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
             });
             const otpValue = getOtpValue();
             setOtp(otpValue);
-            if (otpValue.length === 5) handleSubmit(otpValue);
-            else focusInput(otpValue.length);
+            if (otpValue.length === 5) {
+               // Auto-submit removed for better UX/control
+               focusInput(4);
+            } else {
+               focusInput(otpValue.length);
+            }
             return;
         }
 
@@ -42,7 +46,6 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
 
         const otpValue = getOtpValue();
         setOtp(otpValue);
-        if (otpValue.length === 5) handleSubmit(otpValue);
     };
 
     const handleKeyDown = (e, index) => {
@@ -57,7 +60,6 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
             return;
         }
 
-        // مستقیماً onVerify را صدا بزن - validation در LoginForm انجام می‌شود
         setOtpError(false);
         onVerify(enteredOtp);
     };
@@ -69,12 +71,14 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
         inputsRef.current.forEach((el) => el && (el.value = ""));
         focusInput(0);
         setOtp("");
-        // API ارسال مجدد SMS رو اینجا صدا بزن
+        // API call logic would go here
     };
 
     useEffect(() => {
         focusInput(0);
     }, []);
+
+    const isFormValid = (otp?.length === 5);
 
     return (
         <div className="h-[90dvh] flex items-center justify-center bg-gradient-to-br from-[#0B111A] to-[#1C2E4E] p-6 overflow-hidden">
@@ -94,6 +98,7 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                         .map((_, index) => (
                             <input
                                 key={index}
+                                aria-label={`رقم ${index + 1}`}
                                 type="text"
                                 inputMode="numeric"
                                 maxLength={1}
@@ -115,10 +120,17 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
 
                 <button
                     onClick={() => handleSubmit(getOtpValue())}
-                    disabled={getOtpValue().length !== 5}
-                    className="w-full bg-melkingGold text-white py-3 rounded-xl font-bold text-base hover:bg-[#16243f] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!isFormValid || loading}
+                    className="w-full bg-melkingGold text-white py-3 rounded-xl font-bold text-base hover:bg-[#16243f] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                    ورود به سامانه
+                    {loading ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>در حال ورود...</span>
+                        </>
+                    ) : (
+                        "ورود به سامانه"
+                    )}
                 </button>
 
                 <div className="text-center text-sm text-gray-500">
