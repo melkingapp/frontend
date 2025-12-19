@@ -10,7 +10,7 @@ const phoneSchema = yup.object().shape({
         .matches(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
 });
 
-export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role }) {
+export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role, loading }) {
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: { phone },
         resolver: yupResolver(phoneSchema),
@@ -47,9 +47,18 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
                     <div className="space-y-3 pt-4 flex flex-col">
                         <button
                             type="submit"
-                            className="w-full bg-melkingGold text-melkingVeryDark py-3 rounded-xl font-bold text-base hover:bg-[#c6a952] transition"
+                            disabled={loading}
+                            className={`w-full bg-melkingGold text-melkingVeryDark py-3 rounded-xl font-bold text-base hover:bg-[#c6a952] transition flex items-center justify-center gap-2 ${loading ? "opacity-80 cursor-not-allowed" : ""
+                                }`}
                         >
-                            دریافت کد تأیید
+                            {loading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-melkingVeryDark border-t-transparent rounded-full animate-spin"></div>
+                                    <span>در حال پردازش...</span>
+                                </>
+                            ) : (
+                                "دریافت کد تأیید"
+                            )}
                         </button>
 
                         <button
