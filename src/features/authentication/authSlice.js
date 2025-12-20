@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { register, login as loginService, refreshToken as refreshTokenService, logout as logoutService } from "../../shared/services/authService";
 import { getProfile, updateProfile as updateProfileService, changePassword as changePasswordService } from "../../shared/services/profileService";
+import { sanitizeUser } from "../../shared/utils/security";
 
 // Async thunks for API calls
 export const registerUser = createAsyncThunk(
@@ -100,7 +101,7 @@ const authSlice = createSlice({
     initialState,
     reducers: {
         login: (state, action) => {
-            state.user = action.payload.user;
+            state.user = sanitizeUser(action.payload.user);
             state.tokens = action.payload.tokens;
             state.isAuthenticated = true;
             state.error = null;
@@ -178,7 +179,7 @@ const authSlice = createSlice({
             })
             .addCase(registerUser.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = action.payload.user;
+                state.user = sanitizeUser(action.payload.user);
                 state.tokens = action.payload.tokens;
                 state.isAuthenticated = true;
                 state.error = null;
@@ -194,7 +195,7 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = action.payload.user;
+                state.user = sanitizeUser(action.payload.user);
                 state.tokens = action.payload.tokens;
                 state.isAuthenticated = true;
                 state.error = null;
@@ -227,7 +228,7 @@ const authSlice = createSlice({
             })
             .addCase(fetchUserProfile.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = action.payload;
+                state.user = sanitizeUser(action.payload);
                 state.error = null;
             })
             .addCase(fetchUserProfile.rejected, (state, action) => {
@@ -241,7 +242,8 @@ const authSlice = createSlice({
             })
             .addCase(updateUserProfile.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = { ...state.user, ...action.payload };
+                // We sanitize the merged result to ensure no pollution happens
+                state.user = sanitizeUser({ ...state.user, ...action.payload });
                 state.error = null;
             })
             .addCase(updateUserProfile.rejected, (state, action) => {
