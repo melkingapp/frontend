@@ -13,6 +13,13 @@ const COLORS = {
     white: 'bg-white text-black border-2 border-black hover:bg-gray-100',
 };
 
+const SPINNER_COLORS = {
+    darkBlue: 'border-white',
+    gold: 'border-white',
+    whiteBlue: 'border-[#2C5A8C]',
+    white: 'border-black',
+};
+
 export default function Button({
     size = 'medium',
     color = 'darkBlue',
@@ -41,7 +48,7 @@ export default function Button({
         >
             {loading ? (
                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className={`w-4 h-4 border-2 ${SPINNER_COLORS[color] || 'border-white'} border-t-transparent rounded-full animate-spin`}></div>
                     <span>در حال پردازش...</span>
                 </div>
             ) : (
