@@ -1,21 +1,24 @@
-import ResidentLayout from "../layout/residentLayout/ResidentLayout";
-import DashboardResident from "../pages/resident/DashboardResident";
-import Finance from "../pages/resident/Finance";
-import FinanceTransactions from "../features/resident/finance/pages/FinanceTransactions";
-import BuildingBalance from "../features/resident/finance/pages/BuildingBalance";
-import Notifications from "../pages/resident/Notifications";
-import BuildingNews from "../features/resident/notification/pages/BuildingNews";
-import ServicesPage from "../features/resident/notification/pages/ServicesPage";
-import SurveyPage from "../features/resident/notification/pages/SurveyPage";
-import UnitManagement from "../pages/resident/UnitManagement";
-import UnitsPage from "../features/resident/unitManagement/pages/UnitsPage";
-import RequestsPage from "../features/resident/unitManagement/pages/RequestsPage";
-import TransactionsPage from "../features/resident/unitManagement/pages/TransactionsPage";
-import MembershipRequestsPage from "../features/membership/pages/MembershipRequestsPage";
-import ResidentProfile from "../pages/resident/Profile";
-import ResidentSettings from "../pages/resident/Settings";
-import ResidentLegalAI from "../pages/resident/LegalAI";
+import React from 'react';
 import ProtectedRoute from "../shared/components/shared/ProtectedRoute";
+
+const ResidentLayout = React.lazy(() => import("../layout/residentLayout/ResidentLayout"));
+const DashboardResident = React.lazy(() => import("../pages/resident/DashboardResident"));
+const Finance = React.lazy(() => import("../pages/resident/Finance"));
+const FinanceTransactions = React.lazy(() => import("../features/resident/finance/pages/FinanceTransactions"));
+const BuildingBalance = React.lazy(() => import("../features/resident/finance/pages/BuildingBalance"));
+const Notifications = React.lazy(() => import("../pages/resident/Notifications"));
+const BuildingNews = React.lazy(() => import("../features/resident/notification/pages/BuildingNews"));
+const ServicesPage = React.lazy(() => import("../features/resident/notification/pages/ServicesPage"));
+const SurveyPage = React.lazy(() => import("../features/resident/notification/pages/SurveyPage"));
+const UnitManagement = React.lazy(() => import("../pages/resident/UnitManagement"));
+const UnitsPage = React.lazy(() => import("../features/resident/unitManagement/pages/UnitsPage"));
+const RequestsPage = React.lazy(() => import("../features/resident/unitManagement/pages/RequestsPage"));
+const TransactionsPage = React.lazy(() => import("../features/resident/unitManagement/pages/TransactionsPage"));
+const MembershipRequestsPage = React.lazy(() => import("../features/membership/pages/MembershipRequestsPage"));
+const ResidentProfile = React.lazy(() => import("../pages/resident/Profile"));
+const ResidentSettings = React.lazy(() => import("../pages/resident/Settings"));
+const ResidentLegalAI = React.lazy(() => import("../pages/resident/LegalAI"));
+
 
 export const residentRoutes = [
     {
