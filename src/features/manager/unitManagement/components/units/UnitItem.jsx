@@ -1,7 +1,9 @@
 import { Home, Phone, Square, Car, Edit, CheckCircle2, XCircle, CircleSlash, Layers } from "lucide-react";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 
-export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
+// Optimization: Wrapped in React.memo to prevent unnecessary re-renders when parent state changes.
+// Only re-renders if props (unit, onSelect, onEdit) change.
+const UnitItem = React.memo(({ unit, onSelect, onEdit = () => {} }) => {
     const isOccupied = unit.is_occupied || false;
     
     // استفاده از فیلدهای جدید
@@ -184,4 +186,8 @@ export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
             </div>
         </article>
     );
-}
+});
+
+UnitItem.displayName = "UnitItem";
+
+export default UnitItem;
