@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { login } from "../authentication/authSlice";
 import { sendOtp, verifyOtp, login as authLogin } from "../../shared/services/authService";
+import { sanitizeUser } from "../../shared/utils/security";
 
 import PhoneInputForm from "./components/PhoneInputForm";
 import OtpVerificationForm from "./components/OtpVerificationForm";
@@ -86,14 +87,16 @@ export default function LoginForm() {
             localStorage.setItem('access_token', data.tokens.access);
             localStorage.setItem('refresh_token', data.tokens.refresh);
             
+            const sanitizedUser = sanitizeUser(data.user);
+
             dispatch(login({ 
-                phone: data.user.phone_number, 
-                role: data.user.role,
-                user: data.user
+                phone: sanitizedUser.phone_number,
+                role: sanitizedUser.role,
+                user: sanitizedUser
             }));
             
             // ذخیره در authService
-            await authLogin(data.tokens.access, data.tokens.refresh, data.user);
+            await authLogin(data.tokens.access, data.tokens.refresh, sanitizedUser);
             
             // هدایت بر اساس نقش کاربر و صفحه قبلی
             const from = location.state?.from?.pathname || '/';
