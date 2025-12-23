@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { login } from "../authentication/authSlice";
 import { sendOtp, verifyOtp, login as authLogin } from "../../shared/services/authService";
+import { sanitizeUser } from "../../shared/utils/security";
 
 import PhoneInputForm from "./components/PhoneInputForm";
 import OtpVerificationForm from "./components/OtpVerificationForm";
@@ -19,10 +20,6 @@ export default function LoginForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     
-    console.log("phone:", phone);
-    console.log("otp:", otp);
-    console.log("role:", role);
-
     useEffect(() => {
         if (role !== "manager" && role !== "resident") {
             navigate("/login", { replace: true });
@@ -31,7 +28,6 @@ export default function LoginForm() {
 
     const handleSendOtp = async (phoneFromForm) => {
         const phoneNumber = phoneFromForm || phone;
-        console.log(`ارسال کد برای شماره ${phoneNumber} نقش: ${role}`);
         
         if (!phoneNumber || !role) {
             setError('شماره تلفن و نقش الزامی است');
@@ -49,12 +45,8 @@ export default function LoginForm() {
         
         try {
             const data = await sendOtp(phoneNumber, role);
-            console.log('Send OTP Response:', data);
             
-            console.log('کد ارسال شد:', data.otp); // فقط برای توسعه
-            if (data.otp) {
-                console.log(`🔐 کد تایید: ${data.otp}`); // نمایش در کنسول
-            }
+            // 🛡️ Sentinel: Removed sensitive OTP logging
             setStep(2);
             setError('');
         } catch (error) {
@@ -77,23 +69,23 @@ export default function LoginForm() {
         setError('');
 
         try {
-            console.log('Verifying OTP:', { phone_number: phone, role: role, otp: codeToVerify });
-            
             const data = await verifyOtp(phone, role, codeToVerify);
-            console.log('Verify response:', data);
             
+            // 🛡️ Sentinel: Sanitize user data before storage
+            const sanitizedUser = sanitizeUser(data.user);
+
             // ذخیره توکن در localStorage
             localStorage.setItem('access_token', data.tokens.access);
             localStorage.setItem('refresh_token', data.tokens.refresh);
             
             dispatch(login({ 
-                phone: data.user.phone_number, 
-                role: data.user.role,
-                user: data.user
+                phone: sanitizedUser.phone_number,
+                role: sanitizedUser.role,
+                user: sanitizedUser
             }));
             
             // ذخیره در authService
-            await authLogin(data.tokens.access, data.tokens.refresh, data.user);
+            await authLogin(data.tokens.access, data.tokens.refresh, sanitizedUser);
             
             // هدایت بر اساس نقش کاربر و صفحه قبلی
             const from = location.state?.from?.pathname || '/';
