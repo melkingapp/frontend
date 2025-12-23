@@ -123,7 +123,7 @@ export default function CustomAmountsEditor({
         {/* Title */}
         <div className="sm:col-span-2">
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-            عنوان اعلام شارژ *
+            عنوان شارژ *
           </label>
           <input
             type="text"

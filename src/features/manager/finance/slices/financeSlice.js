@@ -19,7 +19,8 @@ import {
     getCurrentFundBalance,
     registerExpense as registerExpenseService,
     payBill as payBillService,
-    uploadExpenseAttachment as uploadExpenseAttachmentService
+    uploadExpenseAttachment as uploadExpenseAttachmentService,
+    getExpenseAllocation as getExpenseAllocationService
 } from "../../../../shared/services/billingService";
 
 // Async thunks for billing/finance operations
@@ -91,6 +92,18 @@ export const deleteExpense = createAsyncThunk(
             const { deleteExpense } = await import("../../../../shared/services/billingService");
             const response = await deleteExpense(expenseId);
             return { ...response, expenseId };
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const fetchExpenseAllocation = createAsyncThunk(
+    "finance/fetchExpenseAllocation",
+    async (sharedBillId, { rejectWithValue }) => {
+        try {
+            const response = await getExpenseAllocationService(sharedBillId);
+            return response;
         } catch (error) {
             return rejectWithValue(error.message);
         }
@@ -462,6 +475,19 @@ const financeSlice = createSlice({
                 state.error = null;
             })
             .addCase(deleteExpense.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Fetch expense allocation
+            .addCase(fetchExpenseAllocation.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchExpenseAllocation.fulfilled, (state, action) => {
+                state.loading = false;
+                state.error = null;
+            })
+            .addCase(fetchExpenseAllocation.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })

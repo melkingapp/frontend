@@ -34,6 +34,40 @@ export const registerExpense = async (expenseData) => {
     }
 };
 
+// Register new charge
+export const registerCharge = async (chargeData) => {
+    try {
+        // اگر فایل داریم، باید از FormData استفاده کنیم
+        const formData = new FormData();
+        
+        for (const key in chargeData) {
+            if (chargeData[key] !== undefined && chargeData[key] !== null) {
+                if (key === 'specific_units' && Array.isArray(chargeData[key])) {
+                    // آرایه‌ها رو به JSON تبدیل می‌کنیم
+                    formData.append(key, JSON.stringify(chargeData[key]));
+                } else if (chargeData[key] instanceof File) {
+                    // فایل‌ها رو مستقیماً اضافه می‌کنیم
+                    formData.append(key, chargeData[key], chargeData[key].name);
+                } else {
+                    // بقیه فیلدها رو به صورت عادی اضافه می‌کنیم
+                    formData.append(key, chargeData[key]);
+                }
+            }
+        }
+        
+        // بذار axios خودش Content-Type رو با boundary مناسب set کنه
+        const response = await post('/billing/register-charge/', formData);
+        return response;
+    } catch (error) {
+        console.error('Register charge error:', error);
+        // نمایش پیام خطای Backend اگر موجود باشد
+        if (error.response?.data?.error) {
+            console.error('Backend error:', error.response.data.error);
+        }
+        throw error;
+    }
+};
+
 // Update expense
 export const updateExpense = async (expenseData) => {
     try {
@@ -66,12 +100,22 @@ export const updateExpense = async (expenseData) => {
 // Delete expense
 export const deleteExpense = async (expenseId) => {
     try {
-        const response = await deleteRequest('/billing/delete-expense/', { 
-            data: { shared_bill_id: expenseId } 
-        });
+        // ارسال shared_bill_id به عنوان query parameter
+        const response = await deleteRequest(`/billing/delete-expense/?shared_bill_id=${expenseId}`);
         return response;
     } catch (error) {
         console.error('Delete expense error:', error);
+        throw error;
+    }
+};
+
+// Get expense allocation
+export const getExpenseAllocation = async (sharedBillId) => {
+    try {
+        const response = await get(`/billing/get-expense-allocation/?shared_bill_id=${sharedBillId}`);
+        return response;
+    } catch (error) {
+        console.error('Get expense allocation error:', error);
         throw error;
     }
 };
@@ -354,9 +398,147 @@ export const getCurrentFundBalance = async (buildingId) => {
     }
 };
 
+// Charge Formulas APIs
+// Get list of charge formulas for a building
+export const getChargeFormulas = async (buildingId) => {
+    try {
+        const response = await get(`/billing/formulas/?building_id=${buildingId}`);
+        return response;
+    } catch (error) {
+        console.error('Get charge formulas error:', error);
+        throw error;
+    }
+};
+
+// Create a new charge formula
+export const createChargeFormula = async (formulaData) => {
+    try {
+        const response = await post('/billing/formulas/create/', formulaData);
+        return response;
+    } catch (error) {
+        console.error('Create charge formula error:', error);
+        if (error.response?.data?.error) {
+            console.error('Backend error:', error.response.data.error);
+        }
+        throw error;
+    }
+};
+
+// Get charge formula details
+export const getChargeFormula = async (formulaId) => {
+    try {
+        const response = await get(`/billing/formulas/${formulaId}/`);
+        return response;
+    } catch (error) {
+        console.error('Get charge formula error:', error);
+        throw error;
+    }
+};
+
+// Update charge formula
+export const updateChargeFormula = async (formulaId, formulaData) => {
+    try {
+        const response = await put(`/billing/formulas/${formulaId}/`, formulaData);
+        return response;
+    } catch (error) {
+        console.error('Update charge formula error:', error);
+        if (error.response?.data?.error) {
+            console.error('Backend error:', error.response.data.error);
+        }
+        throw error;
+    }
+};
+
+// Delete charge formula
+export const deleteChargeFormula = async (formulaId) => {
+    try {
+        const response = await deleteRequest(`/billing/formulas/${formulaId}/`);
+        return response;
+    } catch (error) {
+        console.error('Delete charge formula error:', error);
+        throw error;
+    }
+};
+
+// Announce charge (new endpoint with auto_schedule support)
+export const announceCharge = async (chargeData) => {
+    try {
+        const response = await post('/billing/announce-charge/', chargeData);
+        return response;
+    } catch (error) {
+        console.error('Announce charge error:', error);
+        if (error.response?.data?.error) {
+            console.error('Backend error:', error.response.data.error);
+        }
+        throw error;
+    }
+};
+
+// Charge Schedule Management APIs
+// Get list of charge schedules
+export const getChargeSchedules = async (buildingId = null, isActive = null) => {
+    try {
+        const params = new URLSearchParams();
+        if (buildingId) params.append('building_id', buildingId);
+        if (isActive !== null) params.append('is_active', isActive);
+        
+        const queryString = params.toString() ? `?${params.toString()}` : '';
+        const response = await get(`/billing/schedules/${queryString}`);
+        return response;
+    } catch (error) {
+        console.error('Get charge schedules error:', error);
+        throw error;
+    }
+};
+
+// Get charge schedule details
+export const getChargeSchedule = async (scheduleId) => {
+    try {
+        const response = await get(`/billing/schedules/${scheduleId}/`);
+        return response;
+    } catch (error) {
+        console.error('Get charge schedule error:', error);
+        throw error;
+    }
+};
+
+// Toggle schedule (activate/deactivate)
+export const toggleChargeSchedule = async (scheduleId) => {
+    try {
+        const response = await post(`/billing/schedules/${scheduleId}/toggle/`);
+        return response;
+    } catch (error) {
+        console.error('Toggle charge schedule error:', error);
+        throw error;
+    }
+};
+
+// Execute schedule manually
+export const executeChargeSchedule = async (scheduleId) => {
+    try {
+        const response = await post(`/billing/schedules/${scheduleId}/execute/`);
+        return response;
+    } catch (error) {
+        console.error('Execute charge schedule error:', error);
+        throw error;
+    }
+};
+
+// Delete schedule
+export const deleteChargeSchedule = async (scheduleId) => {
+    try {
+        const response = await deleteRequest(`/billing/schedules/${scheduleId}/`);
+        return response;
+    } catch (error) {
+        console.error('Delete charge schedule error:', error);
+        throw error;
+    }
+};
+
 // Default export (برای backward compatibility)
 const billingService = {
     registerExpense,
+    registerCharge,
     payBill,
     getFinancialSummary,
     getTransactions,
@@ -375,7 +557,18 @@ const billingService = {
     deleteBalanceTransaction,
     getBalanceTransactionDetails,
     exportBalanceData,
-    getCurrentFundBalance
+    getCurrentFundBalance,
+    getChargeFormulas,
+    createChargeFormula,
+    getChargeFormula,
+    updateChargeFormula,
+    deleteChargeFormula,
+    announceCharge,
+    getChargeSchedules,
+    getChargeSchedule,
+    toggleChargeSchedule,
+    executeChargeSchedule,
+    deleteChargeSchedule
 };
 
 export default billingService;

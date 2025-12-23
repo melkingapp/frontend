@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Trash2, AlertTriangle } from "lucide-react";
+import { X, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import UnitRequestItem from "./modalItem/UnitRequestItem";
 import UnitTransactionItem from "./modalItem/UnitTransactionItem";
@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUnit, deleteUnit } from "../../slices/unitsSlice";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
+import { getUnitFinancialTransactions } from "../../../../../shared/services/transactionsService";
+import { getPersianType } from "../../../../../shared/utils/typeUtils";
 
 export default function UnitDetailsModal({ unit, isOpen, onClose }) {
     const navigate = useNavigate();
@@ -24,6 +26,9 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
     const [ownerData, setOwnerData] = useState({});
     const [tenantData, setTenantData] = useState({});
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [financialTransactions, setFinancialTransactions] = useState([]);
+    const [financialSummary, setFinancialSummary] = useState(null);
+    const [loadingFinancial, setLoadingFinancial] = useState(false);
 
     useEffect(() => {
         if (unit) {
@@ -63,6 +68,32 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
         }
     }, [unit]);
 
+    // Fetch financial transactions when unit changes
+    useEffect(() => {
+        if (isOpen && unit && unit.units_id) {
+            setLoadingFinancial(true);
+            getUnitFinancialTransactions(unit.units_id)
+                .then((response) => {
+                    if (response.transactions) {
+                        setFinancialTransactions(response.transactions);
+                    }
+                    if (response.summary) {
+                        setFinancialSummary(response.summary);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error fetching financial transactions:', error);
+                    toast.error('خطا در دریافت گردش مالی واحد');
+                })
+                .finally(() => {
+                    setLoadingFinancial(false);
+                });
+        } else {
+            setFinancialTransactions([]);
+            setFinancialSummary(null);
+        }
+    }, [isOpen, unit]);
+
     useEffect(() => {
         const handleEsc = (e) => {
             if (e.key === "Escape") onClose();
@@ -81,10 +112,30 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
 
     const handleShowMoreTx = () => setVisibleTxCount((prev) => Math.min(prev + 4, maxTxVisible));
     const handleShowLessTx = () => setVisibleTxCount(initialTxCount);
-    const sortedTx = unit.transactions
-        ? [...unit.transactions].sort((a, b) => moment(b.date).valueOf() - moment(a.date).valueOf())
+    
+    // Use financial transactions if available, otherwise fall back to unit.transactions
+    const transactionsToUse = financialTransactions.length > 0 
+        ? financialTransactions 
+        : (unit.transactions || []);
+    
+    const sortedTx = transactionsToUse
+        ? [...transactionsToUse].sort((a, b) => {
+            const dateA = a.date ? moment(a.date).valueOf() : 0;
+            const dateB = b.date ? moment(b.date).valueOf() : 0;
+            return dateB - dateA;
+        })
         : [];
-    const txToShow = sortedTx.slice(0, visibleTxCount);
+
+    // فقط تراکنش‌های مرتبط با هزینه (قبوض مشترک و فاکتورهای واحد)
+    // اگر invoice به یک shared_bill متصل است، در backend برای آن expense_name ست شده
+    // اینجا فقط یکی را نگه می‌داریم: یا shared_bill یا invoice مستقل بدون expense_name
+    const expenseTransactions = sortedTx.filter(
+        (tx) =>
+            tx.type === "shared_bill" ||
+            (tx.type === "invoice" && !tx.expense_name) ||
+            tx.category === "individual_invoice"
+    );
+    const txToShow = expenseTransactions.slice(0, visibleTxCount);
 
     const goToUnitTransactionsPage = () => {
         navigate("/manager/unit-management/transactions", { state: { unitNumber: unit.unitNumber } });
@@ -265,25 +316,90 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                         </div>
                     )}
 
+                    {/* Financial Summary */}
+                    {financialSummary && (
+                        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                            <h3 className="font-semibold mb-3 text-gray-800 text-lg">خلاصه گردش مالی</h3>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="bg-white p-3 rounded-lg shadow-sm">
+                                    <div className="text-gray-600">تعداد فاکتورها</div>
+                                    <div className="text-lg font-bold text-gray-900">{financialSummary.total_invoices || 0}</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {financialSummary.total_amount_invoices?.toLocaleString('fa-IR') || 0} تومان
+                                    </div>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg shadow-sm">
+                                    <div className="text-gray-600">تعداد پرداخت‌ها</div>
+                                    <div className="text-lg font-bold text-emerald-600">{financialSummary.total_payments || 0}</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {financialSummary.total_amount_payments?.toLocaleString('fa-IR') || 0} تومان
+                                    </div>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg shadow-sm">
+                                    <div className="text-gray-600">تعداد بدهی‌ها</div>
+                                    <div className="text-lg font-bold text-red-600">{financialSummary.total_debts || 0}</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {financialSummary.total_amount_debts?.toLocaleString('fa-IR') || 0} تومان
+                                    </div>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg shadow-sm">
+                                    <div className="text-gray-600">صورتحساب‌های مشترک</div>
+                                    <div className="text-lg font-bold text-indigo-600">{financialSummary.total_shared_bills || 0}</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Recent Transactions */}
                     <div className="mb-6">
-                        <h3 className="font-semibold mb-3 text-gray-800 text-lg">تراکنش‌های اخیر</h3>
-                        {unit.transactions?.length > 0 ? (
-                            txToShow.map((tx) => <UnitTransactionItem key={tx.id} transaction={tx} />)
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-gray-800 text-lg">گردش مالی واحد</h3>
+                            {loadingFinancial && (
+                                <Loader2 className="animate-spin text-gray-400" size={20} />
+                            )}
+                        </div>
+                        {loadingFinancial ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 className="animate-spin text-melkingDarkBlue" size={24} />
+                                <span className="mr-2 text-gray-600">در حال بارگذاری...</span>
+                            </div>
+                        ) : sortedTx.length > 0 ? (
+                            <>
+                                {txToShow.map((tx) => {
+                                    // این لیست فقط شامل هزینه‌هاست (shared_bill / invoice)
+                                    const expenseName = tx.expense_name || tx.expense_details?.expense_name || null;
+
+                                    // نوع تراکنش به فارسی برای نمایش (invoice / payment / shared_bill ...)
+                                    const persianTransactionType = getPersianType(tx.type || tx.transaction_type || "");
+
+                                    const formattedTx = {
+                                        id: tx.id,
+                                        title: expenseName || persianTransactionType || tx.transaction_type || tx.type || "تراکنش",
+                                        amount: tx.amount || 0,
+                                        date: tx.date,
+                                        due_date: tx.expense_details?.bill_due || tx.due_date || null,
+                                        status: tx.status_label || tx.status || "نامشخص",
+                                        type: tx.type, // invoice, payment, debt, shared_bill
+                                        transaction_type: tx.transaction_type,
+                                        expense_name: expenseName,
+                                    };
+                                    return <UnitTransactionItem key={`${tx.type}-${tx.id}`} transaction={formattedTx} />;
+                                })}
+
+                                {sortedTx.length > 0 && visibleTxCount < Math.min(sortedTx.length, maxTxVisible) && (
+                                    <button onClick={handleShowMoreTx} className="text-sm text-blue-600 mt-2 hover:underline">
+                                        مشاهده بیشتر
+                                    </button>
+                                )}
+
+                                {sortedTx.length > initialTxCount && visibleTxCount > initialTxCount && (
+                                    <button onClick={handleShowLessTx} className="text-sm text-gray-600 mt-1 hover:underline">
+                                        مشاهده کمتر
+                                    </button>
+                                )}
+                            </>
                         ) : (
                             <p className="text-gray-500 text-sm">این واحد تراکنشی انجام نداده است.</p>
-                        )}
-
-                        {unit.transactions?.length > 0 && visibleTxCount < Math.min(unit.transactions.length, maxTxVisible) && (
-                            <button onClick={handleShowMoreTx} className="text-sm text-blue-600 mt-2 hover:underline">
-                                مشاهده بیشتر
-                            </button>
-                        )}
-
-                        {unit.transactions?.length > initialTxCount && visibleTxCount > initialTxCount && (
-                            <button onClick={handleShowLessTx} className="text-sm text-gray-600 mt-1 hover:underline">
-                                مشاهده کمتر
-                            </button>
                         )}
 
                         <button onClick={goToUnitTransactionsPage} className="block mt-2 text-sm text-gray-700 hover:underline">

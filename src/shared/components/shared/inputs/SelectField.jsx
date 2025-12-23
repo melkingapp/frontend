@@ -3,7 +3,7 @@ function ErrorMessage({ children }) {
     return <p className="text-red-500 text-xs mb-3">{children}</p>;
 }
 
-export default function SelectField({ label, name, value, onChange, options, error }) {
+export default function SelectField({ label, name, value, onChange, options, error, disabled = false }) {
     return (
         <div className="mb-4">
             <label htmlFor={name} className="block text-sm font-semibold text-gray-700 mb-2">
@@ -14,8 +14,8 @@ export default function SelectField({ label, name, value, onChange, options, err
                 name={name}
                 value={value}
                 onChange={onChange}
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 ${error ? "border-red-500" : "border-gray-200"
-                    }`}
+                disabled={disabled}
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 ${error ? "border-red-500" : "border-gray-200"} ${disabled ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
             >
                 <option value="">انتخاب کنید</option>
                 {options.map(({ value: optVal, label: optLabel }, index) => (

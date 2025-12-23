@@ -64,6 +64,19 @@ export const getPersianType = (type) => {
     
     'individual_invoice': 'فاکتور فردی',
     'فاکتور فردی': 'فاکتور فردی',
+    
+    // Transaction types
+    'invoice': 'فاکتور',
+    'Invoice': 'فاکتور',
+    'فاکتور': 'فاکتور',
+    
+    'payment': 'پرداخت',
+    'Payment': 'پرداخت',
+    'پرداخت': 'پرداخت',
+    
+    'debt': 'بدهی',
+    'Debt': 'بدهی',
+    'بدهی': 'بدهی',
   };
   
   return typeMap[type] || type;

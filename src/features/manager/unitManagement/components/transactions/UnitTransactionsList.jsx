@@ -13,7 +13,7 @@ import unitsApi from "../../../../../shared/services/unitsApi";
 
 export default function UnitTransactionsList({ unitNumber, buildingId = null }) {
     const dispatch = useDispatch();
-    const { unitTransactions, unitLoading, error } = useSelector(state => state.transactions);
+    const { unitTransactions, unitSummary, unitLoading, error } = useSelector(state => state.transactions);
     const [filteredTx, setFilteredTx] = useState([]);
     const [statusFilter, setStatusFilter] = useState("");
     const [dateRange, setDateRange] = useState(null); // بازه زمانی
@@ -27,12 +27,9 @@ export default function UnitTransactionsList({ unitNumber, buildingId = null }) 
             setUnitInfo(null);
             return;
         }
-
-        // Fetch unit transactions from backend
-        dispatch(fetchUnitTransactions({ unitNumber, buildingId }));
         
-        // Fetch unit information from API
-        const fetchUnitInfo = async () => {
+        // Fetch unit information from API, then load full financial transactions by unit_id
+        const fetchUnitInfoAndTransactions = async () => {
             if (!buildingId) {
                 console.warn('Building ID is required to fetch unit info');
                 return;
@@ -56,6 +53,10 @@ export default function UnitTransactionsList({ unitNumber, buildingId = null }) 
                         parkingCount: unit.parking_count || 0,
                         residentCount: unit.resident_count || 1
                     });
+                    // بعد از پیدا شدن واحد، گردش مالی کامل واحد را بگیر
+                    if (unit.units_id) {
+                        dispatch(fetchUnitTransactions({ unitId: unit.units_id }));
+                    }
                 } else {
                     console.error('Failed to fetch unit info:', result.error);
                     setUnitInfo(null);
@@ -66,33 +67,25 @@ export default function UnitTransactionsList({ unitNumber, buildingId = null }) 
             }
         };
 
-        fetchUnitInfo();
+        fetchUnitInfoAndTransactions();
     }, [dispatch, unitNumber, buildingId]);
 
     useEffect(() => {
-        if (unitTransactions.length === 0) {
-            setFilteredTx([]);
-            return;
-        }
-
-        // Sort transactions by date
-        const sorted = [...unitTransactions].sort((a, b) => {
-            const dateA = moment(a.date || a.created_at).valueOf();
-            const dateB = moment(b.date || b.created_at).valueOf();
-            return dateB - dateA;
-        });
-
-        setFilteredTx(sorted);
-    }, [unitTransactions]);
-
-    useEffect(() => {
-        let result = [...unitTransactions];
+        // فقط تراکنش‌های مرتبط با هزینه (قبوض مشترک و فاکتورهای واحد)
+        // اگر invoice به یک shared_bill متصل است، در backend برای آن expense_name ست شده
+        // اینجا فقط یکی را نگه می‌داریم: یا shared_bill یا invoice مستقل بدون expense_name
+        let result = unitTransactions.filter(
+            (tx) =>
+                tx.type === "shared_bill" ||
+                (tx.type === "invoice" && !tx.expense_name) ||
+                tx.category === "individual_invoice"
+        );
 
         // فیلتر بر اساس وضعیت
         if (statusFilter) result = result.filter(tx => tx.status === statusFilter);
 
         // فیلتر بر اساس بازه زمانی
-        if (dateRange && dateRange.length === 2) {
+        if (dateRange && dateRange.length === 2 && result.length > 0) {
             const startDate = moment(dateRange[0].toDate()).startOf("day").valueOf();
             const endDate = moment(dateRange[1].toDate()).endOf("day").valueOf();
             result = result.filter(tx => {
@@ -101,7 +94,14 @@ export default function UnitTransactionsList({ unitNumber, buildingId = null }) 
             });
         }
 
-        setFilteredTx(result);
+        // مرتب‌سازی بر اساس تاریخ (جدیدترین بالا)
+        const sorted = [...result].sort((a, b) => {
+            const dateA = moment(a.date || a.created_at).valueOf();
+            const dateB = moment(b.date || b.created_at).valueOf();
+            return dateB - dateA;
+        });
+
+        setFilteredTx(sorted);
     }, [statusFilter, dateRange, unitTransactions]);
 
 
@@ -166,6 +166,59 @@ export default function UnitTransactionsList({ unitNumber, buildingId = null }) 
                             <p className="font-medium text-gray-800">
                                 {unitInfo.hasParking ? `${unitInfo.parkingCount} پارکینگ` : 'ندارد'}
                             </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* خلاصه گردش مالی واحد */}
+            {unitSummary && (
+                <div className="mb-6 p-4 bg-blue-50 rounded-xl shadow-sm border border-blue-200">
+                    <h3 className="font-semibold mb-3 text-blue-800 text-lg flex items-center gap-2">
+                        خلاصه گردش مالی واحد
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span className="text-gray-600 block">کل فاکتورها</span>
+                            <span className="font-medium text-gray-900">
+                                {unitSummary.total_invoices} مورد
+                            </span>
+                            <span className="block text-xs text-gray-500 mt-1">
+                                مبلغ:{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {unitSummary.total_amount_invoices?.toLocaleString('fa-IR') || 0} تومان
+                                </span>
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-gray-600 block">کل پرداخت‌ها</span>
+                            <span className="font-medium text-gray-900">
+                                {unitSummary.total_payments} مورد
+                            </span>
+                            <span className="block text-xs text-gray-500 mt-1">
+                                مبلغ:{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {unitSummary.total_amount_payments?.toLocaleString('fa-IR') || 0} تومان
+                                </span>
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-gray-600 block">کل بدهی‌ها</span>
+                            <span className="font-medium text-gray-900">
+                                {unitSummary.total_debts} مورد
+                            </span>
+                            <span className="block text-xs text-gray-500 mt-1">
+                                مبلغ:{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {unitSummary.total_amount_debts?.toLocaleString('fa-IR') || 0} تومان
+                                </span>
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-gray-600 block">صورتحساب‌های مشترک</span>
+                            <span className="font-medium text-gray-900">
+                                {unitSummary.total_shared_bills} مورد
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -256,28 +309,42 @@ export default function UnitTransactionsList({ unitNumber, buildingId = null }) 
                         </p>
                     </div>
                     
-                    {filteredTx.map(tx => (
-                        <div
-                            key={tx.id}
-                            className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border rounded-2xl shadow-md bg-white hover:shadow-xl transition duration-300"
-                        >
-                            <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-                                <div className="flex items-center gap-2">{getTypeIcon(tx.type || tx.category)}</div>
-                                <span className="font-semibold text-gray-900 text-lg">{getPersianType(tx.type || tx.category)}</span> 
-                                <span className="text-gray-700 text-base">
-                                    <span className="font-medium">{parseFloat(tx.amount).toLocaleString('fa-IR')}</span> تومان
-                                </span>
+                    {filteredTx.map((tx, index) => {
+                        const expenseName = tx.expense_name || tx.expense_details?.expense_name || null;
+                        const typeLabel = getPersianType(tx.type || tx.category || tx.transaction_type || "");
+
+                        return (
+                            <div
+                                key={`${tx.id}-${tx.type || tx.category || "tx"}-${index}`}
+                                className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border rounded-2xl shadow-md bg-white hover:shadow-xl transition duration-300"
+                            >
+                                <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                                    <div className="flex items-center gap-2">{getTypeIcon(tx.type || tx.category)}</div>
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-gray-900 text-lg">
+                                            {expenseName || typeLabel}
+                                        </span>
+                                        {expenseName && (
+                                            <span className="text-xs text-gray-500 mt-0.5">
+                                                {typeLabel}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-gray-700 text-base">
+                                        <span className="font-medium">{parseFloat(tx.amount).toLocaleString('fa-IR')}</span> تومان
+                                    </span>
+                                </div>
+                                <div className="flex gap-3 mt-3 sm:mt-0 items-center">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBgColor(tx.status)}`}>
+                                        {getPersianStatus(tx.status)}
+                                    </span>
+                                    <span className="text-sm text-gray-500">
+                                        {formatJalaliDate(tx.date || tx.created_at)}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex gap-3 mt-3 sm:mt-0 items-center">
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBgColor(tx.status)}`}>
-                                    {getPersianStatus(tx.status)}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                    {formatJalaliDate(tx.date || tx.created_at)}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

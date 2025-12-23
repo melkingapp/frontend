@@ -13,11 +13,28 @@ export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelet
     // getStatusColor and formatJalaliDate are now imported from utils
 
     // Safe data extraction with fallbacks
-    const rawTitle = transaction.title || transaction.description || transaction.category || 'بدون عنوان';
+    // For unit transactions, use type/transaction_type, for building transactions use title
+    const rawTitle = transaction.title || 
+                     transaction.description || 
+                     transaction.category || 
+                     transaction.type ||
+                     transaction.transaction_type ||
+                     'بدون عنوان';
     const title = getPersianType(rawTitle);
+    const expenseName = transaction.expense_name || 
+                       transaction.expense_details?.expense_name || 
+                       null;
     const amount = transaction.amount || transaction.total_amount || 0;
-    const date = formatJalaliDate(transaction.date || transaction.billing_date || transaction.issue_date);
-    const systemStatus = getPersianStatus(transaction.status || 'نامشخص'); // وضعیت سیستم
+    const date = formatJalaliDate(
+        transaction.date || 
+        transaction.billing_date || 
+        transaction.issue_date ||
+        transaction.created_at
+    );
+    // اگر payment_method از شارژ باشه، وضعیت سیستم "برداشت از موجودی صندوق" باشه
+    const systemStatus = transaction.payment_method === 'from_fund' 
+        ? 'برداشت از موجودی صندوق'
+        : getPersianStatus(transaction.status || transaction.status_label || 'نامشخص'); // وضعیت سیستم
 
     const handleEdit = (e) => {
         e.stopPropagation();
@@ -32,10 +49,11 @@ export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelet
     return (
         <div className="relative w-full mb-2">
             <button
-                className="grid grid-cols-4 gap-2 items-center text-sm text-right w-full rounded-xl p-3 bg-white shadow hover:bg-gray-50 border"
+                className="grid grid-cols-5 gap-2 items-center text-sm text-right w-full rounded-xl p-3 bg-white shadow hover:bg-gray-50 border"
                 onClick={() => onSelect(transaction)}
             >
                 <span className="font-medium truncate">{title}</span>
+                <span className="font-semibold text-melkingDarkBlue truncate">{expenseName || '—'}</span>
                 <span>{typeof amount === 'number' ? amount.toLocaleString() : '0'}</span>
                 <span className="text-xs">{date}</span>
                 <span className={`font-semibold ${getStatusColor(systemStatus)} flex items-center gap-1`}>

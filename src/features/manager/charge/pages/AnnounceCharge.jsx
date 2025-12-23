@@ -159,15 +159,6 @@ export default function AnnounceCharge() {
           />
         )}
 
-        {/* Info Section */}
-        <div className="mt-4 sm:mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
-          <h3 className="font-medium text-yellow-800 mb-1.5 sm:mb-2 text-sm sm:text-base">نکات مهم:</h3>
-          <ul className="text-xs sm:text-sm text-yellow-700 space-y-0.5 sm:space-y-1">
-            <li>• اعلام شارژ به تمام ساکنان واحدهای انتخاب شده ارسال خواهد شد</li>
-            <li>• مهلت پرداخت باید حداقل ۷ روز از تاریخ اعلام باشد</li>
-            <li>• در صورت نیاز به اصلاح، می‌توانید اعلام شارژ جدیدی ثبت کنید</li>
-          </ul>
-        </div>
       </div>
 
       {/* Floating Action Button */}

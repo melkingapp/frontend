@@ -14,6 +14,9 @@ export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
     const parkingCount = unit.parking_count || 0;
     const residentCount = (unit.resident_count ?? 0);
     const ownerType = unit.owner_type || "";
+    // فیلدهای مالی واحد
+    const totalDebt = unit.total_debt ?? 0;
+    const totalCredit = unit.total_credit ?? 0;
     
     // سازگاری با فیلدهای قدیمی
     const ownerName = unit.owner_name || fullName;
@@ -181,6 +184,22 @@ export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
                         </div>
                     </div>
                 ) : null}
+
+                {/* وضعیت مالی واحد: بدهکاری / بستانکاری */}
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-gray-700">
+                    <div className="flex flex-col bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                        <span className="text-[11px] sm:text-xs text-red-600 mb-1">بدهی واحد</span>
+                        <span className="font-semibold text-red-700">
+                            {totalDebt ? `${Number(totalDebt).toLocaleString('fa-IR')} تومان` : "۰ تومان"}
+                        </span>
+                    </div>
+                    <div className="flex flex-col bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
+                        <span className="text-[11px] sm:text-xs text-emerald-600 mb-1">بستانکاری واحد</span>
+                        <span className="font-semibold text-emerald-700">
+                            {totalCredit ? `${Number(totalCredit).toLocaleString('fa-IR')} تومان` : "۰ تومان"}
+                        </span>
+                    </div>
+                </div>
             </div>
         </article>
     );

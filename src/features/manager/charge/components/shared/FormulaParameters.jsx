@@ -105,7 +105,6 @@ export default function FormulaParameters({
                 >
                   <option value="more_than">بیشتر از</option>
                   <option value="less_than">کمتر از</option>
-                  <option value="equal">مساوی با</option>
                   <option value="always">همیشه اعمال شود</option>
                 </select>
                 {formData.formulaParams.perPerson.conditionType !== 'always' && (
@@ -167,7 +166,6 @@ export default function FormulaParameters({
                 >
                   <option value="more_than">متراژ بیشتر از</option>
                   <option value="less_than">متراژ کمتر از</option>
-                  <option value="equal">متراژ مساوی با</option>
                   <option value="always">همیشه اعمال شود</option>
                 </select>
                 {formData.formulaParams.perArea.conditionType !== 'always' && (
@@ -229,7 +227,6 @@ export default function FormulaParameters({
                 >
                   <option value="more_than">تعداد پارکینگ بیشتر از</option>
                   <option value="less_than">تعداد پارکینگ کمتر از</option>
-                  <option value="equal">تعداد پارکینگ مساوی با</option>
                   <option value="always">همیشه اعمال شود</option>
                 </select>
                 {formData.formulaParams.perParking.conditionType !== 'always' && (
@@ -291,7 +288,6 @@ export default function FormulaParameters({
                 >
                   <option value="more_than">متراژ انباری بیشتر از</option>
                   <option value="less_than">متراژ انباری کمتر از</option>
-                  <option value="equal">متراژ انباری مساوی با</option>
                   <option value="always">همیشه اعمال شود</option>
                 </select>
                 {formData.formulaParams.perStorageArea.conditionType !== 'always' && (
@@ -318,7 +314,7 @@ export default function FormulaParameters({
         {/* Title */}
         <div className="bg-white p-4 rounded-lg border md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            عنوان اعلام شارژ *
+            عنوان شارژ *
           </label>
           <input
             type="text"

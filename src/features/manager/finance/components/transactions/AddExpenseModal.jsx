@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { X } from "lucide-react";
 import ExpenseForm from "./ExpenseForm";
+import ExpenseAllocationView from "./ExpenseAllocationView";
 import useClickOutside from "../../../../../shared/hooks/useClickOutside";
 import { addExpenseType } from "../../slices/expenseTypesSlice";
 import { fetchBuildingUnits } from "../../../building/buildingSlice";
@@ -26,14 +27,24 @@ const distributionMethods = [
     { value: "per_person", label: "بر اساس تعداد نفر" },
     { value: "area", label: "بر اساس متراژ" },
     { value: "parking", label: "بر اساس تعداد پارکینگ" },
+    { value: "custom", label: "دلخواه" },
 ];
 
-function validate(form) {
+const paymentMethods = [
+    { value: "direct", label: "مستقیم" },
+    { value: "from_fund", label: "از شارژ" },
+];
+
+function validate(form, customUnitCosts, filteredUnits, target, selectedUnits) {
     const errors = {};
 
     if (!form.type) errors.type = "این فیلد نمی‌تواند خالی باشد.";
     if (form.type === "AddExpenseType" && !form.customType)
         errors.customType = "لطفاً نوع هزینه دلخواه را وارد کنید.";
+
+    if (!form.expenseName || form.expenseName.trim() === "") {
+        errors.expenseName = "نام هزینه الزامی است.";
+    }
 
     if (!form.target) errors.target = "این فیلد نمی‌تواند خالی باشد.";
 
@@ -49,8 +60,62 @@ function validate(form) {
     if (!form.allocation) errors.allocation = "این فیلد نمی‌تواند خالی باشد.";
     if (!form.distribution) errors.distribution = "این فیلد نمی‌تواند خالی باشد.";
 
+    // بررسی تاریخ مهلت پرداخت
+    if (!form.billDue) {
+        errors.billDue = "تاریخ مهلت پرداخت الزامی است.";
+    } else {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const billDueDate = new Date(form.billDue);
+        billDueDate.setHours(0, 0, 0, 0);
+        const daysDiff = Math.ceil((billDueDate - today) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff < 7) {
+            errors.billDue = "تاریخ مهلت پرداخت باید حداقل 7 روز از امروز باشد.";
+        }
+    }
+
     if (form.target === "custom" && form.selectedUnits.length === 0)
         errors.selectedUnits = "حداقل یک واحد باید انتخاب شود.";
+
+    // بررسی custom_unit_costs برای توزیع دلخواه
+    if (form.distribution === "custom") {
+        // تعیین واحدهای هدف
+        let targetUnits = [];
+        if (target === "all") {
+            targetUnits = filteredUnits;
+        } else if (target === "custom") {
+            targetUnits = filteredUnits.filter(unit => selectedUnits.includes(unit.value));
+        } else {
+            targetUnits = filteredUnits;
+        }
+
+        // بررسی اینکه برای همه واحدها مبلغ تعریف شده باشد
+        const missingUnits = targetUnits.filter(unit => {
+            const unitId = unit.unit?.units_id || unit.unit?.id || unit.value;
+            const cost = customUnitCosts[String(unitId)];
+            return !cost || cost === "" || parseFloat(cost) <= 0;
+        });
+
+        if (missingUnits.length > 0) {
+            errors.customUnitCosts = `لطفاً مبلغ را برای همه واحدها وارد کنید. واحدهای بدون مبلغ: ${missingUnits.map(u => u.label).join(", ")}`;
+        } else {
+            // بررسی اینکه مجموع مبالغ برابر مبلغ کل باشد
+            const totalCosts = targetUnits.reduce((sum, unit) => {
+                const unitId = unit.unit?.units_id || unit.unit?.id || unit.value;
+                const cost = parseFloat(customUnitCosts[String(unitId)] || 0);
+                return sum + (isNaN(cost) ? 0 : cost);
+            }, 0);
+
+            const totalAmount = parseFloat(amountStr) || 0;
+            const difference = Math.abs(totalCosts - totalAmount);
+            
+            // اجازه خطای کوچک (کمتر از 1 تومان) برای مشکلات محاسباتی اعشار
+            if (difference > 1) {
+                errors.customUnitCosts = `مجموع مبالغ واحدها (${totalCosts.toLocaleString()} تومان) باید برابر مبلغ کل (${totalAmount.toLocaleString()} تومان) باشد. تفاوت: ${difference.toLocaleString()} تومان`;
+            }
+        }
+    }
 
     return errors;
 }
@@ -76,26 +141,48 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
         return a.length === b.length && a.every((unit, index) => unit.id === b[index]?.id);
     });
 
+    // محاسبه تاریخ پیش‌فرض مهلت پرداخت (7 روز بعد)
+    const getDefaultBillDue = () => {
+        const today = new Date();
+        const billDueDate = new Date(today);
+        billDueDate.setDate(today.getDate() + 7);
+        return billDueDate.toISOString().split('T')[0]; // فرمت YYYY-MM-DD
+    };
+
     const [form, setForm] = useState({
         type: "",
         customType: "",
+        expenseName: "",
         amount: "",
         target: "all",
         selectedUnits: [],
         allocation: "",
         distribution: "equal",
+        paymentMethod: "direct",
+        billDue: getDefaultBillDue(),
         description: "",
     });
+    const [customUnitCosts, setCustomUnitCosts] = useState({}); // { "unitId": "amount" }
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [errors, setErrors] = useState({});
     const [filteredUnits, setFilteredUnits] = useState([]);
+    const [showAllocation, setShowAllocation] = useState(false); // برای نمایش تخصیص بعد از ثبت
+    const [allocationData, setAllocationData] = useState(null); // داده‌های تخصیص از بکند
 
     const modalRef = useRef(null);
     useClickOutside(modalRef, () => { if (isOpen) onClose(); });
 
+    // بررسی allocationData بعد از ثبت
+    useEffect(() => {
+        if (editingExpense?.allocationData && isOpen) {
+            setAllocationData(editingExpense.allocationData);
+            setShowAllocation(true);
+        }
+    }, [editingExpense?.allocationData, isOpen]);
+
     // پر کردن فرم با مقادیر expense در حالت ویرایش
     useEffect(() => {
-        if (editingExpense && isOpen) {
+        if (editingExpense && isOpen && !editingExpense.allocationData) {
             // Mapping از transaction به form
             const typeMapping = {
                 'water': 'water_bill',
@@ -130,14 +217,25 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
                 allocation = editingExpense.allocation;
             }
 
+            // تبدیل تاریخ مهلت پرداخت از editingExpense
+            let billDue = getDefaultBillDue();
+            if (editingExpense.bill_due) {
+                billDue = editingExpense.bill_due;
+            } else if (editingExpense.due_date) {
+                billDue = editingExpense.due_date;
+            }
+
             setForm({
                 type: mappedType,
                 customType: "",
+                expenseName: editingExpense.expense_name || "",
                 amount: editingExpense.amount?.toString() || "",
                 target: target,
                 selectedUnits: editingExpense.selectedUnits || [],
                 allocation: allocation,
                 distribution: editingExpense.distribution_method || "equal",
+                paymentMethod: editingExpense.payment_method || "direct",
+                billDue: billDue,
                 description: editingExpense.description || "",
             });
         } else if (!isOpen) {
@@ -145,13 +243,17 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
             setForm({
                 type: "",
                 customType: "",
+                expenseName: "",
                 amount: "",
                 target: "all",
                 selectedUnits: [],
                 allocation: "",
                 distribution: "equal",
+                paymentMethod: "direct",
+                billDue: getDefaultBillDue(),
                 description: "",
             });
+            setCustomUnitCosts({});
             setUploadedFiles([]);
         }
     }, [editingExpense, isOpen, buildingUnits]);
@@ -206,15 +308,21 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
             setForm({
                 type: "",
                 customType: "",
+                expenseName: "",
                 amount: "",
                 target: "all",
                 selectedUnits: [],
                 allocation: "",
                 distribution: "equal",
+                paymentMethod: "direct",
+                billDue: getDefaultBillDue(),
                 description: "",
             });
+            setCustomUnitCosts({});
             setUploadedFiles([]);
             setErrors({});
+            setShowAllocation(false);
+            setAllocationData(null);
         }
     }, [isOpen]);
 
@@ -237,8 +345,46 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
         }));
     }, []);
 
+    const handleCustomUnitCostChange = useCallback((unitId, value) => {
+        const numericValue = value.replace(/,/g, "");
+        setCustomUnitCosts(prev => ({
+            ...prev,
+            [unitId]: numericValue
+        }));
+    }, []);
+
+    // به‌روزرسانی مبالغ custom
+    const handleUpdateAllocation = useCallback(async (sharedBillId, updatedCosts) => {
+        // تبدیل به فرمت مورد نیاز API
+        const formattedCosts = {};
+        Object.keys(updatedCosts).forEach(unitId => {
+            const cost = parseFloat(updatedCosts[unitId]);
+            if (!isNaN(cost) && cost > 0) {
+                formattedCosts[String(unitId)] = cost;
+            }
+        });
+
+        // ارسال به API برای update
+        await onSubmit({
+            shared_bill_id: sharedBillId,
+            distribution_method: 'custom',
+            custom_unit_costs: JSON.stringify(formattedCosts)
+        }, true); // true = isUpdate
+    }, [onSubmit]);
+
+    // ثبت هزینه
     const handleSubmit = useCallback(() => {
-        const validationErrors = validate(form);
+        // تعیین واحدهای هدف برای validation
+        let targetUnits = [];
+        if (form.target === "all") {
+            targetUnits = filteredUnits;
+        } else if (form.target === "custom") {
+            targetUnits = filteredUnits.filter(unit => form.selectedUnits.includes(unit.value));
+        } else {
+            targetUnits = filteredUnits;
+        }
+
+        const validationErrors = validate(form, customUnitCosts, filteredUnits, form.target, form.selectedUnits);
         setErrors(validationErrors);
         if (Object.keys(validationErrors).length > 0) return;
 
@@ -254,9 +400,24 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
         // allocation حالا یک مقدار واحد است (owner یا resident)
         const finalAllocation = form.allocation;
 
-        onSubmit({ ...form, type: finalType, value: finalValue, allocation: finalAllocation, files: uploadedFiles });
-        onClose();
-    }, [form, onSubmit, onClose, uploadedFiles, dispatch]);
+        // تبدیل customUnitCosts به فرمت مورد نیاز API (string keys, numeric values)
+        const formattedCustomCosts = {};
+        Object.keys(customUnitCosts).forEach(unitId => {
+            const cost = parseFloat(customUnitCosts[unitId]);
+            if (!isNaN(cost) && cost > 0) {
+                formattedCustomCosts[unitId] = cost;
+            }
+        });
+
+        onSubmit({ 
+            ...form, 
+            type: finalType, 
+            value: finalValue, 
+            allocation: finalAllocation, 
+            files: uploadedFiles,
+            customUnitCosts: form.distribution === "custom" ? formattedCustomCosts : undefined
+        });
+    }, [form, onSubmit, uploadedFiles, dispatch, customUnitCosts, filteredUnits]);
 
     if (!isOpen) return null;
 
@@ -275,24 +436,42 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
                         <X className="w-6 h-6 text-gray-500 hover:text-red-500" />
                     </button>
                 </div>
-                <ExpenseForm
-                    form={form}
-                    errors={errors}
-                    onChange={handleChange}
-                    onAmountChange={handleAmountChange}
-                    onCheckboxChange={handleCheckboxChange}
-                    unitsList={filteredUnits}
-                    expenseTypes={[...expenseTypes, { value: "AddExpenseType", label: "افزودن نوع هزینه" }]} // فقط برای UI اضافه شده
-                    paymentTargets={paymentTargets}
-                    allocationMethods={allocationMethods}
-                    distributionMethods={distributionMethods}
-                    uploadedFiles={uploadedFiles}
-                    onFilesChange={setUploadedFiles}
-                    onSubmit={handleSubmit}
-                    onCancel={onClose}
-                    isLoading={isLoading}
-                    isEditing={!!editingExpense}
-                />
+                {showAllocation && allocationData ? (
+                    <ExpenseAllocationView
+                        allocationData={allocationData}
+                        onUpdate={handleUpdateAllocation}
+                        onClose={() => {
+                            setShowAllocation(false);
+                            setAllocationData(null);
+                            // بعد از بستن allocation، modal را ببند و refresh کن
+                            onClose();
+                        }}
+                        isLoading={isLoading}
+                    />
+                ) : (
+                    <ExpenseForm
+                        form={form}
+                        errors={errors}
+                        onChange={handleChange}
+                        onAmountChange={handleAmountChange}
+                        onCheckboxChange={handleCheckboxChange}
+                        unitsList={filteredUnits}
+                        expenseTypes={[...expenseTypes, { value: "AddExpenseType", label: "افزودن نوع هزینه" }]} // فقط برای UI اضافه شده
+                        paymentTargets={paymentTargets}
+                        allocationMethods={allocationMethods}
+                        distributionMethods={distributionMethods}
+                        paymentMethods={paymentMethods}
+                        customUnitCosts={customUnitCosts}
+                        onCustomUnitCostChange={handleCustomUnitCostChange}
+                        uploadedFiles={uploadedFiles}
+                        onFilesChange={setUploadedFiles}
+                        onSubmit={handleSubmit}
+                        onCancel={onClose}
+                        isLoading={isLoading}
+                        isEditing={!!editingExpense}
+                        hasPayments={editingExpense?.payment_status_counts?.paid > 0 || editingExpense?.payment_status_counts?.awaiting_manager > 0 || editingExpense?.status === 'paid'}
+                    />
+                )}
             </div>
         </div>
     );

@@ -9,6 +9,7 @@ import { useSelector as useReduxSelector } from "react-redux";
 import { selectMembershipRequests } from "../../../../membership/membershipSlice";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusIcon } from "../../../../../shared/utils";
 import PaymentModal from "./PaymentModal";
+import DeleteConfirmModal from "../../../../../shared/components/shared/feedback/DeleteConfirmModal";
 
 const statusStyles = {
   "پرداخت شده": "bg-green-100 text-green-700",
@@ -187,19 +188,29 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     ],
     [
       { label: "🏢 ساختمان", value: building?.title || "—" },
-      { label: "📊 نوع هزینه", value: getPersianType(transaction.bill_type) || transaction.title || "—" },
+      { label: "📊 نوع هزینه", value: getPersianType(transaction.bill_type || transaction.title) || transaction.title || "—" },
     ],
     [
       { label: "🔢 نحوه تقسیم", value: distributionLabels[transaction.distribution_method] || "—" },
-      { label: "📊 دسته‌بندی", value: categoryLabels[transaction.category] || "—" },
+      { label: "📅 مهلت پرداخت", value: transaction.bill_due ? formatJalaliDate(transaction.bill_due) : "—" },
     ],
     [
       { label: "👤 مسئول پرداخت", value: allocationLabels[transaction.allocation] || allocationLabels[transaction.role] || "—" },
-      { label: "💳 روش پرداخت", value: transaction.payment_method === 'online' ? 'آنلاین' : "—" },
+      {
+        label: "💳 روش پرداخت",
+        value:
+          transaction.payment_method === "direct"
+            ? "مستقیم"
+            : transaction.payment_method === "from_fund"
+            ? "از شارژ"
+            : transaction.payment_method === "online"
+            ? "آنلاین"
+            : "—",
+      },
     ],
     [
+      { label: "📊 دسته‌بندی", value: categoryLabels[transaction.category] || "—" },
       { label: "🧱 تعداد واحدها", value: transaction.unit_count ? `${transaction.unit_count} واحد` : "—" },
-      { label: "🔍 کد پیگیری", value: transaction.tracking_code || "—" },
     ],
     [
       { label: "📝 توضیحات", value: transaction.description || "—" },
@@ -209,17 +220,25 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
         label: "وضعیت پرداخت",
         value: (
           <span
-            className={`px-2 py-1 rounded-full text-xs font-semibold ${statusStyles[transaction.status] || "bg-gray-100 text-gray-600"
-              }`}
+            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+              transaction.payment_method === 'from_fund' 
+                ? "bg-blue-100 text-blue-700"
+                : statusStyles[transaction.status] || "bg-gray-100 text-gray-600"
+            }`}
           >
-{transaction.status}
+            {transaction.payment_method === 'from_fund' 
+              ? "برداشت از موجودی صندوق"
+              : transaction.status}
           </span>
         ),
       },
     ],
   ];
 
-  const canPay = (isResident || isOwner || isManagerOwnerResident) && 
+  // اگر payment_method از شارژ باشه، دکمه پرداخت نباید نشون داده بشه
+  const isFromFund = transaction.payment_method === 'from_fund';
+  const canPay = !isFromFund && 
+                 (isResident || isOwner || isManagerOwnerResident) && 
                  (transaction.status !== "پرداخت شده" && transaction.status !== "paid");
 
   const handleEdit = () => {
@@ -561,59 +580,17 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
         </div>
       </Dialog>
 
-      {/* دیالوگ تایید حذف */}
-      <Transition show={showDeleteConfirm} as={Fragment}>
-        <Dialog onClose={() => setShowDeleteConfirm(false)} className="relative z-50">
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-                <Dialog.Title className="text-lg font-bold mb-4 text-right">
-                  تایید حذف هزینه
-                </Dialog.Title>
-                <p className="text-gray-600 mb-6 text-right">
-                  آیا از حذف این هزینه اطمینان دارید؟ این عمل قابل بازگشت نیست.
-                </p>
-                <div className="flex gap-3 justify-end">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-                    disabled={isDeleting}
-                  >
-                    انصراف
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? 'در حال حذف...' : 'حذف'}
-                  </button>
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </Dialog>
-      </Transition>
+      {/* مدال تایید حذف */}
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="تایید حذف هزینه"
+        message="آیا از حذف این هزینه اطمینان دارید؟"
+        itemName={transaction ? getPersianType(transaction.bill_type || transaction.title) : ""}
+        itemDetails={transaction ? `مبلغ: ${transaction.amount?.toLocaleString()} تومان` : ""}
+        isLoading={isDeleting}
+      />
 
       {/* مدال پرداخت */}
       <PaymentModal

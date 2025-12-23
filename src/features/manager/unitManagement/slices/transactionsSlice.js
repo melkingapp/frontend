@@ -1,5 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getTransactions as getTransactionsService, getUnitTransactions as getUnitTransactionsService, getTransactionDetail as getTransactionDetailService } from "../../../../shared/services/transactionsService";
+import {
+  getTransactions as getTransactionsService,
+  getUnitFinancialTransactions as getUnitFinancialTransactionsService,
+  getTransactionDetail as getTransactionDetailService,
+} from "../../../../shared/services/transactionsService";
 
 // Async thunks
 export const fetchTransactions = createAsyncThunk(
@@ -16,10 +20,10 @@ export const fetchTransactions = createAsyncThunk(
 
 export const fetchUnitTransactions = createAsyncThunk(
   "transactions/fetchUnitTransactions",
-  async ({ unitNumber, buildingId }, { rejectWithValue }) => {
+  async ({ unitId, dateFrom, dateTo }, { rejectWithValue }) => {
     try {
-      const response = await getUnitTransactionsService(unitNumber, buildingId);
-      return response.transactions || [];
+      const response = await getUnitFinancialTransactionsService(unitId, dateFrom, dateTo);
+      return response;
     } catch (error) {
       return rejectWithValue(error.response?.data?.error || error.message);
     }
@@ -43,6 +47,7 @@ const transactionsSlice = createSlice({
   initialState: {
     transactions: [],
     unitTransactions: [],
+    unitSummary: null,
     selectedTransaction: null,
     loading: false,
     unitLoading: false,
@@ -85,7 +90,8 @@ const transactionsSlice = createSlice({
       })
       .addCase(fetchUnitTransactions.fulfilled, (state, action) => {
         state.unitLoading = false;
-        state.unitTransactions = action.payload;
+        state.unitTransactions = action.payload.transactions || [];
+        state.unitSummary = action.payload.summary || null;
       })
       .addCase(fetchUnitTransactions.rejected, (state, action) => {
         state.unitLoading = false;

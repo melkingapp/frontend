@@ -43,6 +43,21 @@ export const API_CONFIG = {
         NOTIFICATION_SETTINGS: '/notification/settings/',
         NOTIFICATION_SETTINGS_UPDATE: '/notification/settings/update/',
         UNIT_RESIDENT_COUNT_UPDATE: (buildingId, unitId) => `/buildings/${buildingId}/units/${unitId}/update-resident-count/`,
+        
+        // Billing
+        REGISTER_CHARGE: '/billing/register-charge/',
+        ANNOUNCE_CHARGE: '/billing/announce-charge/',
+        
+        // Charge Formulas
+        CHARGE_FORMULAS: '/billing/formulas/',
+        CHARGE_FORMULA_CREATE: '/billing/formulas/create/',
+        CHARGE_FORMULA_DETAIL: (formulaId) => `/billing/formulas/${formulaId}/`,
+        
+        // Charge Schedules
+        CHARGE_SCHEDULES: '/billing/schedules/',
+        CHARGE_SCHEDULE_DETAIL: (scheduleId) => `/billing/schedules/${scheduleId}/`,
+        CHARGE_SCHEDULE_TOGGLE: (scheduleId) => `/billing/schedules/${scheduleId}/toggle/`,
+        CHARGE_SCHEDULE_EXECUTE: (scheduleId) => `/billing/schedules/${scheduleId}/execute/`,
     }
 };
 

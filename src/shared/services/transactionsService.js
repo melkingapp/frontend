@@ -51,6 +51,23 @@ export const getUnitTransactions = async (unitNumber, buildingId = null) => {
     }
 };
 
+// Get unit financial transactions (complete financial flow)
+export const getUnitFinancialTransactions = async (unitId, dateFrom = null, dateTo = null) => {
+    try {
+        const params = new URLSearchParams();
+        if (unitId) params.append('unit_id', unitId);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        
+        const queryString = params.toString() ? `?${params.toString()}` : '';
+        const response = await get(`/billing/unit-financial-transactions/${queryString}`);
+        return response;
+    } catch (error) {
+        console.error('Get unit financial transactions error:', error);
+        throw error;
+    }
+};
+
 // Get transaction detail
 export const getTransactionDetail = async (transactionId) => {
     try {
@@ -66,6 +83,7 @@ export const getTransactionDetail = async (transactionId) => {
 const transactionsService = {
     getTransactions,
     getUnitTransactions,
+    getUnitFinancialTransactions,
     getTransactionDetail
 };
 
