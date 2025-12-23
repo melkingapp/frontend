@@ -1,7 +1,7 @@
 import { Home, Phone, Square, Car, Edit, CheckCircle2, XCircle, CircleSlash, Layers } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 
-export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
+function UnitItem({ unit, onSelect, onEdit = () => {} }) {
     const isOccupied = unit.is_occupied || false;
     
     // استفاده از فیلدهای جدید
@@ -204,3 +204,5 @@ export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
         </article>
     );
 }
+
+export default memo(UnitItem);
