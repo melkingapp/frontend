@@ -1,4 +1,5 @@
 import { post, setTokens, clearTokens, isAuthenticated as apiIsAuthenticated } from './apiService';
+import { sanitizeUser } from '../utils/security';
 
 // Send OTP
 export const sendOtp = async (phoneNumber, role) => {
@@ -33,7 +34,9 @@ export const verifyOtp = async (phoneNumber, role, otp) => {
 export const login = async (accessToken, refreshToken, userData) => {
     try {
         setTokens(accessToken, refreshToken);
-        localStorage.setItem('user', JSON.stringify(userData));
+        // 🛡️ Sentinel: Sanitize user data before storage
+        const sanitizedUser = sanitizeUser(userData);
+        localStorage.setItem('user', JSON.stringify(sanitizedUser));
         return { success: true };
     } catch (error) {
         console.error('Login error:', error);
