@@ -21,6 +21,11 @@ export default function StepSummary({ formData, prev }) {
         setIsLoading(true);
         
         try {
+            // اگر usage_type مسکونی است و residential_type خالی است، مقدار پیش‌فرض تنظیم کن
+            if (formData.usage_type === 'residential' && !formData.residential_type) {
+                formData.residential_type = 'apartment';
+            }
+
             // Clean form data for API
             const cleanData = {
                 title: formData.title,
@@ -28,14 +33,15 @@ export default function StepSummary({ formData, prev }) {
                 property_type: formData.property_type,
                 unit_count: parseInt(formData.unit_count) || 0,
                 is_owner_resident: formData.is_owner_resident,
-                resident_floor: formData.is_owner_resident 
-                    ? (formData.manager_floor || formData.resident_floor || '') 
+                resident_floor: formData.is_owner_resident
+                    ? (formData.manager_floor || formData.resident_floor || '')
                     : '',
                 fund_balance: parseFloat(formData.fund_balance) || 0,
                 fund_sheba_number: formData.fund_sheba_number,
                 blocks_count: (formData.property_type === 'complex' || formData.property_type === 'community')
                     ? (formData.blocks_count || '')
-                    : ''
+                    : '',
+                residential_type: formData.usage_type === 'residential' ? formData.residential_type : ''
             };
             
             console.log("🔥 Sending clean data:", cleanData);
@@ -97,12 +103,18 @@ export default function StepSummary({ formData, prev }) {
             community: "شهرک",
             building: "ساختمان",
         },
+        residential_type: {
+            apartment: "آپارتمان",
+            villa: "ویلا",
+            mixed: "مختلط",
+        },
     };
 
     const entries = [
         { label: "عنوان ساختمان", value: formData.title },
         { label: "نام مدیر", value: formData.name || "-" },
         { label: "نوع کاربری", value: labelsMap.usage_type[formData.usage_type] || formData.usage_type },
+        ...(formData.usage_type === "residential" ? [{ label: "نوع ساختمان مسکونی", value: labelsMap.residential_type[formData.residential_type] || formData.residential_type }] : []),
         { label: "نوع ملک", value: labelsMap.property_type[formData.property_type] || formData.property_type },
         { label: "تعداد واحد", value: formData.unit_count },
         { label: "مدیر ساکن است؟", value: formData.is_owner_resident ? "بله" : "خیر" },

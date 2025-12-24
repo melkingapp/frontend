@@ -39,6 +39,19 @@ export default function StepInfo({ formData, setFormData, next }) {
                         ]}
                     />
 
+                    {formData.usage_type === "residential" && (
+                        <SelectField
+                            label="نوع ساختمان مسکونی"
+                            value={formData.residential_type}
+                            onChange={(e) => setFormData({ ...formData, residential_type: e.target.value })}
+                            options={[
+                                { value: "apartment", label: "آپارتمان" },
+                                { value: "villa", label: "ویلا" },
+                                { value: "mixed", label: "مختلط" },
+                            ]}
+                        />
+                    )}
+
                     <SelectField
                         label="نوع ملک"
                         value={formData.property_type}
