@@ -1,9 +1,11 @@
-function ErrorMessage({ children }) {
+import { forwardRef } from "react";
+
+function ErrorMessage({ children, id }) {
     if (!children) return null;
-    return <p className="text-red-500 text-xs mb-3">{children}</p>;
+    return <p id={id} className="text-red-500 text-xs mb-3">{children}</p>;
 }
 
-export default function InputField({
+const InputField = forwardRef(({
     label,
     value,
     onChange,
@@ -11,16 +13,23 @@ export default function InputField({
     type = "text",
     name,
     disabled = false,
-    error
-}) {
+    error,
+    required = false,
+    className,
+    ...rest
+}, ref) => {
+    const errorId = error ? `${name}-error` : undefined;
+
     return (
-        <div>
+        <div className={className}>
             {label && (
                 <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor={name}>
                     {label}
+                    {required && <span className="text-red-500 ms-1" aria-hidden="true">*</span>}
                 </label>
             )}
             <input
+                ref={ref}
                 id={name}
                 name={name}
                 type={type}
@@ -28,11 +37,20 @@ export default function InputField({
                 onChange={onChange}
                 placeholder={placeholder}
                 disabled={disabled}
-                className={`w-full px-4 py-3 border rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2C5A8C] transition  ${error ? "border-red-500" : "border-gray-200"
+                required={required}
+                aria-required={required}
+                aria-invalid={!!error}
+                aria-describedby={errorId}
+                className={`w-full px-4 py-3 border rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2C5A8C] transition ${error ? "border-red-500" : "border-gray-200"
                     }`}
+                {...rest}
             />
 
-            <ErrorMessage>{error}</ErrorMessage>
+            <ErrorMessage id={errorId}>{error}</ErrorMessage>
         </div>
     );
-}
+});
+
+InputField.displayName = "InputField";
+
+export default InputField;
