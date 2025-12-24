@@ -10,7 +10,7 @@ export const createMembershipRequest = createAsyncThunk(
       return response;
     } catch (error) {
       // Log error details for debugging (only in development)
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.error("❌ createMembershipRequest error:", error);
         console.error("❌ Error data:", error.data);
         console.error("❌ Error response:", error.response);
@@ -61,7 +61,7 @@ export const fetchMembershipRequests = createAsyncThunk(
       }
       return response;
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
       console.error("❌ fetchMembershipRequests error:", error);
       }
       return rejectWithValue(error.response?.data?.error || error.message);
@@ -241,6 +241,18 @@ export const createInviteLink = createAsyncThunk(
   }
 );
 
+export const fetchInviteLinks = createAsyncThunk(
+  'membership/fetchInviteLinks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.listInviteLinks();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
 export const validateInviteLink = createAsyncThunk(
   'membership/validateInviteLink',
   async (token, { rejectWithValue }) => {
@@ -401,7 +413,7 @@ const membershipSlice = createSlice({
       })
       .addCase(createMembershipRequest.fulfilled, (state, action) => {
         state.createLoading = false;
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
         console.log("🔍 createMembershipRequest.fulfilled payload:", action.payload);
         }
         if (action.payload) {
@@ -652,6 +664,19 @@ const membershipSlice = createSlice({
         state.error = action.payload;
       })
 
+      .addCase(fetchInviteLinks.pending, (state) => {
+        state.inviteLinksLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchInviteLinks.fulfilled, (state, action) => {
+        state.inviteLinksLoading = false;
+        state.inviteLinks = action.payload?.invitations || [];
+      })
+      .addCase(fetchInviteLinks.rejected, (state, action) => {
+        state.inviteLinksLoading = false;
+        state.error = action.payload;
+      })
+
       .addCase(validateInviteLink.pending, (state) => {
         state.validateInviteLinkLoading = true;
         state.error = null;
@@ -728,7 +753,7 @@ const membershipSlice = createSlice({
       })
       .addCase(getManagerTasks.fulfilled, (state, action) => {
         state.managerTasksLoading = false;
-        state.managerTasks = action.payload;
+        state.managerTasks = action.payload?.tasks || [];
       })
       .addCase(getManagerTasks.rejected, (state, action) => {
         state.managerTasksLoading = false;
@@ -742,9 +767,11 @@ const membershipSlice = createSlice({
       .addCase(completeManagerTask.fulfilled, (state, action) => {
         state.completeTaskLoading = false;
         // Update the completed task in the list
-        const taskIndex = state.managerTasks.findIndex(task => task.task_id === action.payload.task.task_id);
-        if (taskIndex !== -1) {
-          state.managerTasks[taskIndex] = action.payload.task;
+        if (action.payload?.task) {
+          const taskIndex = state.managerTasks.findIndex(task => task.manager_task_id === action.payload.task.manager_task_id);
+          if (taskIndex !== -1) {
+            state.managerTasks[taskIndex] = action.payload.task;
+          }
         }
       })
       .addCase(completeManagerTask.rejected, (state, action) => {

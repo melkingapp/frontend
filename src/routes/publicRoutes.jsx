@@ -39,6 +39,6 @@ export const publicRoutes = [
   },
   {
     path: "/join",
-    element: <JoinMethodSelector />
+    element: <JoinPage />
   }
 ];

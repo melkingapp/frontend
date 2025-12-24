@@ -6,7 +6,7 @@ import { CheckCircle, Circle, Clock, AlertCircle, Loader } from 'lucide-react';
 
 export default function ManagerTasksWidget({ buildingId }) {
   const dispatch = useDispatch();
-  const tasks = useSelector(selectManagerTasks);
+  const tasks = useSelector(selectManagerTasks) || [];
   const loading = useSelector(selectManagerTasksLoading);
   const completing = useSelector(selectCompleteTaskLoading);
 
@@ -107,7 +107,7 @@ export default function ManagerTasksWidget({ buildingId }) {
         ) : (
           tasks.map((task) => (
             <div
-              key={task.task_id}
+              key={task.manager_task_id}
               className={`flex items-start justify-between p-3 rounded-lg border transition-colors ${
                 task.is_completed
                   ? 'bg-green-50 border-green-200'
@@ -130,7 +130,7 @@ export default function ManagerTasksWidget({ buildingId }) {
 
               {!task.is_completed && (
                 <button
-                  onClick={() => handleCompleteTask(task.task_id)}
+                  onClick={() => handleCompleteTask(task.manager_task_id)}
                   disabled={completing}
                   className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >

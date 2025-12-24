@@ -1,8 +1,8 @@
 // API Base URL Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://127.0.0.1:8000/api/v1'
-    : `${window.location.protocol}//${window.location.host}/api/v1`);
+    : 'https://melkingapp.ir/api/v1'));
 
 class ApiService {
   constructor() {
@@ -129,7 +129,7 @@ class ApiService {
         let errorMessage = data?.detail || data?.message || data?.error;
         
         // Log the full error response for debugging (only in development)
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.error('API Error Response:', {
             status: response.status,
             statusText: response.statusText,
@@ -313,7 +313,7 @@ class ApiService {
         let errorMessage = data?.detail || data?.message || data?.error;
         
         // Log the full error response for debugging (only in development)
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.error('File Upload Error Response:', {
             status: response.status,
             statusText: response.statusText,

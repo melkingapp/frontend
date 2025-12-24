@@ -167,6 +167,14 @@ class MembershipApiService {
   }
 
   /**
+   * دریافت لیست لینک‌های دعوت (US11)
+   */
+  async listInviteLinks() {
+    const { data } = await api.get('/membership/invite-link/list/');
+    return data;
+  }
+
+  /**
    * اعتبارسنجی لینک دعوت (US11)
    */
   async validateInviteLink(token) {

@@ -10,15 +10,15 @@ export default function CreateBuildingForm() {
     const [formData, setFormData] = useState({
         title: "",
         name: "",
-        usage_type: "",
-        property_type: "",
+        usage_type: "residential",
+        property_type: "building",
         unit_count: "",
         is_owner_resident: false,
         resident_floor: "",
         fund_balance: "",
         fund_sheba_number: "",
         blocks_count: "",
-        residential_type: "",
+        residential_type: "apartment",
     });
 
     const next = () => setStep((prev) => prev + 1);

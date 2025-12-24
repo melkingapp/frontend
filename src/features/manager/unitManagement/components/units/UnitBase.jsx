@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import CreateUnitModal from "./CreateUnitModal";
 import UnitDetailsModal from "./UnitDetailsModal";
-import BulkUnitImportModal from "../../../buildings/components/BulkUnitImportModal";
+import BulkUnitImportModal from "../../../../buildings/components/BulkUnitImportModal";
 import { fetchUnits } from "../../slices/unitsSlice";
 
 export default function UnitBase({ limit, showCreateButton = true, buildingId = null }) {

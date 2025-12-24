@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog, Transition } from '@headlessui/react';
 import { toast } from 'sonner';
 import { X, Upload, FileText, CheckCircle, AlertCircle, Loader } from 'lucide-react';
-import membershipApi from '../../membership/services/membershipApi';
+import membershipApi from '../../../shared/services/membershipApi';
 
 export default function BulkUnitImportModal({ isOpen, onClose, buildingId, buildingTitle, onImportSuccess }) {
   const dispatch = useDispatch();

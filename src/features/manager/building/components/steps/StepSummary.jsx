@@ -33,6 +33,7 @@ export default function StepSummary({ formData, prev }) {
                     : '',
                 fund_balance: parseFloat(formData.fund_balance) || 0,
                 fund_sheba_number: formData.fund_sheba_number,
+                residential_type: formData.usage_type === 'residential' ? (formData.residential_type || 'apartment') : null,
                 blocks_count: (formData.property_type === 'complex' || formData.property_type === 'community')
                     ? (formData.blocks_count || '')
                     : ''
@@ -90,6 +91,11 @@ export default function StepSummary({ formData, prev }) {
             office: "اداری",
             other: "سایر",
         },
+        residential_type: {
+            apartment: "آپارتمان",
+            villa: "ویلا",
+            mixed: "ترکیبی",
+        },
         property_type: {
             block: "بلوک",
             tower: "برج",
@@ -103,6 +109,9 @@ export default function StepSummary({ formData, prev }) {
         { label: "عنوان ساختمان", value: formData.title },
         { label: "نام مدیر", value: formData.name || "-" },
         { label: "نوع کاربری", value: labelsMap.usage_type[formData.usage_type] || formData.usage_type },
+        ...(formData.usage_type === "residential"
+            ? [{ label: "نوع مسکونی", value: labelsMap.residential_type[formData.residential_type || "apartment"] }]
+            : []),
         { label: "نوع ملک", value: labelsMap.property_type[formData.property_type] || formData.property_type },
         { label: "تعداد واحد", value: formData.unit_count },
         { label: "مدیر ساکن است؟", value: formData.is_owner_resident ? "بله" : "خیر" },

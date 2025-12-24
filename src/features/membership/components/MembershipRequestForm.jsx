@@ -303,14 +303,14 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       // Helper function to convert to number (required fields should not be null)
       const toNumber = (value, required = false) => {
         if (value === null || value === undefined || value === '') {
-          if (required && process.env.NODE_ENV === 'development') {
+          if (required && import.meta.env.DEV) {
             console.warn("⚠️ Required number field is missing:", value);
           }
           return required ? 0 : null; // Return 0 for required fields instead of null
         }
         const num = Number(value);
         if (isNaN(num)) {
-          if (required && process.env.NODE_ENV === 'development') {
+          if (required && import.meta.env.DEV) {
             console.warn("⚠️ Required number field is NaN:", value);
           }
           return required ? 0 : null;
@@ -352,7 +352,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       
       if (missingFields.length > 0) {
         const errorMsg = `فیلدهای الزامی خالی هستند: ${missingFields.join(', ')}`;
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.error("❌ Missing required fields:", missingFields);
         }
         setErrors({ submit: errorMsg });
@@ -383,7 +383,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       };
       
       // Log payload for debugging (only in development)
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("📤 handleAcceptPrefill - Payload being sent:", payload);
         console.log("📤 handleAcceptPrefill - unitData:", unitData);
       }
@@ -392,7 +392,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       toast.success('درخواست عضویت با اطلاعات شناسایی‌شده ثبت شد');
       handleClose();
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.error("❌ Error in handleAcceptPrefill:", error);
         console.error("❌ Error details:", {
           error,
@@ -450,7 +450,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       };
       
       const result = await dispatch(createMembershipRequest(submitData)).unwrap();
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
       console.log("✅ Membership request created successfully:", result);
       }
       
@@ -483,7 +483,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       }
       
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
       console.error("❌ Error creating membership request:", error);
       }
       setErrors({ submit: error });
@@ -578,7 +578,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                 {/* Show for each building where user is a member (via BuildingUser) but doesn't have approved membership request */}
                 {!unitLoading && (() => {
                   // Debug logs (only in development)
-                  if (process.env.NODE_ENV === 'development') {
+                  if (import.meta.env.DEV) {
                     console.log("🔍 MembershipRequestForm - unitData:", unitData);
                     console.log("🔍 MembershipRequestForm - approvedBuildings:", approvedBuildings);
                     console.log("🔍 MembershipRequestForm - membershipRequests:", membershipRequests);
@@ -595,7 +595,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                     return !hasApprovedRequest;
                   });
                   
-                  if (process.env.NODE_ENV === 'development') {
+                  if (import.meta.env.DEV) {
                     console.log("🔍 buildingsNeedingRequest:", buildingsNeedingRequest);
                   }
                   
@@ -630,7 +630,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         owner_phone_number: targetBuilding.owner_phone_number || '',
                       };
                   
-                  if (process.env.NODE_ENV === 'development') {
+                  if (import.meta.env.DEV) {
                     console.log("🔍 Showing pre-fill notification for building:", targetBuilding.building_code);
                   }
                   
@@ -709,7 +709,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                                   handleClose();
                                 })
                                 .catch((error) => {
-                                  if (process.env.NODE_ENV === 'development') {
+                                  if (import.meta.env.DEV) {
                                     console.error("❌ Error creating membership request:", error);
                                   }
                                   const errorMessage = typeof error === 'string' ? error : (error?.payload || error?.message || 'خطا در ارسال درخواست عضویت');
