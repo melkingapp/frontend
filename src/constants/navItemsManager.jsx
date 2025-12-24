@@ -1,4 +1,4 @@
-import { CreditCard, PieChart, MessageCircle, Bell, Settings, User, Home, Building2, Users, CheckCircle, UserPlus, BookOpen, DollarSign } from "lucide-react";
+import { CreditCard, PieChart, MessageCircle, Bell, Settings, User, Home, Building2, Users, CheckCircle, UserPlus, BookOpen, DollarSign, AlertTriangle, Link } from "lucide-react";
 
 export const navItemsManager = [
     {
@@ -47,6 +47,16 @@ export const navItemsManager = [
         label: "درخواست‌های عضویت",
         icon: <UserPlus size={20} />,
         to: "/manager/membership",
+    },
+    {
+        label: "گزارش‌های تعارض",
+        icon: <AlertTriangle size={20} />,
+        to: "/manager/conflict-reports",
+    },
+    {
+        label: "لینک‌های دعوت",
+        icon: <Link size={20} />,
+        to: "/manager/invite-links",
     },
     {
         label: "مدیریت واحد",

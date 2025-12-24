@@ -14,6 +14,8 @@ import TransactionsPage from "../features/manager/unitManagement/pages/Transacti
 import FinancePaymentsPage from "../features/manager/finance/pages/PaymentsPage";
 import RequestsPage from "../features/manager/unitManagement/pages/RequestsPage";
 import ManagerMembershipPage from "../features/membership/pages/ManagerMembershipPage";
+import ConflictReportsPage from "../features/membership/pages/ConflictReportsPage";
+import InviteLinksPage from "../features/membership/pages/InviteLinksPage";
 import ManagerProfile from "../pages/manager/Profile";
 import ManagerSettings from "../pages/manager/Settings";
 import LegalAI from "../pages/manager/LegalAI";
@@ -46,6 +48,8 @@ export const managerRoutes = [
             { path: "unit-management/requests", element: <RequestsPage /> },
             { path: "unit-management/transactions", element: <TransactionsPage /> },
             { path: "membership", element: <ManagerMembershipPage /> },
+            { path: "conflict-reports", element: <ConflictReportsPage /> },
+            { path: "invite-links", element: <InviteLinksPage /> },
             { path: "legal-ai", element: <LegalAI /> },
             { path: "profile", element: <ManagerProfile /> },
             { path: "settings", element: <ManagerSettings /> },

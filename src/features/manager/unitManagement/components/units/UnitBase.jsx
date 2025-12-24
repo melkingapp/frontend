@@ -1,15 +1,18 @@
-import { HomeIcon, HousePlus, Loader2, RefreshCw } from "lucide-react";
+import { HomeIcon, HousePlus, Loader2, RefreshCw, Upload } from "lucide-react";
 import UnitItem from "./UnitItem";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import CreateUnitModal from "./CreateUnitModal";
 import UnitDetailsModal from "./UnitDetailsModal";
+import BulkUnitImportModal from "../../../buildings/components/BulkUnitImportModal";
 import { fetchUnits } from "../../slices/unitsSlice";
 
 export default function UnitBase({ limit, showCreateButton = true, buildingId = null }) {
     const dispatch = useDispatch();
     const { units: reduxUnits, loading, error } = useSelector(state => state.units);
+    const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
     const [selectedUnit, setSelectedUnit] = useState(null);
 
     // Use Redux data if available, otherwise fall back to props
@@ -51,13 +54,22 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
                         بروزرسانی
                     </button>
                     {showCreateButton && (
-                        <button
-                            onClick={() => setIsCreateOpen(true)}
-                            className="px-4 py-2 bg-melkingDarkBlue text-white rounded-lg hover:bg-melkingGold hover:text-melkingDarkBlue transition flex items-center gap-2"
-                        >
-                            <HousePlus size={18} />
-                            ایجاد واحد
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setIsBulkImportOpen(true)}
+                                className="px-4 py-2 border border-melkingDarkBlue text-melkingDarkBlue rounded-lg hover:bg-melkingDarkBlue hover:text-white transition flex items-center gap-2"
+                            >
+                                <Upload size={18} />
+                                وارد کردن گروهی
+                            </button>
+                            <button
+                                onClick={() => setIsCreateOpen(true)}
+                                className="px-4 py-2 bg-melkingDarkBlue text-white rounded-lg hover:bg-melkingGold hover:text-melkingDarkBlue transition flex items-center gap-2"
+                            >
+                                <HousePlus size={18} />
+                                ایجاد واحد
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
@@ -108,6 +120,14 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
                 buildingId={buildingId}
+            />
+
+            <BulkUnitImportModal
+                isOpen={isBulkImportOpen}
+                onClose={() => setIsBulkImportOpen(false)}
+                buildingId={buildingId}
+                buildingTitle={buildings?.find(b => b.building_id === buildingId)?.title || 'ساختمان'}
+                onImportSuccess={() => dispatch(fetchUnits(buildingId))}
             />
         </div>
     );

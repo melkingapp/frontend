@@ -114,6 +114,39 @@ export const deleteUnit = async (buildingId, unitId) => {
     }
 };
 
+// Transfer building management (PRD)
+export const transferBuildingManagement = async (buildingId, data) => {
+    try {
+        const response = await post(`/buildings/${buildingId}/transfer-management/`, data);
+        return response;
+    } catch (error) {
+        console.error('Transfer building management error:', error);
+        throw error;
+    }
+};
+
+// Get manager tasks (PRD)
+export const getManagerTasks = async (buildingId) => {
+    try {
+        const response = await get(`/buildings/${buildingId}/manager-tasks/`);
+        return response;
+    } catch (error) {
+        console.error('Get manager tasks error:', error);
+        throw error;
+    }
+};
+
+// Complete manager task (PRD)
+export const completeManagerTask = async (buildingId, data) => {
+    try {
+        const response = await post(`/buildings/${buildingId}/manager-tasks/complete/`, data);
+        return response;
+    } catch (error) {
+        console.error('Complete manager task error:', error);
+        throw error;
+    }
+};
+
 // Default export (برای backward compatibility)
 const buildingsService = {
     registerBuilding,
@@ -125,7 +158,10 @@ const buildingsService = {
     createUnit,
     getUnitDetails,
     updateUnit,
-    deleteUnit
+    deleteUnit,
+    transferBuildingManagement,
+    getManagerTasks,
+    completeManagerTask
 };
 
 export default buildingsService;

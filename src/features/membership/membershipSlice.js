@@ -141,11 +141,221 @@ export const fetchPendingOwnerApprovalRequests = createAsyncThunk(
   }
 );
 
+// ===== US6: Family Invitation Thunks =====
+export const createFamilyInvitation = createAsyncThunk(
+  'membership/createFamilyInvitation',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.createFamilyInvitation(data);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+export const fetchFamilyInvitations = createAsyncThunk(
+  'membership/fetchFamilyInvitations',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.listFamilyInvitations();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+export const acceptFamilyInvitation = createAsyncThunk(
+  'membership/acceptFamilyInvitation',
+  async (code, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.acceptFamilyInvitation(code);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+// ===== US7: Conflict Report Thunks =====
+export const reportUnitConflict = createAsyncThunk(
+  'membership/reportUnitConflict',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.reportUnitConflict(data);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+export const fetchConflictReports = createAsyncThunk(
+  'membership/fetchConflictReports',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.listConflictReports();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+export const resolveConflict = createAsyncThunk(
+  'membership/resolveConflict',
+  async ({ reportId, data }, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.resolveConflict(reportId, data);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+// ===== US9: Withdraw Request Thunk =====
+export const withdrawMembershipRequest = createAsyncThunk(
+  'membership/withdrawRequest',
+  async (requestId, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.withdrawMembershipRequest(requestId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+// ===== US11: Invite Link Thunks =====
+export const createInviteLink = createAsyncThunk(
+  'membership/createInviteLink',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.createInviteLink(data);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+export const validateInviteLink = createAsyncThunk(
+  'membership/validateInviteLink',
+  async (token, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.validateInviteLink(token);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+export const useInviteLink = createAsyncThunk(
+  'membership/useInviteLink',
+  async (token, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.useInviteLink(token);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+// ===== PRD: Suggested Users Management =====
+export const registerSuggestedUser = createAsyncThunk(
+  'membership/registerSuggestedUser',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.registerSuggestedUser(data);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+// ===== PRD: Join by Manager Phone =====
+export const joinByManagerPhone = createAsyncThunk(
+  'membership/joinByManagerPhone',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.joinByManagerPhone(data);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+// ===== PRD: Transfer Management =====
+export const transferBuildingManagement = createAsyncThunk(
+  'membership/transferBuildingManagement',
+  async ({ buildingId, data }, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.transferBuildingManagement(buildingId, data);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+// ===== PRD: Manager Tasks =====
+export const getManagerTasks = createAsyncThunk(
+  'membership/getManagerTasks',
+  async (buildingId, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.getManagerTasks(buildingId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
+export const completeManagerTask = createAsyncThunk(
+  'membership/completeManagerTask',
+  async ({ buildingId, data }, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.completeManagerTask(buildingId, data);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
 const initialState = {
   requests: [],
   selectedRequest: null,
   unitData: null,
   pendingOwnerApprovalRequests: [],
+  // US6: Family Invitations
+  familyInvitations: [],
+  familyInvitationsLoading: false,
+  createFamilyInvitationLoading: false,
+  // US7: Conflict Reports
+  conflictReports: [],
+  conflictReportsLoading: false,
+  resolveConflictLoading: false,
+  // US11: Invite Links
+  inviteLinks: [],
+  inviteLinksLoading: false,
+  createInviteLinkLoading: false,
+  validateInviteLinkLoading: false,
+  useInviteLinkLoading: false,
+  inviteLinkData: null,
+  // PRD: Manager Tasks
+  managerTasks: [],
+  managerTasksLoading: false,
+  completeTaskLoading: false,
+  // PRD: Transfer Management
+  transferManagementLoading: false,
+  // Common
   loading: false,
   error: null,
   createLoading: false,
@@ -338,6 +548,208 @@ const membershipSlice = createSlice({
       .addCase(fetchPendingOwnerApprovalRequests.rejected, (state, action) => {
         state.pendingOwnerApprovalLoading = false;
         state.error = action.payload;
+      })
+
+      // ===== US6: Family Invitation =====
+      .addCase(createFamilyInvitation.pending, (state) => {
+        state.createFamilyInvitationLoading = true;
+        state.error = null;
+      })
+      .addCase(createFamilyInvitation.fulfilled, (state, action) => {
+        state.createFamilyInvitationLoading = false;
+        state.familyInvitations.unshift(action.payload);
+      })
+      .addCase(createFamilyInvitation.rejected, (state, action) => {
+        state.createFamilyInvitationLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchFamilyInvitations.pending, (state) => {
+        state.familyInvitationsLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchFamilyInvitations.fulfilled, (state, action) => {
+        state.familyInvitationsLoading = false;
+        state.familyInvitations = action.payload?.invitations || [];
+      })
+      .addCase(fetchFamilyInvitations.rejected, (state, action) => {
+        state.familyInvitationsLoading = false;
+        state.error = action.payload;
+      })
+
+      // ===== US7: Conflict Reports =====
+      .addCase(reportUnitConflict.pending, (state) => {
+        state.createLoading = true;
+        state.error = null;
+      })
+      .addCase(reportUnitConflict.fulfilled, (state, action) => {
+        state.createLoading = false;
+        // Can add to conflictReports if needed
+      })
+      .addCase(reportUnitConflict.rejected, (state, action) => {
+        state.createLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchConflictReports.pending, (state) => {
+        state.conflictReportsLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchConflictReports.fulfilled, (state, action) => {
+        state.conflictReportsLoading = false;
+        state.conflictReports = action.payload?.reports || [];
+      })
+      .addCase(fetchConflictReports.rejected, (state, action) => {
+        state.conflictReportsLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(resolveConflict.pending, (state) => {
+        state.resolveConflictLoading = true;
+        state.error = null;
+      })
+      .addCase(resolveConflict.fulfilled, (state, action) => {
+        state.resolveConflictLoading = false;
+        const reportId = action.payload.report.report_id;
+        const index = state.conflictReports.findIndex(report => report.report_id === reportId);
+        if (index !== -1) {
+          state.conflictReports[index] = action.payload.report;
+        }
+      })
+      .addCase(resolveConflict.rejected, (state, action) => {
+        state.resolveConflictLoading = false;
+        state.error = action.payload;
+      })
+
+      // ===== US9: Withdraw Request =====
+      .addCase(withdrawMembershipRequest.pending, (state) => {
+        state.rejectLoading = true;
+        state.error = null;
+      })
+      .addCase(withdrawMembershipRequest.fulfilled, (state, action) => {
+        state.rejectLoading = false;
+        // Remove the withdrawn request from the list
+        const requestId = action.meta.arg;
+        state.requests = state.requests.filter(req => req.request_id !== requestId);
+        state.count = Math.max(0, state.count - 1);
+      })
+      .addCase(withdrawMembershipRequest.rejected, (state, action) => {
+        state.rejectLoading = false;
+        state.error = action.payload;
+      })
+
+      // ===== US11: Invite Links =====
+      .addCase(createInviteLink.pending, (state) => {
+        state.createInviteLinkLoading = true;
+        state.error = null;
+      })
+      .addCase(createInviteLink.fulfilled, (state, action) => {
+        state.createInviteLinkLoading = false;
+        state.inviteLinks.unshift(action.payload);
+      })
+      .addCase(createInviteLink.rejected, (state, action) => {
+        state.createInviteLinkLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(validateInviteLink.pending, (state) => {
+        state.validateInviteLinkLoading = true;
+        state.error = null;
+      })
+      .addCase(validateInviteLink.fulfilled, (state, action) => {
+        state.validateInviteLinkLoading = false;
+        state.inviteLinkData = action.payload;
+      })
+      .addCase(validateInviteLink.rejected, (state, action) => {
+        state.validateInviteLinkLoading = false;
+        state.error = action.payload;
+        state.inviteLinkData = null;
+      })
+
+      .addCase(useInviteLink.pending, (state) => {
+        state.useInviteLinkLoading = true;
+        state.error = null;
+      })
+      .addCase(useInviteLink.fulfilled, (state, action) => {
+        state.useInviteLinkLoading = false;
+        // Link has been used successfully
+      })
+      .addCase(useInviteLink.rejected, (state, action) => {
+        state.useInviteLinkLoading = false;
+        state.error = action.payload;
+      })
+
+      // ===== PRD: Suggested Users Management =====
+      .addCase(registerSuggestedUser.pending, (state) => {
+        state.createLoading = true;
+        state.error = null;
+      })
+      .addCase(registerSuggestedUser.fulfilled, (state, action) => {
+        state.createLoading = false;
+        // Can add to some list if needed
+      })
+      .addCase(registerSuggestedUser.rejected, (state, action) => {
+        state.createLoading = false;
+        state.error = action.payload;
+      })
+
+      // ===== PRD: Join by Manager Phone =====
+      .addCase(joinByManagerPhone.pending, (state) => {
+        state.createLoading = true;
+        state.error = null;
+      })
+      .addCase(joinByManagerPhone.fulfilled, (state, action) => {
+        state.createLoading = false;
+        // Handle response - could add to requests or navigate
+      })
+      .addCase(joinByManagerPhone.rejected, (state, action) => {
+        state.createLoading = false;
+        state.error = action.payload;
+      })
+
+      // ===== PRD: Transfer Management =====
+      .addCase(transferBuildingManagement.pending, (state) => {
+        state.transferManagementLoading = true;
+        state.error = null;
+      })
+      .addCase(transferBuildingManagement.fulfilled, (state, action) => {
+        state.transferManagementLoading = false;
+        // Building management transferred successfully
+      })
+      .addCase(transferBuildingManagement.rejected, (state, action) => {
+        state.transferManagementLoading = false;
+        state.error = action.payload;
+      })
+
+      // ===== PRD: Manager Tasks =====
+      .addCase(getManagerTasks.pending, (state) => {
+        state.managerTasksLoading = true;
+        state.error = null;
+      })
+      .addCase(getManagerTasks.fulfilled, (state, action) => {
+        state.managerTasksLoading = false;
+        state.managerTasks = action.payload;
+      })
+      .addCase(getManagerTasks.rejected, (state, action) => {
+        state.managerTasksLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(completeManagerTask.pending, (state) => {
+        state.completeTaskLoading = true;
+        state.error = null;
+      })
+      .addCase(completeManagerTask.fulfilled, (state, action) => {
+        state.completeTaskLoading = false;
+        // Update the completed task in the list
+        const taskIndex = state.managerTasks.findIndex(task => task.task_id === action.payload.task.task_id);
+        if (taskIndex !== -1) {
+          state.managerTasks[taskIndex] = action.payload.task;
+        }
+      })
+      .addCase(completeManagerTask.rejected, (state, action) => {
+        state.completeTaskLoading = false;
+        state.error = action.payload;
       });
   },
 });
@@ -365,5 +777,31 @@ export const selectUnitLoading = (state) => state.membership.unitLoading;
 export const selectPendingOwnerApprovalRequests = (state) => state.membership.pendingOwnerApprovalRequests;
 export const selectPendingOwnerApprovalLoading = (state) => state.membership.pendingOwnerApprovalLoading;
 export const selectPendingOwnerApprovalCount = (state) => state.membership.pendingOwnerApprovalCount;
+
+// US6: Family Invitations
+export const selectFamilyInvitations = (state) => state.membership.familyInvitations;
+export const selectFamilyInvitationsLoading = (state) => state.membership.familyInvitationsLoading;
+export const selectCreateFamilyInvitationLoading = (state) => state.membership.createFamilyInvitationLoading;
+
+// US7: Conflict Reports
+export const selectConflictReports = (state) => state.membership.conflictReports;
+export const selectConflictReportsLoading = (state) => state.membership.conflictReportsLoading;
+export const selectResolveConflictLoading = (state) => state.membership.resolveConflictLoading;
+
+// US11: Invite Links
+export const selectInviteLinks = (state) => state.membership.inviteLinks;
+export const selectInviteLinksLoading = (state) => state.membership.inviteLinksLoading;
+export const selectCreateInviteLinkLoading = (state) => state.membership.createInviteLinkLoading;
+export const selectValidateInviteLinkLoading = (state) => state.membership.validateInviteLinkLoading;
+export const selectUseInviteLinkLoading = (state) => state.membership.useInviteLinkLoading;
+export const selectInviteLinkData = (state) => state.membership.inviteLinkData;
+
+// PRD: Manager Tasks
+export const selectManagerTasks = (state) => state.membership.managerTasks;
+export const selectManagerTasksLoading = (state) => state.membership.managerTasksLoading;
+export const selectCompleteTaskLoading = (state) => state.membership.completeTaskLoading;
+
+// PRD: Transfer Management
+export const selectTransferManagementLoading = (state) => state.membership.transferManagementLoading;
 
 export default membershipSlice.reducer;

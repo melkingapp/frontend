@@ -37,6 +37,11 @@ export const navItemsResident = [
         to: "/resident/membership",
     },
     {
+        label: "دعوت‌نامه خانواده",
+        icon: <Users size={20} />,
+        to: "/resident/family-invitations",
+    },
+    {
         label: "دستیار حقوقی",
         icon: <Sparkles size={20} />,
         to: "/resident/legal-ai",

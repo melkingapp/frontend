@@ -6,6 +6,9 @@ import Contact from "../pages/public/Contact";
 import AuthLayout from "../layout/publicLayout/AuthLayout";
 import RoleSelector from "../features/authentication/components/RoleSelector";
 import LoginForm from "../features/authentication/LoginForm";
+import AcceptFamilyInvitePage from "../features/membership/pages/AcceptFamilyInvitePage";
+import JoinByInviteLinkPage from "../features/membership/pages/JoinByInviteLinkPage";
+import JoinPage from "../pages/public/JoinPage";
 
 export const publicRoutes = [
   {
@@ -25,5 +28,17 @@ export const publicRoutes = [
       { index: true, element: <RoleSelector /> },
       { path: ":role", element: <LoginForm /> }
     ]
+  },
+  {
+    path: "/join/family/:code",
+    element: <AcceptFamilyInvitePage />
+  },
+  {
+    path: "/join/invite/:token",
+    element: <JoinByInviteLinkPage />
+  },
+  {
+    path: "/join",
+    element: <JoinMethodSelector />
   }
 ];
