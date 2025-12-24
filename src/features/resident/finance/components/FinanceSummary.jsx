@@ -3,7 +3,7 @@ import CountUp from "react-countup";
 import moment from "moment-jalaali";
 import { useSelector } from "react-redux";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import { selectCurrentFundBalance } from "../../../manager/finance/slices/financeSlice";
+import { selectCurrentFundBalance } from "../../../manager/finance/store/slices/financeSlice";
 
 moment.loadPersian({ dialect: "persian-modern" });
 

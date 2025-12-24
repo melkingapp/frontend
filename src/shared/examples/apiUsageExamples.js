@@ -24,7 +24,7 @@ import {
   registerExpense,
   payBill,
   fetchExpenseTypes
-} from '../../features/manager/finance/slices/financeSlice';
+} from '../../features/manager/finance/store/slices/financeSlice';
 import { 
   fetchBuildingLetters,
   createLetter,

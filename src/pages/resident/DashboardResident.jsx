@@ -8,16 +8,9 @@ import MembershipRequestForm from "../../features/membership/components/Membersh
 import BuildingRequestStatus from "../../features/resident/building/components/BuildingRequestStatus";
 import BuildingSelector from "../../features/resident/building/components/BuildingSelector";
 import Button from "../../shared/components/shared/feedback/Button";
-import { 
-  selectSelectedResidentBuilding,
-  selectApprovedBuildings,
-  selectResidentRequests,
-  fetchApprovedBuildings
-} from "../../features/resident/building/residentBuildingSlice";
-import { 
-  selectMembershipRequests,
-  fetchMembershipRequests
-} from "../../features/membership/membershipSlice";
+import { selectSelectedResidentBuilding } from "../../features/resident/building/residentBuildingSlice";
+import { selectMembershipRequests, fetchMembershipRequests } from "../../features/membership/membershipSlice";
+import { useApprovedRequests } from "../../features/resident/building/hooks/useApprovedRequests";
 
 // Wrapper component for the membership request form
 function MembershipRequestFormWrapper() {
@@ -51,26 +44,17 @@ function MembershipRequestFormWrapper() {
 export default function ResidentDashboard() {
   const dispatch = useDispatch();
   const selectedBuilding = useSelector(selectSelectedResidentBuilding);
-  const approvedBuildings = useSelector(selectApprovedBuildings);
-  const requests = useSelector(selectResidentRequests);
   const membershipRequests = useSelector(selectMembershipRequests);
-  
+
+  const approvedRequests = useApprovedRequests();
+
   // Load data when component mounts
   useEffect(() => {
     dispatch(fetchMembershipRequests());
-    dispatch(fetchApprovedBuildings());
   }, [dispatch]);
-  
-  // Check for approved membership requests (more reliable than approvedBuildings)
-  const approvedRequests = membershipRequests.filter(req => 
-    req.status === 'approved' || 
-    req.status === 'owner_approved' || 
-    req.status === 'manager_approved'
-  );
-  
-  const hasBuilding = approvedBuildings.length > 0 || approvedRequests.length > 0; // Show if user is member of any building
-  const hasMultipleBuildings = approvedBuildings.length > 1 || approvedRequests.length > 1;
-  const hasRequests = requests.length > 0;
+
+  const hasBuilding = approvedRequests.length > 0;
+  const hasMultipleBuildings = approvedRequests.length > 1;
   const hasMembershipRequests = membershipRequests.length > 0;
   
   

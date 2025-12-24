@@ -2,16 +2,15 @@ import ManagerLayout from "../layout/managerLayout/ManagerLayout";
 import DashboardManager from "../pages/manager/DashboardManager";
 import Finance from "../pages/manager/Finance";
 import CreateBuildingForm from "../features/manager/building/pages/CreateBuildingForm";
-import FinanceTransactions from "../features/manager/finance/pages/FinanceTransactions";
-import BuildingBalance from "../features/manager/finance/pages/BuildingBalance";
+import { TransactionsPage as FinanceTransactions } from "../features/manager/finance/pages/Transactions";
+import { BalancePage as BuildingBalance } from "../features/manager/finance/pages/Balance";
 import Notifications from "../pages/manager/Notifications";
 import BuildingNews from "../features/manager/notification/pages/BuildingNews";
 import ServicesPage from "../features/manager/notification/pages/ServicesPage";
 import SurveyPage from "../features/manager/notification/pages/SurveyPage";
 import UnitManagement from "../pages/manager/UnitManagement";
 import UnitsPage from "../features/manager/unitManagement/pages/UnitsPage";
-import TransactionsPage from "../features/manager/unitManagement/pages/TransactionsPage";
-import FinancePaymentsPage from "../features/manager/finance/pages/PaymentsPage";
+import { PaymentsPage as FinancePaymentsPage } from "../features/manager/finance/pages/Payments";
 import RequestsPage from "../features/manager/unitManagement/pages/RequestsPage";
 import ManagerMembershipPage from "../features/membership/pages/ManagerMembershipPage";
 import ManagerProfile from "../pages/manager/Profile";
@@ -44,7 +43,6 @@ export const managerRoutes = [
             { path: "unit-management", element: <UnitManagement /> },
             { path: "unit-management/units", element: <UnitsPage /> },
             { path: "unit-management/requests", element: <RequestsPage /> },
-            { path: "unit-management/transactions", element: <TransactionsPage /> },
             { path: "membership", element: <ManagerMembershipPage /> },
             { path: "legal-ai", element: <LegalAI /> },
             { path: "profile", element: <ManagerProfile /> },

@@ -460,15 +460,15 @@ export const useChargeFormHandlers = ({
         apiData.custom_amounts = customAmountsForApi;
       }
 
-      // Add auto_schedule if enabled and end_date is a valid non-empty string
-      if (formData.autoSchedule?.enabled && formData.autoSchedule?.endDate) {
-        apiData.auto_schedule = {
-          enabled: true,
-          day_of_month: parseInt(formData.autoSchedule.dayOfMonth) || 1,
-          // Backend expects ISO date string (YYYY-MM-DD)
-          end_date: formData.autoSchedule.endDate,
-        };
-      }
+      // TODO: Enable auto_schedule when backend date format is fully aligned
+      // Currently disabled to avoid fromisoformat errors in backend.
+      // if (formData.autoSchedule?.enabled && formData.autoSchedule?.endDate) {
+      //   apiData.auto_schedule = {
+      //     enabled: true,
+      //     day_of_month: parseInt(formData.autoSchedule.dayOfMonth) || 1,
+      //     end_date: formData.autoSchedule.endDate, // must be YYYY-MM-DD
+      //   };
+      // }
 
       // Call API
       const response = await announceCharge(apiData);

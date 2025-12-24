@@ -1,18 +1,11 @@
 import { Building2, Users, MapPin, Calendar, CheckCircle, Home, Car } from "lucide-react";
 import { useSelector } from "react-redux";
-import { selectMembershipRequests } from "../../../membership/membershipSlice";
 import { selectSelectedResidentBuilding } from "../residentBuildingSlice";
+import { useApprovedRequests } from "../hooks/useApprovedRequests";
 
 export default function ResidentBuildingCard() {
-    const requests = useSelector(selectMembershipRequests);
+    const approvedRequests = useApprovedRequests();
     const selectedBuilding = useSelector(selectSelectedResidentBuilding);
-    
-    // Get approved requests (include both owner_approved and manager_approved)
-    const approvedRequests = requests.filter(req => 
-        req.status === 'approved' || 
-        req.status === 'owner_approved' || 
-        req.status === 'manager_approved'
-    );
     
     // Get the request for the selected building/unit, or fallback to first approved request
     let displayRequest = null;

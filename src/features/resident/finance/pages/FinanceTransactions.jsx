@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
 import moment from "moment-jalaali";
-import FinanceTableRow from "../../../manager/finance/components/overview/FinanceTableRow";
-import FinanceDetailsModal from "../../../manager/finance/components/overview/FinanceDetailsModal";
+import { FinanceTableRow, FinanceSummary } from "../../../manager/finance/components/transactions/TransactionList";
+import { FinanceDetailsModal } from "../../../manager/finance/components/transactions/TransactionDetails";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import TransactionFilter from "../../../manager/finance/components/overview/TransactionFilter";
-import FinanceSummary from "../../../manager/finance/components/overview/FinanceSummary";
+import { TransactionFilter } from "../../../manager/finance/components/transactions/TransactionFilters";
 import SearchBox from "../../../../shared/components/shared/inputs/SearchBox";
 import useCategories from "../../../../shared/hooks/useCategories";
-import { fetchTransactions, fetchCurrentFundBalance, selectCurrentFundBalance } from "../../../manager/finance/slices/financeSlice";
+import { fetchTransactions, fetchCurrentFundBalance, selectCurrentFundBalance } from "../../../manager/finance/store/slices/financeSlice";
 import { fetchBuildings, setSelectedBuilding } from "../../../manager/building/buildingSlice";
 
 moment.loadPersian({ dialect: "persian-modern" });

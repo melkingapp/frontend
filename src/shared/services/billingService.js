@@ -398,6 +398,45 @@ export const getCurrentFundBalance = async (buildingId) => {
     }
 };
 
+// Building Visibility Settings
+export const getBuildingVisibilitySettings = async (buildingId) => {
+    try {
+        const response = await get(`/billing/visibility-settings/?building_id=${buildingId}`);
+        return response;
+    } catch (error) {
+        console.error('Get building visibility settings error:', error);
+        throw error;
+    }
+};
+
+export const toggleDebtCreditVisibility = async (buildingId, showToResidents) => {
+    try {
+        const payload = {
+            building_id: buildingId,
+            show_to_residents: showToResidents,
+        };
+        const response = await post('/billing/toggle-debt-credit-visibility/', payload);
+        return response;
+    } catch (error) {
+        console.error('Toggle debt/credit visibility error:', error);
+        throw error;
+    }
+};
+
+export const toggleFinancialTransactionsVisibility = async (buildingId, showToResidents) => {
+    try {
+        const payload = {
+            building_id: buildingId,
+            show_to_residents: showToResidents,
+        };
+        const response = await post('/billing/toggle-financial-transactions-visibility/', payload);
+        return response;
+    } catch (error) {
+        console.error('Toggle financial transactions visibility error:', error);
+        throw error;
+    }
+};
+
 // Charge Formulas APIs
 // Get list of charge formulas for a building
 export const getChargeFormulas = async (buildingId) => {

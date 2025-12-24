@@ -5,7 +5,7 @@ import {
     fetchBuildings,
     setSelectedBuilding,
 } from "../buildingSlice";
-import { fetchCurrentFundBalance, selectCurrentFundBalance } from "../../finance/slices/financeSlice";
+import { fetchCurrentFundBalance, selectCurrentFundBalance } from "../../finance/store/slices/financeSlice";
 
 export default function ManagerBuildingsList() {
     const dispatch = useDispatch();

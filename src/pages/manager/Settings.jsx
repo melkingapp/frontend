@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { 
     Settings, Building, Bell, FileText, 
-    Save, RefreshCw, AlertCircle, Loader2
+    Save, RefreshCw, AlertCircle, Loader2, CreditCard
 } from 'lucide-react';
 import SettingsSection from '../../shared/components/settings/SettingsSection';
 import SettingsInput from '../../shared/components/settings/SettingsInput';
@@ -18,11 +18,14 @@ import {
     deleteBuildingDocument,
     fetchNotificationSettings,
     updateNotificationSettings,
+    fetchFinancialVisibilitySettings,
+    toggleDebtCreditVisibilitySetting,
+    toggleFinancialTransactionsVisibilitySetting,
 } from '../../features/settings/settingsSlice';
 
 const ManagerSettings = () => {
     const dispatch = useDispatch();
-    const { buildingSettings, buildingDocuments, notificationSettings, loading, error } = useSelector((state) => state.settings);
+    const { buildingSettings, buildingDocuments, notificationSettings, financialVisibility, loading, error } = useSelector((state) => state.settings);
     const { selectedBuildingId, data: buildings } = useSelector((state) => state.building);
     
     const [activeTab, setActiveTab] = useState('building');
@@ -49,6 +52,7 @@ const ManagerSettings = () => {
             dispatch(fetchBuildingSettings(selectedBuildingId));
             dispatch(fetchBuildingDocuments(selectedBuildingId));
             dispatch(fetchNotificationSettings());
+            dispatch(fetchFinancialVisibilitySettings(selectedBuildingId));
         }
     }, [dispatch, selectedBuildingId]);
 
@@ -251,8 +255,39 @@ const ManagerSettings = () => {
         }
     };
 
+    const handleFinancialVisibilityChange = async (field, value) => {
+        if (!selectedBuildingId) {
+            toast.error('لطفاً ابتدا یک ساختمان انتخاب کنید.');
+            return;
+        }
+
+        try {
+            if (field === 'show_financial_transactions_to_residents') {
+                await dispatch(
+                    toggleFinancialTransactionsVisibilitySetting({
+                        buildingId: selectedBuildingId,
+                        showToResidents: value,
+                    })
+                ).unwrap();
+                toast.success('دسترسی به گردش مالی واحدها با موفقیت به‌روزرسانی شد.');
+            } else if (field === 'show_debt_credit_to_residents') {
+                await dispatch(
+                    toggleDebtCreditVisibilitySetting({
+                        buildingId: selectedBuildingId,
+                        showToResidents: value,
+                    })
+                ).unwrap();
+                toast.success('دسترسی به بدهکاری/بستانکاری با موفقیت به‌روزرسانی شد.');
+            }
+        } catch (error) {
+            const message = error?.detail || error?.message || 'خطا در به‌روزرسانی تنظیمات دسترسی مالی';
+            toast.error(message);
+        }
+    };
+
     const tabs = useMemo(() => [
         { id: 'building', label: 'اطلاعات ساختمان', icon: Building, description: 'مدیریت اطلاعات پایه و مالی ساختمان' },
+        { id: 'financial', label: 'تنظیمات مالی', icon: CreditCard, description: 'کنترل سطح دسترسی به گزارش‌های مالی' },
         { id: 'notifications', label: 'اعلان‌ها', icon: Bell, description: 'مدیریت اطلاع‌رسانی‌ها' },
         { id: 'documents', label: 'مدیریت اسناد', icon: FileText, description: 'آپلود و مدیریت فایل‌ها' },
         // { id: 'security', label: 'امنیت و دسترسی', icon: Shield, description: 'تنظیمات امنیتی' },
@@ -546,6 +581,59 @@ const ManagerSettings = () => {
                             checked={notificationSettings.general_notifications}
                             onChange={(e) => handleNotificationChange('general_notifications', e.target.checked)}
                         />
+                                </div>
+                            </SettingsSection>
+                        </div>
+                    )}
+
+                    {activeTab === 'financial' && financialVisibility && (
+                        <div className="animate-fade-in">
+                            <SettingsSection
+                                title="تنظیمات دسترسی مالی"
+                                description="کنترل کنید کدام گزارش‌های مالی برای ساکنین قابل مشاهده باشد"
+                            >
+                                <div className="space-y-6">
+                                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+                                        <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                                            دسترسی به گردش مالی واحدها
+                                        </h3>
+                                        <p className="text-xs text-gray-600 mb-3">
+                                            اگر این گزینه فعال باشد، ساکنان (غیر مالک) در صورت داشتن دسترسی، گردش مالی واحدهای دیگر را هم می‌بینند.
+                                        </p>
+                                        <NotificationToggle
+                                            id="show_financial_transactions_to_residents"
+                                            label="نمایش گردش مالی واحدها به ساکنین"
+                                            description="نمایش گزارش گردش مالی واحدها برای ساکنین ساختمان"
+                                            checked={!!financialVisibility.show_financial_transactions_to_residents}
+                                            onChange={(e) =>
+                                                handleFinancialVisibilityChange(
+                                                    'show_financial_transactions_to_residents',
+                                                    e.target.checked
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                                        <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                                            دسترسی به بدهکاری و بستانکاری واحدها
+                                        </h3>
+                                        <p className="text-xs text-gray-600 mb-3">
+                                            با فعال بودن این گزینه، ساکنین می‌توانند گزارش تجمیعی بدهکار و بستانکار بودن واحدها را ببینند.
+                                        </p>
+                                        <NotificationToggle
+                                            id="show_debt_credit_to_residents"
+                                            label="نمایش بدهکاری/بستانکاری واحدها به ساکنین"
+                                            description="نمایش گزارش بدهکاری و بستانکاری واحدها برای ساکنین ساختمان"
+                                            checked={!!financialVisibility.show_debt_credit_to_residents}
+                                            onChange={(e) =>
+                                                handleFinancialVisibilityChange(
+                                                    'show_debt_credit_to_residents',
+                                                    e.target.checked
+                                                )
+                                            }
+                                        />
+                                    </div>
                                 </div>
                             </SettingsSection>
                         </div>

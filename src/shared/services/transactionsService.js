@@ -51,7 +51,7 @@ export const getUnitTransactions = async (unitNumber, buildingId = null) => {
     }
 };
 
-// Get unit financial transactions (complete financial flow)
+// Get unit financial transactions (complete financial flow) - for managers / full access
 export const getUnitFinancialTransactions = async (unitId, dateFrom = null, dateTo = null) => {
     try {
         const params = new URLSearchParams();
@@ -60,10 +60,33 @@ export const getUnitFinancialTransactions = async (unitId, dateFrom = null, date
         if (dateTo) params.append('date_to', dateTo);
         
         const queryString = params.toString() ? `?${params.toString()}` : '';
-        const response = await get(`/billing/unit-financial-transactions/${queryString}`);
+        const url = `/billing/unit-financial-transactions/${queryString}`;
+        console.log('[getUnitFinancialTransactions] Request URL:', url);
+        const response = await get(url);
+        console.log('[getUnitFinancialTransactions] Response:', response);
         return response;
     } catch (error) {
         console.error('Get unit financial transactions error:', error);
+        throw error;
+    }
+};
+
+// Get unit financial transactions for residents (restricted by visibility settings)
+export const getUnitFinancialTransactionsForResidents = async (unitId, dateFrom = null, dateTo = null) => {
+    try {
+        const params = new URLSearchParams();
+        if (unitId) params.append('unit_id', unitId);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        
+        const queryString = params.toString() ? `?${params.toString()}` : '';
+        const url = `/billing/unit-financial-transactions-residents/${queryString}`;
+        console.log('[getUnitFinancialTransactionsForResidents] Request URL:', url);
+        const response = await get(url);
+        console.log('[getUnitFinancialTransactionsForResidents] Response:', response);
+        return response;
+    } catch (error) {
+        console.error('Get unit financial transactions for residents error:', error);
         throw error;
     }
 };
@@ -84,6 +107,7 @@ const transactionsService = {
     getTransactions,
     getUnitTransactions,
     getUnitFinancialTransactions,
+    getUnitFinancialTransactionsForResidents,
     getTransactionDetail
 };
 
