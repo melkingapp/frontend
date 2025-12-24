@@ -33,8 +33,8 @@ export default function StepSummary({ formData, prev }) {
                 property_type: formData.property_type,
                 unit_count: parseInt(formData.unit_count) || 0,
                 is_owner_resident: formData.is_owner_resident,
-                resident_floor: formData.is_owner_resident
-                    ? (formData.manager_floor || formData.resident_floor || '')
+                resident_floor: formData.is_owner_resident 
+                    ? (formData.manager_floor || formData.resident_floor || '') 
                     : '',
                 fund_balance: parseFloat(formData.fund_balance) || 0,
                 fund_sheba_number: formData.fund_sheba_number,
