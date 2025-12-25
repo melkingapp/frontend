@@ -96,6 +96,10 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                                 key={index}
                                 type="text"
                                 inputMode="numeric"
+                                autoComplete="one-time-code"
+                                aria-label={`Digit ${index + 1}`}
+                                aria-invalid={otpError}
+                                aria-describedby={otpError ? "otp-error" : undefined}
                                 maxLength={1}
                                 className={`w-12 h-12 border rounded-xl text-center text-lg font-bold shadow-sm focus:outline-none transition
                                 ${otpError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-melkingGold"}
@@ -108,7 +112,7 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                 </div>
 
                 {otpError && (
-                    <p className="text-red-500 text-sm text-center mt-2">
+                    <p id="otp-error" className="text-red-500 text-sm text-center mt-2">
                         کد تأیید نامعتبر است.
                     </p>
                 )}
