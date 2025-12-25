@@ -1,23 +1,26 @@
+import { lazy } from "react";
 import ManagerLayout from "../layout/managerLayout/ManagerLayout";
-import DashboardManager from "../pages/manager/DashboardManager";
-import Finance from "../pages/manager/Finance";
-import CreateBuildingForm from "../features/manager/building/pages/CreateBuildingForm";
-import { TransactionsPage as FinanceTransactions } from "../features/manager/finance/pages/Transactions";
-import { BalancePage as BuildingBalance } from "../features/manager/finance/pages/Balance";
-import Notifications from "../pages/manager/Notifications";
-import BuildingNews from "../features/manager/notification/pages/BuildingNews";
-import ServicesPage from "../features/manager/notification/pages/ServicesPage";
-import SurveyPage from "../features/manager/notification/pages/SurveyPage";
-import UnitManagement from "../pages/manager/UnitManagement";
-import UnitsPage from "../features/manager/unitManagement/pages/UnitsPage";
-import { PaymentsPage as FinancePaymentsPage } from "../features/manager/finance/pages/Payments";
-import RequestsPage from "../features/manager/unitManagement/pages/RequestsPage";
-import ManagerMembershipPage from "../features/membership/pages/ManagerMembershipPage";
-import ManagerProfile from "../pages/manager/Profile";
-import ManagerSettings from "../pages/manager/Settings";
-import LegalAI from "../pages/manager/LegalAI";
-import AnnounceCharge from "../pages/manager/AnnounceCharge";
 import ProtectedRoute from "../shared/components/shared/ProtectedRoute";
+
+// Lazy load components
+const DashboardManager = lazy(() => import("../pages/manager/DashboardManager"));
+const Finance = lazy(() => import("../pages/manager/Finance"));
+const CreateBuildingForm = lazy(() => import("../features/manager/building/pages/CreateBuildingForm"));
+const FinanceTransactions = lazy(() => import("../features/manager/finance/pages/Transactions").then(module => ({ default: module.TransactionsPage })));
+const BuildingBalance = lazy(() => import("../features/manager/finance/pages/Balance").then(module => ({ default: module.BalancePage })));
+const Notifications = lazy(() => import("../pages/manager/Notifications"));
+const BuildingNews = lazy(() => import("../features/manager/notification/pages/BuildingNews"));
+const ServicesPage = lazy(() => import("../features/manager/notification/pages/ServicesPage"));
+const SurveyPage = lazy(() => import("../features/manager/notification/pages/SurveyPage"));
+const UnitManagement = lazy(() => import("../pages/manager/UnitManagement"));
+const UnitsPage = lazy(() => import("../features/manager/unitManagement/pages/UnitsPage"));
+const FinancePaymentsPage = lazy(() => import("../features/manager/finance/pages/Payments").then(module => ({ default: module.PaymentsPage })));
+const RequestsPage = lazy(() => import("../features/manager/unitManagement/pages/RequestsPage"));
+const ManagerMembershipPage = lazy(() => import("../features/membership/pages/ManagerMembershipPage"));
+const ManagerProfile = lazy(() => import("../pages/manager/Profile"));
+const ManagerSettings = lazy(() => import("../pages/manager/Settings"));
+const LegalAI = lazy(() => import("../pages/manager/LegalAI"));
+const AnnounceCharge = lazy(() => import("../pages/manager/AnnounceCharge"));
 
 export const managerRoutes = [
     {

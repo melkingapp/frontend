@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ManagerHeader from "../../shared/components/headers/managerHeader/ManagerHeader";
@@ -6,6 +6,7 @@ import ManagerSidebar from "../../shared/components/headers/managerHeader/Manage
 import { navItemsManager } from "../../constants/navItemsManager";
 import { fetchBuildings, selectSelectedBuilding } from "../../features/manager/building/buildingSlice";
 import FloatingAIAssistant from "../../shared/components/shared/feedback/FloatingAIAssistant";
+import SuspenseLoader from "../../shared/components/shared/feedback/SuspenseLoader";
 
 export default function ManagerLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,7 +37,9 @@ export default function ManagerLayout() {
                     onCloseSidebar={() => setSidebarOpen(false)}
                 />
                 <main className="flex-1 p-4 overflow-y-auto">
-                    <Outlet />
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <Outlet />
+                    </Suspense>
                 </main>
             </div>
 
