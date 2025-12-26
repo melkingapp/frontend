@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getResidentRequests, getApprovedBuildings, getBuildingDetails } from '../../../shared/services/residentRequestsService';
+import { sanitizeBuildingData, sanitizeRequestData } from '../../../shared/utils/security';
 
 // Token refresh helper
 const handleTokenRefresh = async (dispatch) => {
@@ -18,7 +19,6 @@ const handleTokenRefresh = async (dispatch) => {
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('access_token', data.access);
-            console.log('Token refreshed successfully');
             return true;
         } else {
             throw new Error('Token refresh failed');
@@ -79,7 +79,6 @@ export const fetchApprovedBuildingsDetails = createAsyncThunk(
             
             const buildings = await Promise.all(buildingPromises);
             const validBuildings = buildings.filter(building => building !== null);
-            console.log('Valid buildings fetched:', validBuildings);
             return validBuildings;
         } catch (error) {
             console.error('Error in fetchApprovedBuildingsDetails:', error);
@@ -124,9 +123,10 @@ const residentBuildingSlice = createSlice({
     reducers: {
         setSelectedBuilding: (state, action) => {
             state.selectedBuilding = action.payload;
-            // Save to localStorage
+            // Save to localStorage with sanitization
             try {
-                localStorage.setItem('selectedResidentBuilding', JSON.stringify(action.payload));
+                const sanitizedBuilding = sanitizeBuildingData(action.payload);
+                localStorage.setItem('selectedResidentBuilding', JSON.stringify(sanitizedBuilding));
             } catch (error) {
                 console.error('Failed to save selected building to localStorage:', error);
             }
@@ -151,9 +151,10 @@ const residentBuildingSlice = createSlice({
             .addCase(fetchResidentRequests.fulfilled, (state, action) => {
                 state.loading = false;
                 state.requests = action.payload.requests || [];
-                // Save requests to localStorage
+                // Save requests to localStorage with sanitization
                 try {
-                    localStorage.setItem('residentRequests', JSON.stringify(action.payload.requests || []));
+                    const requestsToSave = (action.payload.requests || []).map(req => sanitizeRequestData(req));
+                    localStorage.setItem('residentRequests', JSON.stringify(requestsToSave));
                 } catch (error) {
                     console.error('Failed to save requests to localStorage:', error);
                 }
@@ -189,9 +190,10 @@ const residentBuildingSlice = createSlice({
                 const newBuildings = action.payload.filter(b => !existingIds.includes(b.building_id || b.id));
                 state.approvedBuildings = [...state.approvedBuildings, ...newBuildings];
                 
-                // Save buildings to localStorage
+                // Save buildings to localStorage with sanitization
                 try {
-                    localStorage.setItem('residentBuildings', JSON.stringify(state.approvedBuildings));
+                    const buildingsToSave = state.approvedBuildings.map(b => sanitizeBuildingData(b));
+                    localStorage.setItem('residentBuildings', JSON.stringify(buildingsToSave));
                 } catch (error) {
                     console.error('Failed to save buildings to localStorage:', error);
                 }
@@ -240,9 +242,10 @@ const residentBuildingSlice = createSlice({
                     }
                 }
                 
-                // Save updated state to localStorage
+                // Save updated state to localStorage with sanitization
                 try {
-                    localStorage.setItem('residentBuildings', JSON.stringify(newBuildings));
+                    const buildingsToSave = newBuildings.map(b => sanitizeBuildingData(b));
+                    localStorage.setItem('residentBuildings', JSON.stringify(buildingsToSave));
                 } catch (error) {
                     console.error('Failed to save buildings to localStorage:', error);
                 }
@@ -252,7 +255,6 @@ const residentBuildingSlice = createSlice({
                 state.error = action.payload;
             })
             .addCase(maintainApprovedBuildings.fulfilled, (state, action) => {
-                console.log('🔄 Maintained approved buildings:', action.payload.length);
                 // Don't change state, just maintain current buildings
             });
     },
@@ -267,13 +269,7 @@ export const refreshApprovedBuildings = createAsyncThunk(
             const response = await getApprovedBuildings();
             const buildings = response.results || response;
             
-            console.log('🏢 Buildings received from API:', buildings);
-            console.log('📊 Number of buildings:', buildings.length);
-            
             if (buildings.length > 0) {
-                buildings.forEach((building, index) => {
-                    console.log(`  ${index + 1}. ${building.title} (ID: ${building.building_id || building.id})`);
-                });
                 return buildings;
             } else {
                 
@@ -282,13 +278,12 @@ export const refreshApprovedBuildings = createAsyncThunk(
                 const currentApprovedBuildings = state.residentBuilding.approvedBuildings;
                 
                 if (currentApprovedBuildings && currentApprovedBuildings.length > 0) {
-                    console.log('🔄 Using current state as fallback:', currentApprovedBuildings.length, 'buildings');
                     return currentApprovedBuildings;
                 }
                   return [];
             }
         } catch (error) {
-            console.error('❌ Error refreshing approved buildings:', error);
+            console.error('Error refreshing approved buildings:', error);
             
             // Fallback: Use current state if API fails
             try {
@@ -296,11 +291,10 @@ export const refreshApprovedBuildings = createAsyncThunk(
                 const currentApprovedBuildings = state.residentBuilding.approvedBuildings;
                 
                 if (currentApprovedBuildings && currentApprovedBuildings.length > 0) {
-                    console.log('🔄 API failed, using current state as fallback:', currentApprovedBuildings.length, 'buildings');
                     return currentApprovedBuildings;
                 }
             } catch (stateError) {
-                console.error('❌ State fallback also failed:', stateError);
+                console.error('State fallback also failed:', stateError);
             }
             
             return rejectWithValue(error.message);
@@ -314,8 +308,6 @@ export const maintainApprovedBuildings = createAsyncThunk(
     async (_, { getState }) => {
         const state = getState();
         const currentApprovedBuildings = state.residentBuilding.approvedBuildings;
-        
-        console.log('🔄 Maintaining current approved buildings:', currentApprovedBuildings.length);
         
         if (currentApprovedBuildings && currentApprovedBuildings.length > 0) {
             return currentApprovedBuildings;
