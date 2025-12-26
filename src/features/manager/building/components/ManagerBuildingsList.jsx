@@ -63,10 +63,12 @@ export default function ManagerBuildingsList() {
                     const isSelected = buildingId === selectedBuildingId;
 
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={buildingId || `building-${index}`}
                             onClick={() => dispatch(setSelectedBuilding(buildingId))}
-                            className={`relative rounded-xl shadow-md p-4 pt-20 overflow-visible group cursor-pointer transition
+                            aria-current={isSelected ? "true" : undefined}
+                            className={`w-full relative rounded-xl shadow-md p-4 pt-20 overflow-visible group cursor-pointer transition focus:outline-none focus:ring-4 focus:ring-yellow-400 focus:ring-opacity-50
                                 ${isSelected
                                     ? "bg-yellow-100 shadow-yellow-400 border-2 border-yellow-400"
                                     : "bg-white hover:shadow-lg"}
@@ -105,7 +107,7 @@ export default function ManagerBuildingsList() {
                                     نقش شما: مدیر ساختمان
                                 </span>
                             </div>
-                        </div>
+                        </button>
                     );
                 })}
             </div>
