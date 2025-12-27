@@ -17,6 +17,8 @@ import {
     getBalanceTransactionDetails,
     exportBalanceData as exportBalanceDataService,
     getCurrentFundBalance,
+    getBalanceSheet as getBalanceSheetService,
+    exportBalanceSheet as exportBalanceSheetService,
     registerExpense as registerExpenseService,
     payBill as payBillService,
     uploadExpenseAttachment as uploadExpenseAttachmentService,
@@ -312,6 +314,30 @@ export const fetchCurrentFundBalance = createAsyncThunk(
     }
 );
 
+export const fetchBalanceSheet = createAsyncThunk(
+    "finance/fetchBalanceSheet",
+    async ({ buildingId, filters = {} }, { rejectWithValue }) => {
+        try {
+            const response = await getBalanceSheetService(buildingId, filters);
+            return response;
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const exportBalanceSheet = createAsyncThunk(
+    "finance/exportBalanceSheet",
+    async ({ buildingId, filters = {} }, { rejectWithValue }) => {
+        try {
+            const response = await exportBalanceSheetService(buildingId, filters);
+            return response;
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
 const initialState = {
     financialSummary: null,
     transactions: [],
@@ -324,6 +350,7 @@ const initialState = {
     balanceTransactions: [],
     balanceTransactionDetails: null,
     currentFundBalance: null,
+    balanceSheet: null,
     loading: false,
     error: null,
     filters: {
@@ -767,6 +794,33 @@ const financeSlice = createSlice({
             .addCase(fetchCurrentFundBalance.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            // Fetch balance sheet
+            .addCase(fetchBalanceSheet.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchBalanceSheet.fulfilled, (state, action) => {
+                state.loading = false;
+                state.balanceSheet = action.payload;
+                state.error = null;
+            })
+            .addCase(fetchBalanceSheet.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Export balance sheet
+            .addCase(exportBalanceSheet.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(exportBalanceSheet.fulfilled, (state, action) => {
+                state.loading = false;
+                state.error = null;
+            })
+            .addCase(exportBalanceSheet.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             });
     },
 });
@@ -789,5 +843,6 @@ export const selectBuildingBalance = (state) => state.finance.buildingBalance;
 export const selectBalanceTransactions = (state) => state.finance.balanceTransactions;
 export const selectBalanceTransactionDetails = (state) => state.finance.balanceTransactionDetails;
 export const selectCurrentFundBalance = (state) => state.finance.currentFundBalance;
+export const selectBalanceSheet = (state) => state.finance.balanceSheet;
 
 export default financeSlice.reducer;

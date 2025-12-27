@@ -9,7 +9,7 @@ export default function PersianDatePicker({ value, onChange, placeholder }) {
             <DatePicker
                 calendar={persian}
                 locale={persian_fa}
-                value={value}
+                value={value || ""}
                 onChange={onChange}
                 placeholder={placeholder || "تاریخ را انتخاب کنید"}
                 inputClass="w-full border border-gray-300 rounded-lg p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-melkingDarkBlue transition"

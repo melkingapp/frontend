@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { Coins } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Coins } from "lucide-react";
 import { toast } from "sonner";
+import ExtraPaymentRequestForm from "../../../../resident/finance/components/ExtraPaymentRequestForm";
 import {
   FinanceSummary,
   UnitTransactionsView,
@@ -31,6 +33,7 @@ import DeleteConfirmModal from "../../../../../shared/components/shared/feedback
 
 export default function FinanceTransactions() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const categories = useCategories();
 
   const [selected, setSelected] = useState(null);
@@ -43,6 +46,7 @@ export default function FinanceTransactions() {
   const [showUnitFinancialModal, setShowUnitFinancialModal] = useState(false);
   const [selectedUnitInvoice, setSelectedUnitInvoice] = useState(null);
   const [unitStatusFilter, setUnitStatusFilter] = useState("all");
+  const [showExtraPaymentForm, setShowExtraPaymentForm] = useState(false);
 
   const {
     building,
@@ -236,6 +240,19 @@ export default function FinanceTransactions() {
   return (
     <>
       <div className="p-4">
+        {/* Submit Request Button */}
+        {userUnits.length > 0 && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={() => setShowExtraPaymentForm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+            >
+              <Plus size={18} />
+              <span>ثبت پرداخت اضافی</span>
+            </button>
+          </div>
+        )}
+
         <ViewModeSwitcher
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
@@ -396,6 +413,16 @@ export default function FinanceTransactions() {
         onClear={handleClearDateFilter}
         oldestDate={oldestDate}
         newestDate={newestDate}
+      />
+
+      {/* Extra Payment Request Form */}
+      <ExtraPaymentRequestForm
+        isOpen={showExtraPaymentForm}
+        onClose={() => setShowExtraPaymentForm(false)}
+        onSuccess={() => {
+          setShowExtraPaymentForm(false);
+          refreshTransactions();
+        }}
       />
     </>
   );

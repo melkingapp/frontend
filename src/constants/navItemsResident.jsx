@@ -1,4 +1,4 @@
-import { CreditCard, MessageCircle, Bell, Settings, User, Home, Building2, Users, UserPlus, Sparkles } from "lucide-react";
+import { CreditCard, MessageCircle, Bell, Settings, User, Home, Building2, Users, UserPlus, Sparkles, Plus } from "lucide-react";
 
 export const navItemsResident = [
     {

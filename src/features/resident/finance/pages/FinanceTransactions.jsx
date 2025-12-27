@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { X } from "lucide-react";
+import { X, Plus, DollarSign } from "lucide-react";
 import moment from "moment-jalaali";
+import ExtraPaymentRequestForm from "../components/ExtraPaymentRequestForm";
 import { FinanceTableRow, FinanceSummary } from "../../../manager/finance/components/transactions/TransactionList";
 import { FinanceDetailsModal } from "../../../manager/finance/components/transactions/TransactionDetails";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
@@ -32,6 +33,7 @@ export default function FinanceTransactions() {
   const [selected, setSelected] = useState(null);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showExtraPaymentForm, setShowExtraPaymentForm] = useState(false);
   const [dateRange, setDateRange] = useState({
     from: getStartOfYear(),
     to: getCurrentDate()
@@ -216,6 +218,17 @@ export default function FinanceTransactions() {
   return (
     <>
       <div className="p-4">
+        {/* Button to open extra payment form */}
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={() => setShowExtraPaymentForm(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus size={18} />
+            <span>ثبت درخواست پرداخت اضافی</span>
+          </button>
+        </div>
+
         <FinanceSummary totalCost={totalCost} balance={balance} newestDate={newestDate} oldestDate={oldestDate} filter={filter} categories={categories} />
 
         {/* Filters and Search */}
@@ -267,6 +280,18 @@ export default function FinanceTransactions() {
         )}
         {/* Modal */}
         <FinanceDetailsModal isResident building={building} transaction={selected} onClose={() => setSelected(null)} />
+        
+        {/* Extra Payment Request Form */}
+        <ExtraPaymentRequestForm
+          isOpen={showExtraPaymentForm}
+          onClose={() => setShowExtraPaymentForm(false)}
+          onSuccess={() => {
+            // Refresh transactions after successful submission
+            if (building?.building_id) {
+              dispatch(fetchTransactions({ building_id: building.building_id }));
+            }
+          }}
+        />
       </div>
     </>
   );

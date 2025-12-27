@@ -119,7 +119,10 @@ class ApiService {
       let data;
       const contentType = response.headers.get('content-type');
       
-      if (contentType && contentType.includes('application/json')) {
+      // Check if responseType is blob
+      if (options.responseType === 'blob') {
+        data = await response.blob();
+      } else if (contentType && contentType.includes('application/json')) {
         data = await response.json();
       } else {
         data = await response.text();
@@ -157,9 +160,14 @@ class ApiService {
               };
               const retryResponse = await fetch(url, retryConfig);
               if (retryResponse.ok) {
-                const retryData = retryResponse.headers.get('content-type')?.includes('application/json') 
-                  ? await retryResponse.json() 
-                  : await retryResponse.text();
+                let retryData;
+                if (options.responseType === 'blob') {
+                  retryData = await retryResponse.blob();
+                } else if (retryResponse.headers.get('content-type')?.includes('application/json')) {
+                  retryData = await retryResponse.json();
+                } else {
+                  retryData = await retryResponse.text();
+                }
                 return { data: retryData, status: retryResponse.status };
               }
             }

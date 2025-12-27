@@ -22,8 +22,13 @@ import {
   Clock,
   CreditCard,
   Download,
-  Eye
+  Eye,
+  Users,
+  CheckCircle,
+  XCircle,
+  AlertCircle
 } from "lucide-react";
+import { useSelector } from "react-redux";
 import moment from "moment-jalaali";
 import { formatNumber } from "../../../../../../shared/utils/helper";
 import { getPersianType, getPersianDistributionMethod } from "../../../../../../shared/utils/typeUtils";
@@ -31,7 +36,9 @@ import { getPersianType, getPersianDistributionMethod } from "../../../../../../
 
 moment.loadPersian({ dialect: "persian-modern" });
 
-export default function BalanceDetailsModal({ transaction, onClose }) {
+export default function BalanceDetailsModal({ transaction, onClose, isManager, transactionDetails }) {
+  const user = useSelector((state) => state.auth?.user);
+  const isUserManager = isManager || user?.role === 'manager';
   if (!transaction) {
     return null;
   }
@@ -222,6 +229,96 @@ export default function BalanceDetailsModal({ transaction, onClose }) {
               </p>
             </div>
           </div>
+
+          {/* Unit Payment Details - Only for Managers */}
+          {isUserManager && (
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Users size={20} className="text-blue-600" />
+                <h3 className="text-lg font-bold text-gray-900">جزئیات پرداخت واحدها</h3>
+              </div>
+              
+              <div className="space-y-3">
+                {((transaction.payments || transaction.unit_payments || transactionDetails?.unit_payments || transactionDetails?.incomes_list || [])).map((payment, index) => {
+                  // Handle different data structures
+                  const unitNumber = payment.unit_number || payment.unit_id || payment.unit?.unit_number || "—";
+                  const amount = payment.amount || payment.payment_amount || payment.total_amount || 0;
+                  const paymentDate = payment.payment_date || payment.date || payment.created_at || payment.issue_date;
+                  const status = payment.status || payment.payment_status;
+                  const paymentMethod = payment.payment_method;
+                  
+                  return (
+                  <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">شماره واحد</label>
+                        <div className="flex items-center gap-2">
+                          <Building size={14} className="text-gray-400" />
+                          <p className="text-sm font-semibold text-gray-900">{unitNumber}</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">مبلغ پرداخت</label>
+                        <div className="flex items-center gap-2">
+                          <DollarSign size={14} className="text-gray-400" />
+                          <p className="text-sm font-semibold text-gray-900">{formatNumber(amount)} ریال</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">تاریخ پرداخت</label>
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} className="text-gray-400" />
+                          <p className="text-sm text-gray-900">{formatDateTime(paymentDate) || "—"}</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">وضعیت</label>
+                        <div className="flex items-center gap-2">
+                          {status === 'paid' || payment.status === 'paid' ? (
+                            <>
+                              <CheckCircle size={14} className="text-green-500" />
+                              <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full font-medium">پرداخت شده</span>
+                            </>
+                          ) : status === 'pending' || payment.status === 'pending' ? (
+                            <>
+                              <AlertCircle size={14} className="text-yellow-500" />
+                              <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full font-medium">در انتظار</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle size={14} className="text-red-500" />
+                              <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded-full font-medium">پرداخت نشده</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {paymentMethod && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">روش پرداخت</label>
+                        <p className="text-sm text-gray-700">{paymentMethod}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+                })}
+              </div>
+              
+              {((!transaction.payments || transaction.payments.length === 0) && 
+                (!transaction.unit_payments || transaction.unit_payments.length === 0) && 
+                (!transactionDetails?.unit_payments || transactionDetails.unit_payments.length === 0) &&
+                (!transactionDetails?.incomes_list || transactionDetails.incomes_list.length === 0)) && (
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                  <Users size={24} className="mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">هیچ اطلاعات پرداختی برای این تراکنش ثبت نشده است</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Additional Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
