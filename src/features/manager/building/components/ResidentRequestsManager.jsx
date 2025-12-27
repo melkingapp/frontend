@@ -18,7 +18,10 @@ export default function ResidentRequestsManager({ buildingId }) {
     const fetchRequests = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir'}/api/v1/buildings/${buildingId}/resident-requests/`, {
+            const baseURL = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://127.0.0.1:8000'
+                : 'https://melkingapp.ir';
+            const response = await fetch(`${baseURL}/api/v1/buildings/${buildingId}/resident-requests/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -44,7 +47,10 @@ export default function ResidentRequestsManager({ buildingId }) {
         
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir'}/api/v1/buildings/resident-requests/${requestId}/update-status/`, {
+            const baseURL = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://127.0.0.1:8000'
+                : 'https://melkingapp.ir';
+            const response = await fetch(`${baseURL}/api/v1/buildings/resident-requests/${requestId}/update-status/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

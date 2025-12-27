@@ -12,11 +12,15 @@ export default function FinanceSummary({ totalCost, balance, newestDate, oldestD
 
   // Format dates to Persian
   const formatJalaliDate = (dateString) => {
-    if (!dateString) return "—";
+    if (!dateString || dateString === "-") return "—";
     try {
-      return moment(dateString).format("jYYYY/jMM/jDD");
+      // Check if dateString is a valid date before passing to moment
+      if (typeof dateString === 'string' && !isNaN(Date.parse(dateString))) {
+        return moment(dateString).format("jYYYY/jMM/jDD");
+      }
+      return "—";
     } catch {
-      return dateString;
+      return "—";
     }
   };
 

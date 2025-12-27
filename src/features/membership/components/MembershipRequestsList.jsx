@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest } from "../membershipSlice";
+import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest, withdrawMembershipRequest } from "../membershipSlice";
 import { 
   Clock, 
   CheckCircle, 
@@ -76,9 +76,10 @@ const RoleBadge = ({ role }) => {
   );
 };
 
-const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject }) => {
+const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject, onWithdraw }) => {
   const { approveLoading, rejectLoading } = useSelector(state => state.membership);
-  
+  const { user } = useSelector(state => state.auth);
+
   const handleApprove = () => {
     if (window.confirm('آیا از تایید این درخواست عضویت اطمینان دارید؟')) {
       onApprove(request.request_id);
@@ -89,6 +90,12 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject }) 
     const reason = window.prompt('دلیل رد درخواست را وارد کنید:');
     if (reason && reason.trim()) {
       onReject(request.request_id, reason.trim());
+    }
+  };
+
+  const handleWithdraw = () => {
+    if (window.confirm('آیا از لغو این درخواست عضویت اطمینان دارید؟ این عمل قابل بازگشت نیست.')) {
+      onWithdraw(request.request_id);
     }
   };
 
@@ -152,7 +159,7 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject }) 
             <Eye size={16} />
             جزئیات
           </button>
-          
+
           {request.status === 'pending' && (
             <>
               <button
@@ -171,6 +178,15 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject }) 
                 <XCircle size={16} />
                 رد
               </button>
+              {/* Withdraw button - only show for user's own pending requests */}
+              {user && request.user === user.id && (
+                <button
+                  onClick={handleWithdraw}
+                  className="flex items-center gap-1 px-3 py-1 bg-gray-600 text-white hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  لغو درخواست
+                </button>
+              )}
             </>
           )}
         </div>
@@ -214,6 +230,18 @@ export default function MembershipRequestsList() {
     } catch (error) {
       console.error('Error rejecting request:', error);
       toast.error('خطا در رد درخواست: ' + error);
+    }
+  };
+
+  const handleWithdraw = async (requestId) => {
+    try {
+      await dispatch(withdrawMembershipRequest(requestId)).unwrap();
+      toast.success('درخواست با موفقیت لغو شد');
+      // Refresh the list
+      dispatch(fetchMembershipRequests({ status: statusFilter === 'all' ? '' : statusFilter }));
+    } catch (error) {
+      console.error('Error withdrawing request:', error);
+      toast.error('خطا در لغو درخواست: ' + error);
     }
   };
 
@@ -389,6 +417,7 @@ export default function MembershipRequestsList() {
               onViewDetails={handleViewDetails}
               onApprove={handleApprove}
               onReject={handleReject}
+              onWithdraw={handleWithdraw}
             />
           ))
         )}

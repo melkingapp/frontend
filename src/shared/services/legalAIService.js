@@ -7,20 +7,25 @@ export const legalAIService = {
       const response = await apiService.post('/legal-ai/ask/', { question });
       console.log('API Response:', response); // Debug log
       
-      // apiService already returns response.data, so we access .response directly
-      const apiResponse = response?.response || response?.data?.response;
+      // Backend now returns response directly in the response object
+      const apiResponse = response?.response;
       
-      return {
-        success: true,
-        message: "سوال شما با موفقیت پردازش شد",
-        legalQuestion: {
-          id: Date.now(),
-          question: question,
-          response: apiResponse || generateLocalResponse(question),
-          status: "completed",
-          createdAt: new Date().toISOString()
-        }
-      };
+      if (response?.success && apiResponse) {
+        return {
+          success: true,
+          message: response.message || "سوال شما با موفقیت پردازش شد",
+          legalQuestion: {
+            id: response.question_id || Date.now(),
+            question: question,
+            response: apiResponse,
+            status: response.status || "completed",
+            createdAt: new Date().toISOString()
+          }
+        };
+      } else {
+        // If no response from API, use fallback
+        throw new Error('No valid response from API');
+      }
     } catch (error) {
       console.log('REST API failed, using fallback response:', error);
       // Fallback to local response

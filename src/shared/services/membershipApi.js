@@ -93,6 +93,142 @@ class MembershipApiService {
     const { data } = await api.get(`/buildings/units/by-phone/${qs}`);
     return data;
   }
+
+  /**
+   * ایجاد دعوت‌نامه خانواده (US6)
+   */
+  async createFamilyInvitation(data) {
+    const { data: response } = await api.post('/membership/family/invite/', data);
+    return response;
+  }
+
+  /**
+   * دریافت لیست دعوت‌نامه‌های ارسالی (US6)
+   */
+  async listFamilyInvitations() {
+    const { data } = await api.get('/membership/family/invitations/');
+    return data;
+  }
+
+  /**
+   * پذیرش دعوت‌نامه خانواده (US6)
+   */
+  async acceptFamilyInvitation(code) {
+    const { data } = await api.post(`/membership/family/accept/${code}/`);
+    return data;
+  }
+
+  /**
+   * گزارش تعارض واحد (US7)
+   */
+  async reportUnitConflict(data) {
+    const { data: response } = await api.post('/membership/conflict/report/', data);
+    return response;
+  }
+
+  /**
+   * دریافت لیست گزارش‌های تعارض (US7)
+   */
+  async listConflictReports() {
+    const { data } = await api.get('/membership/conflict/list/');
+    return data;
+  }
+
+  /**
+   * حل گزارش تعارض (US7)
+   */
+  async resolveConflict(reportId, data) {
+    const { data: response } = await api.post(`/membership/conflict/${reportId}/resolve/`, data);
+    return response;
+  }
+
+  /**
+   * انصراف از درخواست عضویت (US9)
+   */
+  async withdrawMembershipRequest(requestId) {
+    const { data } = await api.post(`/membership/${requestId}/withdraw/`);
+    return data;
+  }
+
+  /**
+   * وارد کردن گروهی واحدها (US10)
+   */
+  async bulkImportUnits(buildingId, data) {
+    const { data: response } = await api.post(`/buildings/${buildingId}/units/bulk-import/`, data);
+    return response;
+  }
+
+  /**
+   * ایجاد لینک دعوت (US11)
+   */
+  async createInviteLink(data) {
+    const { data: response } = await api.post('/membership/invite-link/create/', data);
+    return response;
+  }
+
+  /**
+   * دریافت لیست لینک‌های دعوت (US11)
+   */
+  async listInviteLinks() {
+    const { data } = await api.get('/membership/invite-link/list/');
+    return data;
+  }
+
+  /**
+   * اعتبارسنجی لینک دعوت (US11)
+   */
+  async validateInviteLink(token) {
+    const { data } = await api.get(`/membership/invite-link/validate/${token}/`);
+    return data;
+  }
+
+  /**
+   * استفاده از لینک دعوت (US11)
+   */
+  async useInviteLink(token) {
+    const { data } = await api.post(`/membership/invite-link/use/${token}/`);
+    return data;
+  }
+
+  /**
+   * ثبت کاربر با وضعیت suggested (PRD)
+   */
+  async registerSuggestedUser(data) {
+    const { data: response } = await api.post('/membership/suggest-user/', data);
+    return response;
+  }
+
+  /**
+   * عضویت با شماره تلفن مدیر (PRD)
+   */
+  async joinByManagerPhone(data) {
+    const { data: response } = await api.post('/membership/join-by-manager-phone/', data);
+    return response;
+  }
+
+  /**
+   * انتقال مدیریت ساختمان (PRD)
+   */
+  async transferBuildingManagement(buildingId, data) {
+    const { data: response } = await api.post(`/buildings/${buildingId}/transfer-management/`, data);
+    return response;
+  }
+
+  /**
+   * دریافت لیست ماموریت‌های مدیر (PRD)
+   */
+  async getManagerTasks(buildingId) {
+    const { data } = await api.get(`/buildings/${buildingId}/manager-tasks/`);
+    return data;
+  }
+
+  /**
+   * کامل کردن ماموریت مدیر (PRD)
+   */
+  async completeManagerTask(buildingId, data) {
+    const { data: response } = await api.post(`/buildings/${buildingId}/manager-tasks/complete/`, data);
+    return response;
+  }
 }
 
 const membershipApi = new MembershipApiService();

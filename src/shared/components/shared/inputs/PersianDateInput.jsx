@@ -23,10 +23,6 @@ export default function PersianDateInput({
         const jalaliDate = moment(value, 'YYYY-MM-DD').format('jYYYY/jMM/jDD');
         setDisplayValue(jalaliDate);
         setSelectedDate(moment(value, 'YYYY-MM-DD'));
-        console.log('PersianDateInput - Loading date:', {
-          gregorian: value,
-          persian: jalaliDate
-        });
       } catch (error) {
         console.error('PersianDateInput - Error loading date:', error);
         setDisplayValue('');
@@ -49,18 +45,10 @@ export default function PersianDateInput({
     const firstDay = moment().jYear(year).jMonth(month).jDate(1);
     
     // Get the number of days in the month using moment-jalaali
-    // Create a date for the first day of next month, then subtract 1 day to get last day of current month
-    const nextMonth = moment().jYear(year).jMonth(month).add(1, 'jMonth').jDate(1);
-    const lastDay = nextMonth.clone().subtract(1, 'jDay');
-    const daysInMonth = lastDay.jDate();
-    
-    console.log('Calendar Debug:', {
-      year,
-      month,
-      firstDay: firstDay.format('jYYYY/jMM/jDD'),
-      daysInMonth,
-      monthName: ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'][month]
-    });
+    // Calculate by going to the first day of next month and subtracting 1 day
+    const nextMonthFirstDay = firstDay.clone().add(1, 'jMonth');
+    const lastDayOfMonth = nextMonthFirstDay.clone().subtract(1, 'day');
+    const daysInMonth = lastDayOfMonth.jDate();
     
     const calendarDays = [];
     
@@ -82,27 +70,13 @@ export default function PersianDateInput({
         isToday: dayMoment.isSame(moment(), 'day'),
         isSelected: value && dayGregorian === value
       });
-      
-      if (day <= 5) { // Only log first 5 days to avoid spam
-        console.log(`Day ${day}:`, {
-          persian: dayMoment.format('jYYYY/jMM/jDD'),
-          gregorian: dayGregorian,
-          isSelected: value && dayGregorian === value
-        });
-      }
     }
-    
-    console.log(`Generated ${daysInMonth} days for ${['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'][month]} ${year}`);
     
     return calendarDays;
   };
 
   const handleDayClick = (dayMoment) => {
     const gregorianDate = dayMoment.format('YYYY-MM-DD');
-    console.log('PersianDateInput - Converting date:', {
-      persian: dayMoment.format('jYYYY/jMM/jDD'),
-      gregorian: gregorianDate
-    });
     onChange(gregorianDate);
     setIsOpen(false);
   };

@@ -72,20 +72,50 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     setLocalAwaitingApproval(false);
   }, [transaction?.id]);
   
-  // Fetch transaction details if transaction has an ID and no unit_details
-  // This hook must be called before any early returns to maintain hook order
+  // Fetch transaction details if transaction has an ID
+  // Always fetch to get complete unit_details
   useEffect(() => {
-    if (transaction?.id && !transaction?.unit_details) {
+    if (transaction?.id) {
       dispatch(fetchTransactionDetails(transaction.id));
     }
     // Only depend on transaction.id to avoid infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transaction?.id, dispatch]);
   
+  // Debug: Log unit details - MUST be before early return
+  useEffect(() => {
+    if (transaction?.id) {
+      const unitDetailsDebug = transactionDetails?.unit_details || transaction?.unit_details || [];
+      
+      console.log('🔍 Transaction ID:', transaction.id);
+      console.log('🔍 Transaction Details:', transactionDetails);
+      console.log('🔍 Transaction Details ID:', transactionDetails?.id);
+      console.log('🔍 Unit Details from transactionDetails:', transactionDetails?.unit_details);
+      console.log('🔍 Unit Details from transaction:', transaction?.unit_details);
+      console.log('🔍 Final Unit Details:', unitDetailsDebug);
+      console.log('🔍 Final Unit Details Length:', unitDetailsDebug?.length);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transaction?.id, transactionDetails]);
+  
   // Early return if transaction is null (after ALL hooks)
   if (!transaction) return null;
   
-  const unitDetails = transaction?.unit_details || transactionDetails?.unit_details || [];
+  // Use transactionDetails if it matches the current transaction
+  const isTransactionDetailsMatch = transactionDetails && (
+    transactionDetails.id === transaction.id || 
+    transactionDetails.transaction_id === transaction.id
+  );
+  
+  // Always prefer transactionDetails (from API) as it has complete unit_details
+  // If transactionDetails is available and matches, use it. Otherwise, use transaction
+  const effectiveDetails = isTransactionDetailsMatch ? transactionDetails : null;
+  
+  // For unit_details: prefer transactionDetails (has complete data), then transaction
+  // Note: transactionDetails.unit_details comes from fetchTransactionDetails API
+  const unitDetails = transactionDetails?.unit_details || transaction?.unit_details || [];
+  
+  // Use payment status from transaction first (it's always available), then from transactionDetails
   const paymentStatusCounts = transaction?.payment_status_counts || transactionDetails?.payment_status_counts;
   const paymentStatusTotal = transaction?.payment_status_total || transactionDetails?.payment_status_total;
   const paymentStatusLabel = transaction?.payment_status || transactionDetails?.payment_status;
@@ -113,14 +143,31 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
   // این برای resident، owner و manager که مالک یا ساکن هستن کار می‌کنه
   const residentUnitNumber = (() => {
     try {
-      const approved = (membershipRequests || []).filter(req =>
-        (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved')
-        && (building?.building_id ? req.building === (building.building_id || building.id) : true)
-      );
+      console.log('🔍 Membership Requests:', membershipRequests);
+      console.log('🔍 Building ID:', building?.building_id);
+      
+      // Debug: Log each request's building and status
+      (membershipRequests || []).forEach((req, i) => {
+        console.log(`🔍 Request ${i}: building=${req.building}, status=${req.status}, unit_number=${req.unit_number}`);
+      });
+      
+      const approved = (membershipRequests || []).filter(req => {
+        const statusMatch = req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved';
+        const buildingMatch = building?.building_id ? (
+          req.building === building.building_id || 
+          req.building === building.id ||
+          String(req.building) === String(building.building_id)
+        ) : true;
+        console.log(`🔍 Filtering: status=${req.status}, statusMatch=${statusMatch}, req.building=${req.building}, buildingMatch=${buildingMatch}`);
+        return statusMatch && buildingMatch;
+      });
+      console.log('🔍 Approved Requests:', approved);
       // ترجیح: اول resident، بعد owner، بعد اولین مورد
       const preferred = approved.find(r => r.role === 'resident') || 
                        approved.find(r => r.role === 'owner') || 
                        approved[0];
+      console.log('🔍 Preferred Request:', preferred);
+      console.log('🔍 Resident Unit Number:', preferred?.unit_number);
       return preferred?.unit_number;
     } catch {
       return undefined;
@@ -141,14 +188,24 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
   
   const showAwaitingBanner = localAwaitingApproval || derivedAwaitingApproval;
 
-  // Use real data from transaction.unit_details or transactionDetails, otherwise fallback to mock data
-  const units = unitDetails.length > 0 ? unitDetails : [
-    { units_id: 1, unit_number: "1", status: "paid", amount: 250000 },
-    { units_id: 2, unit_number: "2", status: "unpaid", amount: 250000 },
-    { units_id: 3, unit_number: "3", status: "paid", amount: 250000 },
-    { units_id: 4, unit_number: "4", status: "unpaid", amount: 250000 },
-    { units_id: 5, unit_number: "5", status: "paid", amount: 250000 },
-  ];
+  // Use real data from transaction.unit_details or transactionDetails only
+  const units = unitDetails.length > 0 ? unitDetails : [];
+  
+  // پیدا کردن سهم واحد کاربر
+  const userUnitShare = (() => {
+    console.log('🔍 Finding user unit share...');
+    console.log('🔍 residentUnitNumber:', residentUnitNumber);
+    console.log('🔍 unitDetails:', unitDetails);
+    if (!residentUnitNumber || !unitDetails?.length) {
+      console.log('🔍 No residentUnitNumber or unitDetails empty');
+      return null;
+    }
+    const found = unitDetails.find(
+      (unit) => String(unit.unit_number ?? unit.unitNumber ?? '') === String(residentUnitNumber)
+    );
+    console.log('🔍 Found user unit share:', found);
+    return found;
+  })();
 
   // Filter units based on selected filter
   const filteredUnits = units.filter(unit => {
@@ -271,11 +328,22 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     
     // If this is a shared bill, choose only the current resident unit's invoice_id and unit_id
     if (transaction.category === 'shared_bill') {
-      const sourceUnits = (transaction.unit_details || transactionDetails?.unit_details || []);
-      const myInvoice = sourceUnits.find(u => u.unit_number === residentUnitNumber) || sourceUnits[0];
+      const sourceUnits = unitDetails.length > 0 ? unitDetails : (transaction.unit_details || transactionDetails?.unit_details || []);
+      console.log('🔍 Payment: sourceUnits:', sourceUnits);
+      console.log('🔍 Payment: residentUnitNumber:', residentUnitNumber);
+      
+      // مقایسه با تبدیل به رشته برای اطمینان از مطابقت
+      const myInvoice = sourceUnits.find(u => 
+        String(u.unit_number ?? u.unitNumber ?? '') === String(residentUnitNumber)
+      );
+      console.log('🔍 Payment: myInvoice:', myInvoice);
+      
       if (myInvoice?.invoice_id) {
         targetId = myInvoice.invoice_id;
         unitId = myInvoice.units_id; // ارسال شناسه واحد برای پرداخت واحد خاص
+        console.log('🔍 Payment: targetId:', targetId, 'unitId:', unitId);
+      } else {
+        console.log('🔍 Payment: No matching invoice found for unit', residentUnitNumber);
       }
     }
 
@@ -369,6 +437,20 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                   </button>
                 </div>
               </div>
+
+              {/* نمایش سهم واحد کاربر */}
+              {userUnitShare && (isResident || isOwner || isManagerOwnerResident) && (
+                <div className="border-b p-4 bg-blue-50">
+                  <div className="bg-white rounded-lg p-3 border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">سهم واحد {userUnitShare.unit_number}:</span>
+                      <span className="text-lg font-bold text-blue-700">
+                        {parseFloat(userUnitShare.amount || 0).toLocaleString('fa-IR')} تومان
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* دکمه پرداخت یا وضعیت در انتظار تایید */}
               {(canPay || showAwaitingBanner) && (
@@ -477,103 +559,108 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                   </>
                 )}
 
-                {units.length > 0 && (
-                  <>
-                    <h2 className="mb-3 text-lg font-semibold text-melkingDarkBlue">واحدهای مشمول</h2>
-                    <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs text-blue-700">
-                        💡 مبلغ‌های نمایش داده شده سهم هر واحد از هزینه کل است
-                      </p>
+                {/* همیشه بخش واحدهای مشمول را نمایش بده */}
+                <>
+                  <h2 className="mb-3 text-lg font-semibold text-melkingDarkBlue">واحدهای مشمول</h2>
+                  <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-700">
+                      💡 مبلغ‌های نمایش داده شده سهم هر واحد از هزینه کل است
+                    </p>
+                  </div>
+                  
+                  {loading ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>در حال بارگذاری اطلاعات واحدها...</p>
                     </div>
-                    
-                    {/* فیلتر واحدها */}
-                    <div className="mb-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setUnitFilter("all")}
-                          className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
-                            unitFilter === "all"
-                              ? "bg-melkingDarkBlue text-white border-melkingDarkBlue"
-                              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          همه ({units.length})
-                        </button>
-                        <button
-                          onClick={() => setUnitFilter("paid")}
-                          className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
-                            unitFilter === "paid"
-                              ? "bg-green-600 text-white border-green-600"
-                              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          پرداخت شده ({units.filter(u => normalizeStatus(u.status) === "paid").length})
-                        </button>
-                        <button
-                          onClick={() => setUnitFilter("awaiting")}
-                          className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
-                            unitFilter === "awaiting"
-                              ? "bg-yellow-500 text-white border-yellow-500"
-                              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          منتظر تایید ({units.filter(u => normalizeStatus(u.status) === "awaiting_manager").length})
-                        </button>
-                        <button
-                          onClick={() => setUnitFilter("unpaid")}
-                          className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
-                            unitFilter === "unpaid"
-                              ? "bg-red-600 text-white border-red-600"
-                              : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          پرداخت نشده ({units.filter(u => normalizeStatus(u.status) === "pending").length})
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* لیست واحدها */}
-                    <div className="space-y-2">
-                      {loading ? (
-                        <div className="text-center py-8 text-gray-500">
-                          <p>در حال بارگذاری اطلاعات واحدها...</p>
+                  ) : units.length > 0 ? (
+                    <>
+                      {/* فیلتر واحدها */}
+                      <div className="mb-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setUnitFilter("all")}
+                            className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
+                              unitFilter === "all"
+                                ? "bg-melkingDarkBlue text-white border-melkingDarkBlue"
+                                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            همه ({units.length})
+                          </button>
+                          <button
+                            onClick={() => setUnitFilter("paid")}
+                            className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
+                              unitFilter === "paid"
+                                ? "bg-green-600 text-white border-green-600"
+                                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            پرداخت شده ({units.filter(u => normalizeStatus(u.status) === "paid").length})
+                          </button>
+                          <button
+                            onClick={() => setUnitFilter("awaiting")}
+                            className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
+                              unitFilter === "awaiting"
+                                ? "bg-yellow-500 text-white border-yellow-500"
+                                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            منتظر تایید ({units.filter(u => normalizeStatus(u.status) === "awaiting_manager").length})
+                          </button>
+                          <button
+                            onClick={() => setUnitFilter("unpaid")}
+                            className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
+                              unitFilter === "unpaid"
+                                ? "bg-red-600 text-white border-red-600"
+                                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            پرداخت نشده ({units.filter(u => normalizeStatus(u.status) === "pending").length})
+                          </button>
                         </div>
-                      ) : (
-                        filteredUnits.map((unit) => (
-                        <div
-                          key={unit.units_id || unit.id}
-                          className={`flex items-center justify-between p-3 rounded-xl border-2 ${getUnitStatusStyle(unit.status)}`}
-                        >
-                          <div className="flex items-center gap-3">
-                            {getUnitStatusIcon(unit.status)}
-                            <span className="font-medium">واحد {unit.unit_number}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
-                              {parseFloat(unit.amount || 0).toLocaleString('fa-IR')} تومان
-                            </span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              normalizeStatus(unit.status) === "paid"
-                                ? "bg-green-100 text-green-700"
-                                : normalizeStatus(unit.status) === "awaiting_manager"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : "bg-red-100 text-red-700"
-                            }`}>
-                              {getUnitStatusText(unit.status)}
-                            </span>
-                          </div>
-                        </div>
-                        ))
-                      )}
-                    </div>
-
-                    {filteredUnits.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>هیچ واحدی با فیلتر انتخاب شده یافت نشد.</p>
                       </div>
-                    )}
-                  </>
-                )}
+
+                      {/* لیست واحدها */}
+                      <div className="space-y-2">
+                        {filteredUnits.length > 0 ? (
+                          filteredUnits.map((unit) => (
+                            <div
+                              key={unit.units_id || unit.id}
+                              className={`flex items-center justify-between p-3 rounded-xl border-2 ${getUnitStatusStyle(unit.status)}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                {getUnitStatusIcon(unit.status)}
+                                <span className="font-medium">واحد {unit.unit_number}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">
+                                  {parseFloat(unit.amount || 0).toLocaleString('fa-IR')} تومان
+                                </span>
+                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                  normalizeStatus(unit.status) === "paid"
+                                    ? "bg-green-100 text-green-700"
+                                    : normalizeStatus(unit.status) === "awaiting_manager"
+                                      ? "bg-yellow-100 text-yellow-700"
+                                      : "bg-red-100 text-red-700"
+                                }`}>
+                                  {getUnitStatusText(unit.status)}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>هیچ واحدی با فیلتر انتخاب شده یافت نشد.</p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>اطلاعاتی برای نمایش وجود ندارد.</p>
+                    </div>
+                  )}
+                </>
               </div>
             </Dialog.Panel>
           </Transition.Child>

@@ -38,10 +38,10 @@ export default function StepSummary({ formData, prev }) {
                     : '',
                 fund_balance: parseFloat(formData.fund_balance) || 0,
                 fund_sheba_number: formData.fund_sheba_number,
+                residential_type: formData.usage_type === 'residential' ? (formData.residential_type || 'apartment') : null,
                 blocks_count: (formData.property_type === 'complex' || formData.property_type === 'community')
                     ? (formData.blocks_count || '')
-                    : '',
-                residential_type: formData.usage_type === 'residential' ? formData.residential_type : ''
+                    : ''
             };
             
             console.log("🔥 Sending clean data:", cleanData);
@@ -53,8 +53,14 @@ export default function StepSummary({ formData, prev }) {
             const buildingId = result.building_id || result.id;
             if (formData.is_owner_resident && buildingId) {
                 try {
+                    const managerUnitNumber = formData.manager_unit_number?.trim();
+                    if (!managerUnitNumber) {
+                        toast.warning("شماره واحد مدیر الزامی است");
+                        return;
+                    }
+
                     const unitData = {
-                        unit_number: formData.manager_unit_number || "مدیر",
+                        unit_number: managerUnitNumber,
                         floor: parseInt(formData.manager_floor) || parseInt(formData.resident_floor) || 1,
                         area: formData.manager_area ? parseFloat(formData.manager_area) : null,
                         full_name: formData.name || '',
@@ -65,11 +71,11 @@ export default function StepSummary({ formData, prev }) {
                         tenant_phone_number: formData.manager_tenant_phone_number || '',
                         has_parking: formData.manager_has_parking || false,
                         parking_count: parseInt(formData.manager_parking_count) || 0,
-                        resident_count: (formData.manager_role === 'owner' && formData.manager_owner_type === 'empty') 
-                            ? 0 
+                        resident_count: (formData.manager_role === 'owner' && formData.manager_owner_type === 'empty')
+                            ? 0
                             : (parseInt(formData.manager_resident_count) || 1),
                     };
-                    
+
                     console.log("🔥 Creating manager unit:", unitData);
                     await dispatch(createUnit({ buildingId, unitData })).unwrap();
                     console.log("✅ Manager unit created successfully");
@@ -96,6 +102,11 @@ export default function StepSummary({ formData, prev }) {
             office: "اداری",
             other: "سایر",
         },
+        residential_type: {
+            apartment: "آپارتمان",
+            villa: "ویلا",
+            mixed: "مختلط",
+        },
         property_type: {
             block: "بلوک",
             tower: "برج",
@@ -103,18 +114,15 @@ export default function StepSummary({ formData, prev }) {
             community: "شهرک",
             building: "ساختمان",
         },
-        residential_type: {
-            apartment: "آپارتمان",
-            villa: "ویلا",
-            mixed: "مختلط",
-        },
     };
 
     const entries = [
         { label: "عنوان ساختمان", value: formData.title },
         { label: "نام مدیر", value: formData.name || "-" },
         { label: "نوع کاربری", value: labelsMap.usage_type[formData.usage_type] || formData.usage_type },
-        ...(formData.usage_type === "residential" ? [{ label: "نوع ساختمان مسکونی", value: labelsMap.residential_type[formData.residential_type] || formData.residential_type }] : []),
+        ...(formData.usage_type === "residential"
+            ? [{ label: "نوع ساختمان مسکونی", value: labelsMap.residential_type[formData.residential_type || "apartment"] || formData.residential_type }]
+            : []),
         { label: "نوع ملک", value: labelsMap.property_type[formData.property_type] || formData.property_type },
         { label: "تعداد واحد", value: formData.unit_count },
         { label: "مدیر ساکن است؟", value: formData.is_owner_resident ? "بله" : "خیر" },

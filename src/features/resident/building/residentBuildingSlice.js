@@ -9,7 +9,10 @@ const handleTokenRefresh = async (dispatch) => {
             throw new Error('No refresh token available');
         }
 
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || (window.location.protocol === 'https:' ? 'https://melkingapp.ir/api/v1' : 'http://melkingapp.ir/api/v1')}/refresh/`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 
+            (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://127.0.0.1:8000/api/v1'
+                : 'https://melkingapp.ir/api/v1')}/refresh/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh: refreshToken })

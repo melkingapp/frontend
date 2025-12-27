@@ -42,7 +42,7 @@ export default function StepInfo({ formData, setFormData, next }) {
                     {formData.usage_type === "residential" && (
                         <SelectField
                             label="نوع ساختمان مسکونی"
-                            value={formData.residential_type}
+                            value={formData.residential_type || "apartment"}
                             onChange={(e) => setFormData({ ...formData, residential_type: e.target.value })}
                             options={[
                                 { value: "apartment", label: "آپارتمان" },

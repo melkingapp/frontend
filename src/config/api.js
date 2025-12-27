@@ -3,11 +3,11 @@ const isLocalhost = window.location.hostname === 'localhost' || window.location.
 
 export const API_CONFIG = {
     BASE_URL: isLocalhost 
-        ? 'http://localhost:8000/api/v1' 
-        : (window.location.protocol === 'https:' ? 'https://melkingapp.ir/api/v1' : 'http://melkingapp.ir/api/v1'),
+        ? 'http://127.0.0.1:8000/api/v1' 
+        : 'https://melkingapp.ir/api/v1',
     MEDIA_URL: isLocalhost 
-        ? 'http://localhost:8000' 
-        : (window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir'),
+        ? 'http://127.0.0.1:8000' 
+        : 'https://melkingapp.ir',
     ENDPOINTS: {
         // Authentication
         LOGIN: '/auth/login/',
