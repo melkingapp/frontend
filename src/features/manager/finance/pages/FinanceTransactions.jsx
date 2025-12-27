@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { createSelector } from "@reduxjs/toolkit";
 import { Coins, RotateCcw, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
@@ -26,6 +27,23 @@ import { fetchBuildingUnits } from "../../building/buildingSlice";
 import SelectField from "../../../../shared/components/shared/inputs/SelectField";
 import { getExpenseAllocation } from "../../../../shared/services/billingService";
 
+// Memoized selector for building units
+const selectBuildingUnits = createSelector(
+  [state => state.building.units, selectSelectedBuilding],
+  (units, building) => {
+    const buildingId = building?.building_id || building?.id;
+    if (!buildingId) return [];
+    const unitsData = units[buildingId];
+    // Handle both array and object with units property
+    if (Array.isArray(unitsData)) {
+      return unitsData;
+    } else if (unitsData && unitsData.units) {
+      return unitsData.units;
+    }
+    return [];
+  }
+);
+
 export default function FinanceTransactions() {
   const dispatch = useDispatch();
   const categories = useCategories();
@@ -51,18 +69,7 @@ export default function FinanceTransactions() {
   const currentFundBalance = useSelector(selectCurrentFundBalance);
   const user = useSelector(state => state.auth.user);
   const isManager = user?.role === 'manager';
-  const buildingUnits = useSelector(state => {
-    const buildingId = building?.building_id || building?.id;
-    if (!buildingId) return [];
-    const unitsData = state.building.units[buildingId];
-    // Handle both array and object with units property
-    if (Array.isArray(unitsData)) {
-      return unitsData;
-    } else if (unitsData && unitsData.units) {
-      return unitsData.units;
-    }
-    return [];
-  });
+  const buildingUnits = useSelector(selectBuildingUnits);
   
   
   // Load buildings if not loaded

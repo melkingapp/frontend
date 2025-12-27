@@ -60,9 +60,9 @@ export default function StepOwnerResidence({ formData, setFormData, next, prev }
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <InputField
-                                    label="شماره واحد"
+                                    label="شماره واحد *"
                                     type="text"
-                                    placeholder="مثلاً 1"
+                                    placeholder="مثلاً 1 یا مدیر"
                                     value={formData.manager_unit_number || ""}
                                     onChange={(e) =>
                                         setFormData({ ...formData, manager_unit_number: e.target.value })
