@@ -1,13 +1,29 @@
 /**
  * Convert English transaction/payment types to Persian
  * @param {string} type - English type string
+ * @param {Object} item - Transaction item for additional context
  * @returns {string} - Persian type string
  */
-export const getPersianType = (type) => {
+export const getPersianType = (type, item = null) => {
+  // Special handling for charge types - check if item has charge_type first
+  if (item && item.charge_type) {
+    const chargeTypeMap = {
+      'current': 'شارژ جاری',
+      'construction': 'شارژ عمرانی',
+      'parking': 'شارژ پارکینگ',
+      'elevator': 'شارژ آسانسور',
+      'other': 'شارژ سایر'
+    };
+    return chargeTypeMap[item.charge_type] || 'شارژ';
+  }
+
+  // Special handling for charge types
+  if (type === 'charge' || type === 'Charge' || type === 'شارژ') {
+    return 'شارژ';
+  }
+
   const typeMap = {
     // Basic types
-    'charge': 'شارژ',
-    'Charge': 'شارژ',
     'شارژ': 'شارژ',
     
     // Bills

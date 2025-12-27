@@ -6,7 +6,8 @@ export {
   getPersianType, 
   getPersianStatus, 
   getStatusColor, 
-  getStatusBgColor 
+  getStatusBgColor,
+  getPersianDistributionMethod,
 } from './typeUtils';
 
 // Icon utilities

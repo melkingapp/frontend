@@ -21,6 +21,11 @@ export default function StepSummary({ formData, prev }) {
         setIsLoading(true);
         
         try {
+            // اگر usage_type مسکونی است و residential_type خالی است، مقدار پیش‌فرض تنظیم کن
+            if (formData.usage_type === 'residential' && !formData.residential_type) {
+                formData.residential_type = 'apartment';
+            }
+
             // Clean form data for API
             const cleanData = {
                 title: formData.title,
@@ -100,7 +105,7 @@ export default function StepSummary({ formData, prev }) {
         residential_type: {
             apartment: "آپارتمان",
             villa: "ویلا",
-            mixed: "ترکیبی",
+            mixed: "مختلط",
         },
         property_type: {
             block: "بلوک",
@@ -116,7 +121,7 @@ export default function StepSummary({ formData, prev }) {
         { label: "نام مدیر", value: formData.name || "-" },
         { label: "نوع کاربری", value: labelsMap.usage_type[formData.usage_type] || formData.usage_type },
         ...(formData.usage_type === "residential"
-            ? [{ label: "نوع مسکونی", value: labelsMap.residential_type[formData.residential_type || "apartment"] }]
+            ? [{ label: "نوع ساختمان مسکونی", value: labelsMap.residential_type[formData.residential_type || "apartment"] || formData.residential_type }]
             : []),
         { label: "نوع ملک", value: labelsMap.property_type[formData.property_type] || formData.property_type },
         { label: "تعداد واحد", value: formData.unit_count },

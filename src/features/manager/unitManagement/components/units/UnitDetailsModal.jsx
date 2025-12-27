@@ -5,7 +5,6 @@ import UnitRequestItem from "./modalItem/UnitRequestItem";
 import UnitTransactionItem from "./modalItem/UnitTransactionItem";
 import EditableCard from "../../../../../shared/components/shared/display/EditableCard";
 import moment from "moment";
-import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUnit, deleteUnit } from "../../slices/unitsSlice";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
@@ -13,7 +12,6 @@ import { getUnitFinancialTransactions } from "../../../../../shared/services/tra
 import { getPersianType } from "../../../../../shared/utils/typeUtils";
 
 export default function UnitDetailsModal({ unit, isOpen, onClose }) {
-    const navigate = useNavigate();
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedBuilding);
     const { updateLoading, deleteLoading } = useSelector(state => state.units);
@@ -74,8 +72,10 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
             setLoadingFinancial(true);
             getUnitFinancialTransactions(unit.units_id)
                 .then((response) => {
-                    if (response.transactions) {
-                        setFinancialTransactions(response.transactions);
+                    // Backend now returns { unit, invoices, summary }
+                    console.log('[UnitDetailsModal] unit-financial-transactions response:', response);
+                    if (response.invoices || response.transactions) {
+                        setFinancialTransactions(response.invoices || response.transactions);
                     }
                     if (response.summary) {
                         setFinancialSummary(response.summary);
@@ -120,26 +120,15 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
     
     const sortedTx = transactionsToUse
         ? [...transactionsToUse].sort((a, b) => {
-            const dateA = a.date ? moment(a.date).valueOf() : 0;
-            const dateB = b.date ? moment(b.date).valueOf() : 0;
+            const dateA = (a.date || a.issue_date) ? moment(a.date || a.issue_date).valueOf() : 0;
+            const dateB = (b.date || b.issue_date) ? moment(b.date || b.issue_date).valueOf() : 0;
             return dateB - dateA;
         })
         : [];
 
-    // فقط تراکنش‌های مرتبط با هزینه (قبوض مشترک و فاکتورهای واحد)
-    // اگر invoice به یک shared_bill متصل است، در backend برای آن expense_name ست شده
-    // اینجا فقط یکی را نگه می‌داریم: یا shared_bill یا invoice مستقل بدون expense_name
-    const expenseTransactions = sortedTx.filter(
-        (tx) =>
-            tx.type === "shared_bill" ||
-            (tx.type === "invoice" && !tx.expense_name) ||
-            tx.category === "individual_invoice"
-    );
+    // در فرمت جدید API، فقط فاکتورها (invoices) برگردانده می‌شوند
+    const expenseTransactions = sortedTx;
     const txToShow = expenseTransactions.slice(0, visibleTxCount);
-
-    const goToUnitTransactionsPage = () => {
-        navigate("/manager/unit-management/transactions", { state: { unitNumber: unit.unitNumber } });
-    };
 
     const handleSaveOwner = async () => {
         if (!unit || !selectedBuilding) return;
@@ -325,26 +314,34 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                                     <div className="text-gray-600">تعداد فاکتورها</div>
                                     <div className="text-lg font-bold text-gray-900">{financialSummary.total_invoices || 0}</div>
                                     <div className="text-xs text-gray-500 mt-1">
-                                        {financialSummary.total_amount_invoices?.toLocaleString('fa-IR') || 0} تومان
+                                        {(financialSummary.total_amount || 0).toLocaleString('fa-IR')} تومان
                                     </div>
                                 </div>
                                 <div className="bg-white p-3 rounded-lg shadow-sm">
-                                    <div className="text-gray-600">تعداد پرداخت‌ها</div>
-                                    <div className="text-lg font-bold text-emerald-600">{financialSummary.total_payments || 0}</div>
+                                    <div className="text-gray-600">مجموع پرداخت‌های تایید شده</div>
+                                    <div className="text-lg font-bold text-emerald-600">
+                                        {(financialSummary.total_paid || 0).toLocaleString('fa-IR')} تومان
+                                    </div>
                                     <div className="text-xs text-gray-500 mt-1">
-                                        {financialSummary.total_amount_payments?.toLocaleString('fa-IR') || 0} تومان
+                                        {/* در فرمت جدید تعداد پرداخت‌ها به صورت جداگانه برگردانده نمی‌شود */}
                                     </div>
                                 </div>
                                 <div className="bg-white p-3 rounded-lg shadow-sm">
-                                    <div className="text-gray-600">تعداد بدهی‌ها</div>
-                                    <div className="text-lg font-bold text-red-600">{financialSummary.total_debts || 0}</div>
+                                    <div className="text-gray-600">مانده بدهی‌ها</div>
+                                    <div className="text-lg font-bold text-red-600">
+                                        {(financialSummary.total_remaining || 0).toLocaleString('fa-IR')} تومان
+                                    </div>
                                     <div className="text-xs text-gray-500 mt-1">
-                                        {financialSummary.total_amount_debts?.toLocaleString('fa-IR') || 0} تومان
+                                        {/* مجموع بدهی‌ها */}
                                     </div>
                                 </div>
                                 <div className="bg-white p-3 rounded-lg shadow-sm">
                                     <div className="text-gray-600">صورتحساب‌های مشترک</div>
-                                    <div className="text-lg font-bold text-indigo-600">{financialSummary.total_shared_bills || 0}</div>
+                                    <div className="text-lg font-bold text-indigo-600">
+                                        {Array.isArray(financialTransactions)
+                                            ? financialTransactions.filter(tx => tx.is_shared_expense).length
+                                            : 0}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -366,21 +363,29 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                         ) : sortedTx.length > 0 ? (
                             <>
                                 {txToShow.map((tx) => {
-                                    // این لیست فقط شامل هزینه‌هاست (shared_bill / invoice)
-                                    const expenseName = tx.expense_name || tx.expense_details?.expense_name || null;
+                                    // در فرمت جدید، هر آیتم یک فاکتور است و اگر هزینه مشترک باشد، اطلاعات آن در shared_expense_info است
+                                    const expenseName =
+                                        tx.shared_expense_info?.expense_name ||
+                                        tx.description ||
+                                        null;
 
-                                    // نوع تراکنش به فارسی برای نمایش (invoice / payment / shared_bill ...)
-                                    const persianTransactionType = getPersianType(tx.type || tx.transaction_type || "");
+                                    const persianTransactionType = getPersianType(tx.category || "");
+
+                                    // مبلغ نمایش‌داده‌شده: سهم واحد از هزینه مشترک (اگر موجود باشد) یا کل مبلغ فاکتور
+                                    const amount =
+                                        tx.shared_expense_info?.unit_share_amount ??
+                                        tx.total_amount ??
+                                        0;
 
                                     const formattedTx = {
-                                        id: tx.id,
+                                        id: tx.invoice_id,
                                         title: expenseName || persianTransactionType || tx.transaction_type || tx.type || "تراکنش",
-                                        amount: tx.amount || 0,
-                                        date: tx.date,
-                                        due_date: tx.expense_details?.bill_due || tx.due_date || null,
+                                        amount: amount,
+                                        date: tx.issue_date,
+                                        due_date: tx.shared_expense_info?.bill_due || tx.due_date || null,
                                         status: tx.status_label || tx.status || "نامشخص",
-                                        type: tx.type, // invoice, payment, debt, shared_bill
-                                        transaction_type: tx.transaction_type,
+                                        type: "invoice",
+                                        transaction_type: "invoice",
                                         expense_name: expenseName,
                                     };
                                     return <UnitTransactionItem key={`${tx.type}-${tx.id}`} transaction={formattedTx} />;
@@ -401,10 +406,6 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                         ) : (
                             <p className="text-gray-500 text-sm">این واحد تراکنشی انجام نداده است.</p>
                         )}
-
-                        <button onClick={goToUnitTransactionsPage} className="block mt-2 text-sm text-gray-700 hover:underline">
-                            مشاهده همه تراکنش‌ها
-                        </button>
                     </div>
                 </div>
 

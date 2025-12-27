@@ -1,10 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import SettingsService from '../../shared/services/settingsService';
+import {
+    getBuildingVisibilitySettings,
+    toggleDebtCreditVisibility,
+    toggleFinancialTransactionsVisibility,
+} from '../../shared/services/billingService';
 
 const initialState = {
     buildingSettings: null,
     buildingDocuments: [],
     notificationSettings: null,
+    financialVisibility: null,
     loading: false,
     error: null,
 };
@@ -101,6 +107,47 @@ export const updateNotificationSettings = createAsyncThunk(
             return response.data.settings;
         } catch (error) {
             return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+// Building financial visibility settings (debt/credit & unit financial transactions)
+export const fetchFinancialVisibilitySettings = createAsyncThunk(
+    'settings/fetchFinancialVisibilitySettings',
+    async (buildingId, { rejectWithValue }) => {
+        try {
+            const response = await getBuildingVisibilitySettings(buildingId);
+            // response.data is expected to contain visibility flags
+            return response.data || response;
+        } catch (error) {
+            const errorData = error?.response?.data || error?.data || error;
+            return rejectWithValue(errorData);
+        }
+    }
+);
+
+export const toggleDebtCreditVisibilitySetting = createAsyncThunk(
+    'settings/toggleDebtCreditVisibilitySetting',
+    async ({ buildingId, showToResidents }, { rejectWithValue }) => {
+        try {
+            const response = await toggleDebtCreditVisibility(buildingId, showToResidents);
+            return response.data || response;
+        } catch (error) {
+            const errorData = error?.response?.data || error?.data || error;
+            return rejectWithValue(errorData);
+        }
+    }
+);
+
+export const toggleFinancialTransactionsVisibilitySetting = createAsyncThunk(
+    'settings/toggleFinancialTransactionsVisibilitySetting',
+    async ({ buildingId, showToResidents }, { rejectWithValue }) => {
+        try {
+            const response = await toggleFinancialTransactionsVisibility(buildingId, showToResidents);
+            return response.data || response;
+        } catch (error) {
+            const errorData = error?.response?.data || error?.data || error;
+            return rejectWithValue(errorData);
         }
     }
 );
@@ -217,6 +264,49 @@ const settingsSlice = createSlice({
                 state.notificationSettings = action.payload;
             })
             .addCase(updateNotificationSettings.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Financial visibility settings
+            .addCase(fetchFinancialVisibilitySettings.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchFinancialVisibilitySettings.fulfilled, (state, action) => {
+                state.loading = false;
+                state.financialVisibility = action.payload;
+            })
+            .addCase(fetchFinancialVisibilitySettings.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(toggleDebtCreditVisibilitySetting.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(toggleDebtCreditVisibilitySetting.fulfilled, (state, action) => {
+                state.loading = false;
+                state.financialVisibility = {
+                    ...(state.financialVisibility || {}),
+                    ...action.payload,
+                };
+            })
+            .addCase(toggleDebtCreditVisibilitySetting.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(toggleFinancialTransactionsVisibilitySetting.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(toggleFinancialTransactionsVisibilitySetting.fulfilled, (state, action) => {
+                state.loading = false;
+                state.financialVisibility = {
+                    ...(state.financialVisibility || {}),
+                    ...action.payload,
+                };
+            })
+            .addCase(toggleFinancialTransactionsVisibilitySetting.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })

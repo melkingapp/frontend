@@ -9,7 +9,6 @@ export const navItemsManager = [
             { label: "گردش مالی", to: "/manager/finance-reports" },
             { label: "بیلان ساختمان", to: "/manager/finance/balance" },
             { label: "بررسی پرداخت", to: "/manager/finance/payments" },
-            { label: "تراکنش هر واحد", to: "/manager/unit-management/transactions" },
             // { label: "نمودار گزارش", to: "/manager/finance/charts" },
         ],
     },

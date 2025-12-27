@@ -2,7 +2,7 @@ import { ChevronLeft, Eye, CreditCard, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import { selectCurrentFundBalance } from "../../../manager/finance/slices/financeSlice";
+import { selectCurrentFundBalance } from "../../../manager/finance/store/slices/financeSlice";
 import CountUp from "react-countup";
 
 export default function FinanceTransactionsSummary() {

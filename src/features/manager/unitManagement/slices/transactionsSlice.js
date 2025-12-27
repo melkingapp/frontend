@@ -90,7 +90,12 @@ const transactionsSlice = createSlice({
       })
       .addCase(fetchUnitTransactions.fulfilled, (state, action) => {
         state.unitLoading = false;
-        state.unitTransactions = action.payload.transactions || [];
+        // Backend may return either `transactions` (old format) or `invoices` (new format)
+        const transactions =
+          action.payload.transactions ||
+          action.payload.invoices ||
+          [];
+        state.unitTransactions = transactions;
         state.unitSummary = action.payload.summary || null;
       })
       .addCase(fetchUnitTransactions.rejected, (state, action) => {

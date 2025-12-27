@@ -3,10 +3,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { Eye, Search, Filter, Calendar, X } from "lucide-react";
 import moment from "moment-jalaali";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import { fetchTransactions, selectCurrentFundBalance } from "../../../manager/finance/slices/financeSlice";
-import FinanceTableRow from "../../../manager/finance/components/overview/FinanceTableRow";
-import FinanceDetailsModal from "../../../manager/finance/components/overview/FinanceDetailsModal";
-import TransactionFilter from "../../../manager/finance/components/overview/TransactionFilter";
+import { fetchTransactions, selectCurrentFundBalance } from "../../../manager/finance/store/slices/financeSlice";
+import { FinanceTableRow } from "../../../manager/finance/components/transactions/TransactionList";
+import { FinanceDetailsModal } from "../../../manager/finance/components/transactions/TransactionDetails";
+import { TransactionFilter } from "../../../manager/finance/components/transactions/TransactionFilters";
 import useCategories from "../../../../shared/hooks/useCategories";
 
 moment.loadPersian({ dialect: "persian-modern" });

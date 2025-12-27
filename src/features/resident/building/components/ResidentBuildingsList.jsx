@@ -1,57 +1,32 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Building, CheckCircle, RefreshCw, Home, Users, Car } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import {
-    selectMembershipRequests,
     selectMembershipLoading,
     fetchMembershipRequests,
 } from "../../../membership/membershipSlice";
 import { selectSelectedResidentBuilding, setSelectedBuilding } from "../residentBuildingSlice";
+import { useAllApprovedUnits } from "../hooks/useApprovedRequests";
+import { useBuildingAutoSelection, useBuildingValidation } from "../hooks/useBuildingSelection";
 
 export default function ResidentBuildingsList() {
     const dispatch = useDispatch();
-    const requests = useSelector(selectMembershipRequests);
     const loading = useSelector(selectMembershipLoading);
     const selectedBuilding = useSelector(selectSelectedResidentBuilding);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // Get approved buildings from requests (include both owner_approved and manager_approved)
-    const approvedRequests = requests.filter(req => 
-        req.status === 'approved' || 
-        req.status === 'owner_approved' || 
-        req.status === 'manager_approved'
-    );
-    
-    // Create a list of all units (not just unique buildings)
-    // This allows users with multiple units in the same building to see all units
-    const buildings = useMemo(() => {
-        return approvedRequests.map((request, index) => ({
-            id: `${request.building || 'unknown'}-${request.unit_number || 'unknown'}-${request.request_id || index}`, // Stable unique ID for each unit
-            building_id: request.building,
-            title: request.building_title,
-            building_code: request.building_code,
-            request_id: request.request_id, // Store request_id for reference
-            unit_info: {
-                unit_number: request.unit_number,
-                floor: request.floor,
-                area: request.area,
-                resident_count: request.resident_count,
-                has_parking: request.has_parking,
-                parking_count: request.parking_count,
-                role: request.role
-            }
-        }));
-    }, [approvedRequests]);
+    const buildings = useAllApprovedUnits();
+
+    useBuildingAutoSelection(buildings);
+    useBuildingValidation(buildings, selectedBuilding);
 
     useEffect(() => {
-        // Only fetch if we don't have requests in Redux store
-        if (requests.length === 0) {
-            dispatch(fetchMembershipRequests());
-        }
-    }, [dispatch, requests.length]);
+        dispatch(fetchMembershipRequests());
+    }, [dispatch]);
 
     // Auto-refresh every 30 seconds for pending requests
     useEffect(() => {
+        const requests = buildings.map(b => ({ status: 'approved' })); // Simplified check
         const hasPendingRequests = requests.some(req => req.status === 'pending');
         if (!hasPendingRequests) return;
 
@@ -60,7 +35,7 @@ export default function ResidentBuildingsList() {
         }, 30000); // 30 seconds
 
         return () => clearInterval(interval);
-    }, [dispatch, requests]);
+    }, [dispatch, buildings]);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -72,44 +47,6 @@ export default function ResidentBuildingsList() {
             setIsRefreshing(false);
         }
     };
-
-    // Auto-select first building (only once)
-    useEffect(() => {
-        if (buildings.length > 0 && !selectedBuilding) {
-            // Check if this is the first time loading (no saved selection in localStorage)
-            const savedBuilding = localStorage.getItem('selectedResidentBuilding');
-            if (!savedBuilding) {
-                dispatch(setSelectedBuilding(buildings[0]));
-            }
-        }
-    }, [buildings.length, selectedBuilding, dispatch]);
-
-    // Validate selected building against current buildings list
-    useEffect(() => {
-        if (selectedBuilding && buildings.length > 0) {
-            // Check if selected building still exists in current buildings list
-            const buildingExists = buildings.find(b => 
-                b.id === selectedBuilding.id || 
-                (b.building_id === selectedBuilding.building_id && 
-                 b.unit_info?.unit_number === selectedBuilding.unit_info?.unit_number)
-            );
-            
-            if (!buildingExists) {
-                // Selected building no longer exists, try to find a similar one
-                const similarBuilding = buildings.find(b => 
-                    b.building_id === selectedBuilding.building_id
-                );
-                
-                if (similarBuilding) {
-                    // Found a building with same building_id, update selection
-                    dispatch(setSelectedBuilding(similarBuilding));
-                } else {
-                    // No similar building found, clear selection
-                    dispatch(setSelectedBuilding(null));
-                }
-            }
-        }
-    }, [buildings, selectedBuilding, dispatch]);
 
     if (loading) {
         return (

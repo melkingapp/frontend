@@ -1,15 +1,15 @@
 import { Home, Phone, Square, Car, Edit, CheckCircle2, XCircle, CircleSlash, Layers } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 
-export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
-    const isOccupied = unit.is_occupied || false;
+const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
+    // const isOccupied = unit.is_occupied || false; // Unused
     
     // استفاده از فیلدهای جدید
     const fullName = unit.full_name || "";
     const role = unit.role || "";
     const tenantFullName = unit.tenant_full_name || "";
-    const phoneNumber = unit.phone_number || "";
-    const tenantPhoneNumber = unit.tenant_phone_number || "";
+    // const phoneNumber = unit.phone_number || ""; // Unused
+    // const tenantPhoneNumber = unit.tenant_phone_number || ""; // Unused
     const hasParking = unit.has_parking || false;
     const parkingCount = unit.parking_count || 0;
     const residentCount = (unit.resident_count ?? 0);
@@ -203,4 +203,6 @@ export default function UnitItem({ unit, onSelect, onEdit = () => {} }) {
             </div>
         </article>
     );
-}
+});
+
+export default UnitItem;

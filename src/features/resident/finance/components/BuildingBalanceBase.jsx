@@ -4,7 +4,7 @@ import { DollarSign, TrendingUp, TrendingDown, Building2, Calendar, Wallet, Cred
 import CountUp from "react-countup";
 import moment from "moment-jalaali";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import { fetchCurrentFundBalance, selectCurrentFundBalance } from "../../../manager/finance/slices/financeSlice";
+import { fetchCurrentFundBalance, selectCurrentFundBalance } from "../../../manager/finance/store/slices/financeSlice";
 import { fetchBuildings, setSelectedBuilding } from "../../../manager/building/buildingSlice";
 import BuildingBalanceTable from "./BuildingBalanceTable";
 
