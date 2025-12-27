@@ -8,6 +8,7 @@ import servicesReducer from "../features/manager/notification/slices/servicesSli
 import surveysReducer from "../features/manager/notification/slices/surveysSlice";
 import expenseTypesReducer from "../features/manager/finance/store/slices/expenseTypesSlice";
 import paymentsReducer from "../features/manager/finance/store/slices/paymentsSlice";
+import extraPaymentReducer from "../features/manager/finance/store/slices/extraPaymentSlice";
 import unitsReducer from "../features/manager/unitManagement/slices/unitsSlice";
 import requestsReducer from "../features/manager/unitManagement/slices/requestsSlice";
 import transactionsReducer from "../features/manager/unitManagement/slices/transactionsSlice";
@@ -34,6 +35,7 @@ const store = configureStore({
         surveys: surveysReducer,
         expenseTypes: expenseTypesReducer,
         payments: paymentsReducer,
+        extraPayment: extraPaymentReducer,
         units: unitsReducer,
         requests: requestsReducer,
         transactions: transactionsReducer,

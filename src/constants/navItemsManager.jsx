@@ -1,4 +1,4 @@
-import { CreditCard, PieChart, MessageCircle, Bell, Settings, User, Home, Building2, Users, CheckCircle, UserPlus, BookOpen, DollarSign } from "lucide-react";
+import { CreditCard, PieChart, MessageCircle, Bell, Settings, User, Home, Building2, Users, CheckCircle, UserPlus, BookOpen, DollarSign, Coins } from "lucide-react";
 
 export const navItemsManager = [
     {

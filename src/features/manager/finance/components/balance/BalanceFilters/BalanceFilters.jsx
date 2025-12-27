@@ -14,9 +14,11 @@ import {
   Camera,
   Car,
   ArrowLeftRight,
-  ShoppingCart
+  ShoppingCart,
+  Calendar
 } from "lucide-react";
 import moment from "moment-jalaali";
+import DateRangeModal from "../../transactions/TransactionFilters/DateRangeModal";
 
 moment.loadPersian({ dialect: "persian-modern" });
 
@@ -27,6 +29,7 @@ export default function BalanceFilters({
   onDateRangeChange 
 }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
 
   const filterOptions = [
     { value: "all", label: "همه تراکنش‌ها", icon: <Filter size={16} /> },
@@ -45,44 +48,83 @@ export default function BalanceFilters({
   const selectedFilter = filterOptions.find(option => option.value === filter);
 
 
+  const handleApplyDateRange = (newDateRange) => {
+    onDateRangeChange(newDateRange);
+    setIsDateRangeModalOpen(false);
+  };
+
+  const handleClearDateRange = () => {
+    onDateRangeChange({
+      from: moment().subtract(30, 'days').format('YYYY-MM-DD'),
+      to: moment().format('YYYY-MM-DD')
+    });
+    setIsDateRangeModalOpen(false);
+  };
+
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
-      {/* Filter Buttons */}
-      <div className="flex flex-wrap gap-2">
-        {filterOptions.map((option) => (
+    <>
+      <div className="flex flex-col gap-4">
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap gap-2">
+          {filterOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => onFilterChange(option.value)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                filter === option.value
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 transform scale-105"
+                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md"
+              }`}
+            >
+              <span className={`transition-colors ${filter === option.value ? "text-white" : "text-gray-500"}`}>
+                {option.icon}
+              </span>
+              <span>{option.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Date Range Picker */}
+        <div className="flex items-center gap-3">
           <button
-            key={option.value}
-            onClick={() => onFilterChange(option.value)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-              filter === option.value
-                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 transform scale-105"
-                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md"
-            }`}
+            onClick={() => setIsDateRangeModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
           >
-            <span className={`transition-colors ${filter === option.value ? "text-white" : "text-gray-500"}`}>
-              {option.icon}
+            <Calendar size={18} />
+            <span>
+              {dateRange?.from && dateRange?.to
+                ? `${moment(dateRange.from).format('jYYYY/jMM/jDD')} - ${moment(dateRange.to).format('jYYYY/jMM/jDD')}`
+                : 'انتخاب بازه زمانی'}
             </span>
-            <span>{option.label}</span>
           </button>
-        ))}
+
+          {/* Clear Filters */}
+          {(filter !== "all" || (dateRange.from !== moment().subtract(30, 'days').format('YYYY-MM-DD') || dateRange.to !== moment().format('YYYY-MM-DD'))) && (
+            <button
+              onClick={() => {
+                onFilterChange("all");
+                onDateRangeChange({
+                  from: moment().subtract(30, 'days').format('YYYY-MM-DD'),
+                  to: moment().format('YYYY-MM-DD')
+                });
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full border border-red-200 hover:border-red-300 transition-all duration-200"
+            >
+              <X size={16} />
+              پاک کردن فیلترها
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Clear Filters */}
-      {(filter !== "all" || dateRange.from !== moment().startOf('year').format('YYYY-MM-DD') || dateRange.to !== moment().format('YYYY-MM-DD')) && (
-        <button
-          onClick={() => {
-            onFilterChange("all");
-            onDateRangeChange({
-              from: moment().startOf('year').format('YYYY-MM-DD'),
-              to: moment().format('YYYY-MM-DD')
-            });
-          }}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full border border-red-200 hover:border-red-300 transition-all duration-200"
-        >
-          <X size={16} />
-          پاک کردن فیلترها
-        </button>
-      )}
-    </div>
+      {/* Date Range Modal */}
+      <DateRangeModal
+        isOpen={isDateRangeModalOpen}
+        onClose={() => setIsDateRangeModalOpen(false)}
+        dateRange={dateRange}
+        onApply={handleApplyDateRange}
+        onClear={handleClearDateRange}
+      />
+    </>
   );
 }

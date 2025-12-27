@@ -1,4 +1,4 @@
-import { get, post, put, deleteRequest } from './apiService';
+import { get, post, put, patch, deleteRequest } from './apiService';
 
 // Register new expense
 export const registerExpense = async (expenseData) => {
@@ -338,7 +338,7 @@ export const addBalanceTransaction = async (transactionData) => {
 
 export const updateBalanceTransaction = async (transactionId, transactionData) => {
     try {
-        const response = await put(`/billing/balance-transactions/${transactionId}/`, transactionData);
+        const response = await put(`/billing/balance-transactions/${transactionId}/update/`, transactionData);
         return response;
     } catch (error) {
         console.error('Update balance transaction error:', error);
@@ -348,7 +348,7 @@ export const updateBalanceTransaction = async (transactionId, transactionData) =
 
 export const deleteBalanceTransaction = async (transactionId) => {
     try {
-        const response = await deleteRequest(`/billing/balance-transactions/${transactionId}/`);
+        const response = await deleteRequest(`/billing/balance-transactions/${transactionId}/delete/`);
         return response;
     } catch (error) {
         console.error('Delete balance transaction error:', error);
@@ -398,6 +398,49 @@ export const getCurrentFundBalance = async (buildingId) => {
     }
 };
 
+// Balance Sheet Methods
+export const getBalanceSheet = async (buildingId, filters = {}) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== '') {
+                params.append(key, value);
+            }
+        });
+        
+        const queryString = params.toString();
+        const response = await get(`/billing/balance-sheet/?${queryString}`);
+        return response;
+    } catch (error) {
+        console.error('Get balance sheet error:', error);
+        throw error;
+    }
+};
+
+export const exportBalanceSheet = async (buildingId, filters = {}) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== '') {
+                params.append(key, value);
+            }
+        });
+        
+        const queryString = params.toString();
+        const response = await get(`/billing/balance-sheet/export/?${queryString}`, {
+            responseType: 'blob'
+        });
+        return response;
+    } catch (error) {
+        console.error('Export balance sheet error:', error);
+        throw error;
+    }
+};
+
 // Building Visibility Settings
 export const getBuildingVisibilitySettings = async (buildingId) => {
     try {
@@ -419,6 +462,79 @@ export const toggleDebtCreditVisibility = async (buildingId, showToResidents) =>
         return response;
     } catch (error) {
         console.error('Toggle debt/credit visibility error:', error);
+        throw error;
+    }
+};
+
+// Extra Payment Request Functions
+export const createExtraPaymentRequest = async (buildingId, data) => {
+    try {
+        const formData = new FormData();
+        
+        // افزودن فیلدهای الزامی
+        formData.append('building_id', buildingId);
+        formData.append('title', data.title);
+        formData.append('amount', data.amount);
+        
+        // فیلدهای اختیاری
+        if (data.unit_id) {
+            formData.append('unit_id', data.unit_id);
+        }
+        if (data.description) {
+            formData.append('description', data.description);
+        }
+        if (data.payment_date) {
+            formData.append('payment_date', data.payment_date);
+        }
+        if (data.attachment && data.attachment instanceof File) {
+            formData.append('attachment', data.attachment, data.attachment.name);
+        }
+        
+        const response = await post('/billing/extra-payment-request/', formData);
+        return response;
+    } catch (error) {
+        console.error('Create extra payment request error:', error);
+        throw error;
+    }
+};
+
+export const getExtraPaymentRequests = async (buildingId, filters = {}) => {
+    try {
+        const params = new URLSearchParams();
+        if (buildingId) {
+            params.append('building_id', buildingId);
+        }
+        if (filters.status) {
+            params.append('status', filters.status);
+        }
+        
+        const queryString = params.toString();
+        const response = await get(`/billing/extra-payment-requests/${queryString ? `?${queryString}` : ''}`);
+        return response;
+    } catch (error) {
+        console.error('Get extra payment requests error:', error);
+        throw error;
+    }
+};
+
+export const approveExtraPaymentRequest = async (requestId) => {
+    try {
+        const response = await patch(`/billing/extra-payment-request/${requestId}/approve/`, {});
+        return response;
+    } catch (error) {
+        console.error('Approve extra payment request error:', error);
+        throw error;
+    }
+};
+
+export const rejectExtraPaymentRequest = async (requestId, reason = '') => {
+    try {
+        const response = await patch(`/billing/extra-payment-request/${requestId}/reject/`, {
+            rejection_reason: reason
+        });
+        return response;
+    } catch (error) {
+        console.error('Reject extra payment request error:', error);
         throw error;
     }
 };
@@ -597,6 +713,8 @@ const billingService = {
     getBalanceTransactionDetails,
     exportBalanceData,
     getCurrentFundBalance,
+    getBalanceSheet,
+    exportBalanceSheet,
     getChargeFormulas,
     createChargeFormula,
     getChargeFormula,
@@ -607,7 +725,11 @@ const billingService = {
     getChargeSchedule,
     toggleChargeSchedule,
     executeChargeSchedule,
-    deleteChargeSchedule
+    deleteChargeSchedule,
+    createExtraPaymentRequest,
+    getExtraPaymentRequests,
+    approveExtraPaymentRequest,
+    rejectExtraPaymentRequest
 };
 
 export default billingService;
