@@ -10,13 +10,25 @@ import { fetchCurrentFundBalance, selectCurrentFundBalance } from "../../finance
 export default function ManagerBuildingsList() {
     const dispatch = useDispatch();
     const buildings = useSelector((state) => state.building.data);
-    const userPhone = useSelector((state) => state.auth.user?.phone);
+    const userPhone = useSelector((state) => state.auth.user?.phone_number || state.auth.user?.phone);
+    const userId = useSelector((state) => state.auth.user?.id);
     const selectedBuildingId = useSelector((state) => state.building.selectedBuildingId);
     const currentFundBalance = useSelector(selectCurrentFundBalance);
 
-    const myBuildings = buildings.filter(
-        (b) => b.manager?.phone === userPhone
-    );
+    const myBuildings = buildings.filter((b) => {
+        // Check if manager phone matches
+        const managerPhone = b.manager?.phone_number || b.manager?.phone;
+        if (managerPhone && userPhone && managerPhone === userPhone) {
+            return true;
+        }
+        // Fallback: check if manager ID matches current user ID
+        if (userId && (b.manager?.id === userId || b.manager === userId)) {
+            return true;
+        }
+        // If manager data is missing but building exists, include it (edge case)
+        // This handles cases where building was just created and manager data might not be fully loaded
+        return false;
+    });
 
     useEffect(() => {
         dispatch(fetchBuildings());

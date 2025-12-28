@@ -7,7 +7,7 @@ import Button from "../../../../../shared/components/shared/feedback/Button";
 import Modal from "../../../../../shared/components/shared/feedback/Modal";
 import { formatNumber } from "../../../../../shared/utils/helper";
 import InfoCards from "../../../../../shared/components/shared/display/InfoCard";
-import { createBuilding } from "../../buildingSlice";
+import { createBuilding, fetchBuildings } from "../../buildingSlice";
 import { createUnit } from "../../../unitManagement/slices/unitsSlice";
 
 export default function StepSummary({ formData, prev }) {
@@ -83,6 +83,16 @@ export default function StepSummary({ formData, prev }) {
                     console.error("❌ Manager unit creation failed:", unitError);
                     toast.warning("ساختمان ایجاد شد اما خطا در ایجاد واحد مدیر: " + (unitError.message || 'خطای نامشخص'));
                 }
+            }
+            
+            // Refresh buildings list to get the latest data from backend
+            // This ensures the new building appears immediately and bypasses any cache issues
+            try {
+                await dispatch(fetchBuildings()).unwrap();
+                console.log("✅ Buildings list refreshed after creation");
+            } catch (fetchError) {
+                console.error("⚠️ Failed to refresh buildings list:", fetchError);
+                // Don't block navigation if refresh fails
             }
             
             setIsSuccessOpen(true);
