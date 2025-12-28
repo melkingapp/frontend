@@ -20,8 +20,6 @@ import membershipSliceReducer, {
   registerSuggestedUser,
   joinByManagerPhone,
   transferBuildingManagement,
-  getManagerTasks,
-  completeManagerTask,
   clearError,
   setSelectedRequest,
   clearRequests,
@@ -52,9 +50,6 @@ describe('membershipSlice', () => {
     validateInviteLinkLoading: false,
     useInviteLinkLoading: false,
     inviteLinkData: null,
-    managerTasks: [],
-    managerTasksLoading: false,
-    completeTaskLoading: false,
     transferManagementLoading: false,
     loading: false,
     error: null,
@@ -328,50 +323,6 @@ describe('membershipSlice', () => {
       });
     });
 
-    describe('getManagerTasks', () => {
-      it('should populate manager tasks list', async () => {
-        const mockBuildingId = 1;
-        const mockResponse = {
-          tasks: [
-            { task_id: 1, title: 'Complete building info', is_completed: false },
-            { task_id: 2, title: 'Add units', is_completed: true }
-          ],
-          completed_count: 1,
-          total_count: 2
-        };
-
-        membershipApi.getManagerTasks.mockResolvedValue(mockResponse);
-
-        const dispatch = jest.fn();
-        const thunk = getManagerTasks(mockBuildingId);
-
-        await thunk(dispatch, () => ({}), undefined);
-
-        const dispatchedActions = dispatch.mock.calls.map(call => call[0]);
-        expect(dispatchedActions[1].payload).toEqual(mockResponse);
-      });
-    });
-
-    describe('completeManagerTask', () => {
-      it('should update task status on successful completion', async () => {
-        const mockData = { buildingId: 1, data: { task_id: 1 } };
-        const mockResponse = {
-          message: 'Task completed',
-          task: { task_id: 1, is_completed: true }
-        };
-
-        membershipApi.completeManagerTask.mockResolvedValue(mockResponse);
-
-        const dispatch = jest.fn();
-        const thunk = completeManagerTask(mockData);
-
-        await thunk(dispatch, () => ({}), undefined);
-
-        const dispatchedActions = dispatch.mock.calls.map(call => call[0]);
-        expect(dispatchedActions[1].payload).toEqual(mockResponse);
-      });
-    });
-
     describe('transferBuildingManagement', () => {
       it('should handle successful management transfer', async () => {
         const mockData = { buildingId: 1, data: { new_manager_phone: '09123456789' } };
@@ -434,44 +385,6 @@ describe('membershipSlice', () => {
       expect(result.requests[0].status).toBe('owner_approved');
       expect(result.selectedRequest.status).toBe('owner_approved');
       expect(result.approveLoading).toBe(false);
-    });
-
-    it('should update managerTasks on getManagerTasks fulfilled', () => {
-      const mockTasks = [{ task_id: 1, title: 'Test Task' }];
-      const action = {
-        type: getManagerTasks.fulfilled.type,
-        payload: mockTasks
-      };
-
-      const result = membershipSliceReducer(initialState, action);
-
-      expect(result.managerTasks).toEqual(mockTasks);
-      expect(result.managerTasksLoading).toBe(false);
-    });
-
-    it('should update task in list on completeManagerTask fulfilled', () => {
-      const initialStateWithTasks = {
-        ...initialState,
-        managerTasks: [
-          { task_id: 1, is_completed: false },
-          { task_id: 2, is_completed: false }
-        ]
-      };
-
-      const mockResponse = {
-        task: { task_id: 1, is_completed: true }
-      };
-
-      const action = {
-        type: completeManagerTask.fulfilled.type,
-        payload: mockResponse
-      };
-
-      const result = membershipSliceReducer(initialStateWithTasks, action);
-
-      expect(result.managerTasks[0].is_completed).toBe(true);
-      expect(result.managerTasks[1].is_completed).toBe(false);
-      expect(result.completeTaskLoading).toBe(false);
     });
 
     it('should remove request from list on withdrawMembershipRequest fulfilled', () => {

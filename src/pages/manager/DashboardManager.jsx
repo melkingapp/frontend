@@ -3,7 +3,6 @@ import { useSelector } from "react-redux";
 import DashboardOverview from "../../features/manager/dashboard/DashboardOverview";
 import ManagerBuildingsList from "../../features/manager/building/components/ManagerBuildingsList";
 import AddBuildingCard from "../../features/manager/building/components/AddBuildingCard";
-import ManagerTasksWidget from "../../features/manager/components/ManagerTasksWidget";
 
 export default function ManagerDashboard() {
   // const hasBuilding = useSelector((state) => !!state.building?.id); // فرض بر اینکه بعد از ایجاد، building.id ثبت میشه
@@ -17,13 +16,6 @@ export default function ManagerDashboard() {
       <div>
         <ManagerBuildingsList />
       </div>
-
-      {/* Manager Tasks Widget - only show if building is selected */}
-      {selectedBuildingId && (
-        <div>
-          <ManagerTasksWidget buildingId={selectedBuildingId} />
-        </div>
-      )}
 
       <div>
         <AddBuildingCard />

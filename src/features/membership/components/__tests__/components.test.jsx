@@ -47,26 +47,6 @@ const mockMembershipRequestForm = ({ onSubmit, loading }) => (
   </form>
 );
 
-const mockManagerTasksWidget = ({ tasks, onCompleteTask }) => (
-  <div data-testid="manager-tasks-widget">
-    <h3>Manager Tasks</h3>
-    {tasks.map(task => (
-      <div key={task.task_id} data-testid={`task-${task.task_id}`}>
-        <span>{task.title}</span>
-        {!task.is_completed && (
-          <button
-            data-testid={`complete-btn-${task.task_id}`}
-            onClick={() => onCompleteTask(task.task_id)}
-          >
-            Complete
-          </button>
-        )}
-        {task.is_completed && <span data-testid={`completed-${task.task_id}`}>✓</span>}
-      </div>
-    ))}
-  </div>
-);
-
 const mockTransferManagementModal = ({ isOpen, onClose, onConfirm, loading }) => (
   isOpen ? (
     <div data-testid="transfer-management-modal">
@@ -147,9 +127,6 @@ const createMockStore = (initialState = {}) => {
         validateInviteLinkLoading: false,
         useInviteLinkLoading: false,
         inviteLinkData: null,
-        managerTasks: [],
-        managerTasksLoading: false,
-        completeTaskLoading: false,
         transferManagementLoading: false,
         loading: false,
         error: null,
@@ -290,53 +267,6 @@ describe('Membership Components', () => {
         full_name: 'Test User',
         phone_number: '09123456789'
       });
-    });
-  });
-
-  describe('ManagerTasksWidget', () => {
-    const mockTasks = [
-      { task_id: 1, title: 'Complete building info', is_completed: false },
-      { task_id: 2, title: 'Add units', is_completed: true },
-    ];
-
-    it('renders tasks with completion status', () => {
-      const mockOnCompleteTask = jest.fn();
-
-      renderWithProviders(
-        mockManagerTasksWidget({ tasks: mockTasks, onCompleteTask: mockOnCompleteTask })
-      );
-
-      expect(screen.getByTestId('manager-tasks-widget')).toBeInTheDocument();
-      expect(screen.getByText('Manager Tasks')).toBeInTheDocument();
-
-      // Check incomplete task
-      expect(screen.getByTestId('task-1')).toBeInTheDocument();
-      expect(screen.getByTestId('complete-btn-1')).toBeInTheDocument();
-
-      // Check completed task
-      expect(screen.getByTestId('task-2')).toBeInTheDocument();
-      expect(screen.getByTestId('completed-2')).toBeInTheDocument();
-    });
-
-    it('calls onCompleteTask when complete button is clicked', () => {
-      const mockOnCompleteTask = jest.fn();
-
-      renderWithProviders(
-        mockManagerTasksWidget({ tasks: mockTasks, onCompleteTask: mockOnCompleteTask })
-      );
-
-      fireEvent.click(screen.getByTestId('complete-btn-1'));
-      expect(mockOnCompleteTask).toHaveBeenCalledWith(1);
-    });
-
-    it('does not show complete button for completed tasks', () => {
-      const mockOnCompleteTask = jest.fn();
-
-      renderWithProviders(
-        mockManagerTasksWidget({ tasks: mockTasks, onCompleteTask: mockOnCompleteTask })
-      );
-
-      expect(screen.queryByTestId('complete-btn-2')).not.toBeInTheDocument();
     });
   });
 

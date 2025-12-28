@@ -34,9 +34,12 @@ export const createUnit = createAsyncThunk(
   async ({ buildingId, unitData }, { rejectWithValue }) => {
     try {
       const response = await unitsApi.createUnit(buildingId, unitData);
+      if (response.success === false) {
+        return rejectWithValue(response.error || 'خطا در ایجاد واحد');
+      }
       return response.unit;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || error.message);
+      return rejectWithValue(error.response?.data?.error || error.message || 'خطا در ایجاد واحد');
     }
   }
 );

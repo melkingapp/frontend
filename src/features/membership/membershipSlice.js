@@ -316,31 +316,6 @@ export const transferBuildingManagement = createAsyncThunk(
   }
 );
 
-// ===== PRD: Manager Tasks =====
-export const getManagerTasks = createAsyncThunk(
-  'membership/getManagerTasks',
-  async (buildingId, { rejectWithValue }) => {
-    try {
-      const response = await membershipApi.getManagerTasks(buildingId);
-      return response;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.error || error.message);
-    }
-  }
-);
-
-export const completeManagerTask = createAsyncThunk(
-  'membership/completeManagerTask',
-  async ({ buildingId, data }, { rejectWithValue }) => {
-    try {
-      const response = await membershipApi.completeManagerTask(buildingId, data);
-      return response;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.error || error.message);
-    }
-  }
-);
-
 const initialState = {
   requests: [],
   selectedRequest: null,
@@ -361,10 +336,6 @@ const initialState = {
   validateInviteLinkLoading: false,
   useInviteLinkLoading: false,
   inviteLinkData: null,
-  // PRD: Manager Tasks
-  managerTasks: [],
-  managerTasksLoading: false,
-  completeTaskLoading: false,
   // PRD: Transfer Management
   transferManagementLoading: false,
   // Common
@@ -744,39 +715,6 @@ const membershipSlice = createSlice({
       .addCase(transferBuildingManagement.rejected, (state, action) => {
         state.transferManagementLoading = false;
         state.error = action.payload;
-      })
-
-      // ===== PRD: Manager Tasks =====
-      .addCase(getManagerTasks.pending, (state) => {
-        state.managerTasksLoading = true;
-        state.error = null;
-      })
-      .addCase(getManagerTasks.fulfilled, (state, action) => {
-        state.managerTasksLoading = false;
-        state.managerTasks = action.payload?.tasks || [];
-      })
-      .addCase(getManagerTasks.rejected, (state, action) => {
-        state.managerTasksLoading = false;
-        state.error = action.payload;
-      })
-
-      .addCase(completeManagerTask.pending, (state) => {
-        state.completeTaskLoading = true;
-        state.error = null;
-      })
-      .addCase(completeManagerTask.fulfilled, (state, action) => {
-        state.completeTaskLoading = false;
-        // Update the completed task in the list
-        if (action.payload?.task) {
-          const taskIndex = state.managerTasks.findIndex(task => task.manager_task_id === action.payload.task.manager_task_id);
-          if (taskIndex !== -1) {
-            state.managerTasks[taskIndex] = action.payload.task;
-          }
-        }
-      })
-      .addCase(completeManagerTask.rejected, (state, action) => {
-        state.completeTaskLoading = false;
-        state.error = action.payload;
       });
   },
 });
@@ -822,11 +760,6 @@ export const selectCreateInviteLinkLoading = (state) => state.membership.createI
 export const selectValidateInviteLinkLoading = (state) => state.membership.validateInviteLinkLoading;
 export const selectUseInviteLinkLoading = (state) => state.membership.useInviteLinkLoading;
 export const selectInviteLinkData = (state) => state.membership.inviteLinkData;
-
-// PRD: Manager Tasks
-export const selectManagerTasks = (state) => state.membership.managerTasks;
-export const selectManagerTasksLoading = (state) => state.membership.managerTasksLoading;
-export const selectCompleteTaskLoading = (state) => state.membership.completeTaskLoading;
 
 // PRD: Transfer Management
 export const selectTransferManagementLoading = (state) => state.membership.transferManagementLoading;

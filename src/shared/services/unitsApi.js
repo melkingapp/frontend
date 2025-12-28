@@ -71,9 +71,11 @@ class UnitsApiService {
       };
     } catch (error) {
       console.error('Error creating unit:', error);
+      // Extract error message from error.data (from api.js) or error.message
+      const errorMessage = error.data?.error || error.message || 'خطا در ایجاد واحد';
       return {
         success: false,
-        error: error.response?.data?.error || error.message || 'خطا در ایجاد واحد'
+        error: errorMessage
       };
     }
   }

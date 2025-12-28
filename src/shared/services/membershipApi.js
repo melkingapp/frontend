@@ -214,21 +214,6 @@ class MembershipApiService {
     return response;
   }
 
-  /**
-   * دریافت لیست ماموریت‌های مدیر (PRD)
-   */
-  async getManagerTasks(buildingId) {
-    const { data } = await api.get(`/buildings/${buildingId}/manager-tasks/`);
-    return data;
-  }
-
-  /**
-   * کامل کردن ماموریت مدیر (PRD)
-   */
-  async completeManagerTask(buildingId, data) {
-    const { data: response } = await api.post(`/buildings/${buildingId}/manager-tasks/complete/`, data);
-    return response;
-  }
 }
 
 const membershipApi = new MembershipApiService();

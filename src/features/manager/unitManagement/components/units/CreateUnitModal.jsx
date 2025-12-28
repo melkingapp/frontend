@@ -1,8 +1,8 @@
-import { useState, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { createUnit } from "../../slices/unitsSlice";
+import { createUnit, clearError } from "../../slices/unitsSlice";
 import SelectField from "../../../../../shared/components/shared/inputs/SelectField";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
 
@@ -60,6 +60,14 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
   
   const [errors, setErrors] = useState({});
 
+  // Clear Redux error when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      dispatch(clearError());
+      setErrors({});
+    }
+  }, [isOpen, dispatch]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
@@ -67,12 +75,17 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
       [name]: type === "checkbox" ? checked : value,
     }));
     
-    // Clear error when user starts typing
+    // Clear local validation error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
+    }
+    
+    // Clear Redux error when user starts typing in unit_number (duplicate unit error)
+    if (name === 'unit_number' && error) {
+      dispatch(clearError());
     }
   };
 

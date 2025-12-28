@@ -27,7 +27,7 @@ const getPersianOwnerType = (ownerType) => {
   return ownerTypeMap[ownerType] || ownerType;
 };
 
-const FormField = ({ label, name, type = "text", placeholder, value, onChange, min, required, options = null }) => (
+const FormField = ({ label, name, type = "text", placeholder, value, onChange, min, required, options = null, disabled = false }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
     {options ? (
@@ -36,7 +36,8 @@ const FormField = ({ label, name, type = "text", placeholder, value, onChange, m
         value={value}
         onChange={onChange}
         required={required}
-        className="mt-1 block w-full rounded-2xl border border-gray-300 shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3"
+        disabled={disabled}
+        className="mt-1 block w-full rounded-2xl border border-gray-300 shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3 disabled:bg-gray-100 disabled:text-gray-500"
       >
         <option value="">انتخاب کنید</option>
         {options.map((option) => (
@@ -54,7 +55,8 @@ const FormField = ({ label, name, type = "text", placeholder, value, onChange, m
         placeholder={placeholder}
         min={min}
         required={required}
-        className="mt-1 block w-full rounded-2xl border border-gray-300 shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3"
+        disabled={disabled}
+        className="mt-1 block w-full rounded-2xl border border-gray-300 shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3 disabled:bg-gray-100 disabled:text-gray-500"
       />
     )}
   </div>
@@ -72,35 +74,37 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   const [form, setForm] = useState({
     // اطلاعات ساختمان
     building_code: "",
-    
+
     // اطلاعات شخصی
     full_name: "",
     phone_number: "",
-    
+
     // اطلاعات واحد
     unit_number: "",
     floor: "",
     area: "",
     resident_count: 1,
-    
+
     // نقش و نوع مالک
     role: "", // ساکن یا مالک
     owner_type: "", // مقیم یا دارای مستاجر
-    
+
     // اطلاعات مستاجر (اگر مالک دارای مستاجر باشد)
     tenant_full_name: "",
     tenant_phone_number: "",
-    
+
     // اطلاعات مالک (اگر نقش ساکن باشد)
     owner_full_name: "",
     owner_phone_number: "",
-    
+
     // پارکینگ
     has_parking: false,
     parking_count: 0,
   });
 
   const [errors, setErrors] = useState({});
+  const [originalUnitData, setOriginalUnitData] = useState(null); // ذخیره داده‌های اولیه واحد
+  const [isFromManagerUnit, setIsFromManagerUnit] = useState(false); // آیا داده‌ها از واحد مدیر پر شده؟
   const debounceRef = useRef(null);
 
   // Resolve phone number: prefer user.phone_number, fallback to user.username
@@ -151,9 +155,46 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     };
   }, [form.phone_number, isOpen, dispatch]);
 
+  // تابع مقایسه داده‌های فرم با داده‌های اولیه واحد
+  const compareFormWithOriginalData = (formData, originalData) => {
+    if (!originalData) return false; // اگر داده اولیه وجود ندارد، فرض می‌کنیم تغییر نکرده
+
+    // فیلدهای کلیدی برای مقایسه
+    const keyFields = ['unit_number', 'floor', 'area', 'role', 'owner_type', 'full_name', 'phone_number'];
+
+    // برای مستاجر، اطلاعات مستاجر را مقایسه کن
+    if (originalData.role === 'tenant' || originalData.match_type === 'tenant') {
+      keyFields.push('tenant_full_name', 'tenant_phone_number');
+      // نقش در فرم باید 'resident' باشد برای مستاجر
+      if (formData.role !== 'resident') {
+        return true; // تغییر کرده
+      }
+    } else {
+      // برای مالک، اطلاعات مالک را مقایسه کن
+      if (formData.role !== 'owner') {
+        return true; // تغییر کرده
+      }
+    }
+
+    for (const field of keyFields) {
+      const originalValue = String(originalData[field] || '').trim();
+      const formValue = String(formData[field] || '').trim();
+
+      if (originalValue !== formValue) {
+        return true; // تغییر کرده
+      }
+    }
+
+    return false; // تغییر نکرده
+  };
+
   // Pre-fill form when unit data is loaded
   useEffect(() => {
     if (unitData) {
+      // ذخیره داده‌های اولیه برای مقایسه بعداً
+      setOriginalUnitData({...unitData});
+      setIsFromManagerUnit(true); // نشان می‌دهد که داده‌ها از واحد مدیر پر شده
+
       const isOwnerWithLandlord = unitData.role === 'owner' && unitData.owner_type === 'landlord';
       const isResidentRole = unitData.role === 'resident';
       const isTenantMatch = unitData.match_type === 'tenant';
@@ -316,6 +357,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       parking_count: 0,
     });
     setErrors({});
+    setOriginalUnitData(null);
+    setIsFromManagerUnit(false);
     dispatch(clearUnitData());
     onClose();
   }, [dispatch, onClose]);
@@ -481,6 +524,9 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
               owner_full_name: null,
               owner_phone_number: null,
             };
+      // بررسی اینکه آیا داده‌ها تغییر کرده یا نه
+      const hasBeenEdited = isFromManagerUnit ? compareFormWithOriginalData(form, originalUnitData) : false;
+
       const submitData = {
         ...form,
         owner_full_name: ownerInfo.owner_full_name,
@@ -488,6 +534,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         // Only include tenant info if owner_type is 'landlord'
         tenant_full_name: isOwnerWithLandlord ? form.tenant_full_name : null,
         tenant_phone_number: isOwnerWithLandlord ? form.tenant_phone_number : null,
+        // اضافه کردن فلگ ویرایش
+        has_been_edited: hasBeenEdited,
       };
       
       const result = await dispatch(createMembershipRequest(submitData)).unwrap();
@@ -519,6 +567,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       // Show success message based on approval flow
       if (result.requires_owner_approval) {
         toast.success('درخواست عضویت ارسال شد. درخواست شما ابتدا باید توسط مالک تایید شود.');
+      } else if (result.requires_manager_approval) {
+        toast.success('اطلاعات تغییر کرده است. درخواست شما به مدیر ساختمان ارسال شد.');
       } else {
         toast.success('درخواست عضویت با موفقیت ارسال شد');
       }
@@ -861,6 +911,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         value={form.role}
                         onChange={handleChange}
                         required
+                        disabled={isFromManagerUnit}
                       />
                       {form.role === 'owner' && (
                         <FormField

@@ -349,33 +349,6 @@ describe('membershipApi', () => {
     });
   });
 
-  describe('getManagerTasks', () => {
-    it('should call GET /buildings/{buildingId}/manager-tasks/', async () => {
-      const mockResponse = { data: { tasks: [], completed_count: 0 } };
-
-      api.get.mockResolvedValue(mockResponse);
-
-      const result = await membershipApi.getManagerTasks(1);
-
-      expect(api.get).toHaveBeenCalledWith('/buildings/1/manager-tasks/');
-      expect(result).toEqual(mockResponse.data);
-    });
-  });
-
-  describe('completeManagerTask', () => {
-    it('should call POST /buildings/{buildingId}/manager-tasks/complete/', async () => {
-      const mockData = { task_id: 1 };
-      const mockResponse = { data: { message: 'Completed' } };
-
-      api.post.mockResolvedValue(mockResponse);
-
-      const result = await membershipApi.completeManagerTask(1, mockData);
-
-      expect(api.post).toHaveBeenCalledWith('/buildings/1/manager-tasks/complete/', mockData);
-      expect(result).toEqual(mockResponse.data);
-    });
-  });
-
   describe('getUnitByPhone', () => {
     it('should call GET /buildings/units/by-phone/ with phone parameter', async () => {
       const mockResponse = { data: { unit: { unit_number: '101' } } };
