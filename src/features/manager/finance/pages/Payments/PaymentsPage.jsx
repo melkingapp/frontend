@@ -22,6 +22,7 @@ import {
   rejectExtraPaymentRequest 
 } from "../../store/slices/extraPaymentSlice";
 import { fetchTransactions, fetchCurrentFundBalance } from "../../store/slices/financeSlice";
+import { fetchPendingPayments } from "../../store/slices/paymentsSlice";
 import { formatNumber } from "../../../../../shared/utils/helper";
 import { API_CONFIG } from "../../../../../config/api";
 
@@ -32,9 +33,14 @@ export default function PaymentsPage() {
   const dispatch = useDispatch();
   const selectedBuilding = useSelector(selectSelectedBuilding);
   const { requests, loading, error } = useSelector((state) => state.extraPayment);
+  const { payments } = useSelector((state) => state.payments);
   
   // Get building ID from selected building
   const buildingId = selectedBuilding?.building_id || selectedBuilding?.id || null;
+  
+  // Count pending payments and extra payment requests
+  const pendingPaymentsCount = payments?.filter(p => p.status === 'pending')?.length || 0;
+  const pendingExtraPaymentsCount = requests?.filter(r => r.status === 'pending')?.length || 0;
   
   const [activeTab, setActiveTab] = useState("payments"); // "payments" or "extra-payments"
   const [statusFilter, setStatusFilter] = useState("all");
@@ -48,6 +54,13 @@ export default function PaymentsPage() {
       loadRequests();
     }
   }, [buildingId, statusFilter, activeTab]);
+
+  // Load pending payments when payments tab is active
+  useEffect(() => {
+    if (buildingId && activeTab === "payments") {
+      dispatch(fetchPendingPayments({ buildingId, status: 'pending' }));
+    }
+  }, [buildingId, activeTab, dispatch]);
 
   const loadRequests = () => {
     if (buildingId) {
@@ -153,23 +166,37 @@ export default function PaymentsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab("payments")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`relative px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === "payments"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             بررسی پرداخت
+            {pendingPaymentsCount > 0 && (
+              <span className={`absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center ${
+                pendingPaymentsCount > 9 ? 'min-w-[24px] h-6 px-1.5' : 'w-6 h-6'
+              }`}>
+                {pendingPaymentsCount > 99 ? '99+' : pendingPaymentsCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab("extra-payments")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`relative px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === "extra-payments"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             درخواست‌های پرداخت اضافی
+            {pendingExtraPaymentsCount > 0 && (
+              <span className={`absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center ${
+                pendingExtraPaymentsCount > 9 ? 'min-w-[24px] h-6 px-1.5' : 'w-6 h-6'
+              }`}>
+                {pendingExtraPaymentsCount > 99 ? '99+' : pendingExtraPaymentsCount}
+              </span>
+            )}
           </button>
         </div>
         <button

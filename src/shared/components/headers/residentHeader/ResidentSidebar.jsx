@@ -135,6 +135,58 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         }
     }, [approvedUnits, selectedBuilding, dispatch]);
 
+    // Enrich selectedBuilding with unit_info from approvedUnits if missing
+    useEffect(() => {
+        if (selectedBuilding && approvedUnits.length > 0 && !selectedBuilding.unit_info?.unit_number) {
+            const buildingId = selectedBuilding.building_id || selectedBuilding.id;
+            const matchingUnit = approvedUnits.find(unit => {
+                const unitBuildingId = unit.building;
+                // Try multiple matching strategies
+                if (unitBuildingId && buildingId) {
+                    // Direct match
+                    if (unitBuildingId === buildingId || String(unitBuildingId) === String(buildingId)) {
+                        return true;
+                    }
+                }
+                // Match by building_code
+                if (selectedBuilding.building_code && unit.building_code && 
+                    selectedBuilding.building_code === unit.building_code) {
+                    return true;
+                }
+                // Match by title
+                if (selectedBuilding.title && unit.building_title && 
+                    selectedBuilding.title.trim() === unit.building_title.trim()) {
+                    return true;
+                }
+                // Match by extracting building_id from selectedBuilding.id if it's composite
+                if (selectedBuilding.id && typeof selectedBuilding.id === 'string' && selectedBuilding.id.includes('-')) {
+                    const idParts = selectedBuilding.id.split('-');
+                    if (idParts.length > 0 && idParts[0] && idParts[0] !== 'undefined' && 
+                        String(unitBuildingId) === String(idParts[0])) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            
+            if (matchingUnit && matchingUnit.unit_number) {
+                const enrichedBuilding = {
+                    ...selectedBuilding,
+                    unit_info: {
+                        unit_number: matchingUnit.unit_number,
+                        floor: matchingUnit.floor,
+                        area: matchingUnit.area,
+                        resident_count: matchingUnit.resident_count,
+                        has_parking: matchingUnit.has_parking,
+                        parking_count: matchingUnit.parking_count,
+                        role: matchingUnit.role
+                    }
+                };
+                dispatch(setSelectedBuilding(enrichedBuilding));
+            }
+        }
+    }, [selectedBuilding, approvedUnits, dispatch]);
+
     // Auto-refresh membership requests every 30 seconds for pending requests
     useEffect(() => {
         const hasPendingRequests = membershipRequests.some(req => req.status === 'pending');
@@ -262,7 +314,113 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         });
     };
 
-    const renderBuildingSelector = (isMobile = false) => (
+    // Helper function to get unit_number from approvedUnits or membershipRequests if not in selectedBuilding
+    const getUnitNumber = () => {
+        if (selectedBuilding?.unit_info?.unit_number) {
+            return selectedBuilding.unit_info.unit_number;
+        }
+        
+        if (!selectedBuilding) {
+            return null;
+        }
+        
+        const buildingId = selectedBuilding.building_id || selectedBuilding.id;
+        
+        // First, try to find from approvedUnits (which has better structure)
+        if (approvedUnits.length > 0) {
+            const matchingUnit = approvedUnits.find(unit => {
+                const unitBuildingId = unit.building;
+                // Try multiple matching strategies
+                if (unitBuildingId && buildingId) {
+                    // Direct match
+                    if (unitBuildingId === buildingId || String(unitBuildingId) === String(buildingId)) {
+                        return true;
+                    }
+                }
+                // Match by building_code
+                if (selectedBuilding.building_code && unit.building_code && 
+                    selectedBuilding.building_code === unit.building_code) {
+                    return true;
+                }
+                // Match by title
+                if (selectedBuilding.title && unit.building_title && 
+                    selectedBuilding.title.trim() === unit.building_title.trim()) {
+                    return true;
+                }
+                // Match by extracting building_id from selectedBuilding.id if it's composite
+                if (selectedBuilding.id && typeof selectedBuilding.id === 'string' && selectedBuilding.id.includes('-')) {
+                    const idParts = selectedBuilding.id.split('-');
+                    if (idParts.length > 0 && idParts[0] && idParts[0] !== 'undefined' && 
+                        String(unitBuildingId) === String(idParts[0])) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            
+            if (matchingUnit && matchingUnit.unit_number) {
+                return matchingUnit.unit_number;
+            }
+        }
+        
+        // Fallback: Try to find unit_number from membershipRequests
+        if (membershipRequests.length > 0) {
+            const approvedRequests = membershipRequests.filter(req => 
+                req.status === 'approved' || 
+                req.status === 'owner_approved' || 
+                req.status === 'manager_approved'
+            );
+            
+            const matchingRequest = approvedRequests.find(req => {
+                const reqBuildingId = req.building;
+                // Try multiple matching strategies
+                if (reqBuildingId && buildingId) {
+                    // Direct match
+                    if (reqBuildingId === buildingId || String(reqBuildingId) === String(buildingId)) {
+                        return true;
+                    }
+                }
+                // Match by building_code
+                if (selectedBuilding.building_code && req.building_code && 
+                    selectedBuilding.building_code === req.building_code) {
+                    return true;
+                }
+                // Match by title
+                if (selectedBuilding.title && req.building_title && 
+                    selectedBuilding.title.trim() === req.building_title.trim()) {
+                    return true;
+                }
+                // Match by extracting building_id from selectedBuilding.id if it's composite
+                if (selectedBuilding.id && typeof selectedBuilding.id === 'string' && selectedBuilding.id.includes('-')) {
+                    const idParts = selectedBuilding.id.split('-');
+                    if (idParts.length > 0 && idParts[0] && idParts[0] !== 'undefined' && 
+                        String(reqBuildingId) === String(idParts[0])) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            
+            if (matchingRequest && matchingRequest.unit_number) {
+                return matchingRequest.unit_number;
+            }
+        }
+        
+        // Last resort: Try to extract from selectedBuilding.id if it's a composite string
+        if (selectedBuilding.id && typeof selectedBuilding.id === 'string' && selectedBuilding.id.includes('-')) {
+            const idParts = selectedBuilding.id.split('-');
+            if (idParts.length > 1 && idParts[1] && idParts[1] !== 'undefined') {
+                return idParts[1];
+            }
+        }
+        
+        return null;
+    };
+
+    const renderBuildingSelector = (isMobile = false) => {
+        const unitNumber = getUnitNumber();
+        
+        return (
         <div className="relative z-50">
             <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -274,7 +432,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                 )}
             >
                 <span className="truncate max-w-[150px]">
-                    {selectedBuilding?.title ? `${selectedBuilding.title} - واحد ${selectedBuilding.unit_info?.unit_number || 'نامشخص'}` : "انتخاب واحد"}
+                    {selectedBuilding?.title ? `${selectedBuilding.title} - واحد ${unitNumber || 'نامشخص'}` : "انتخاب واحد"}
                     {selectedBuilding?.building_code && (
                         <span className="block text-xs text-yellow-700 mt-1">
                             کد: {selectedBuilding.building_code}
@@ -381,7 +539,8 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                 </div>
             )}
         </div>
-    );
+        );
+    };
 
     return (
         <>

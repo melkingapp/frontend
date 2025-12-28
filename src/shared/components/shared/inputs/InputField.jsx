@@ -16,6 +16,7 @@ const InputField = forwardRef(({
     error,
     required = false,
     className,
+    inputClassName,
     ...rest
 }, ref) => {
     const errorId = error ? `${name}-error` : undefined;
@@ -42,7 +43,7 @@ const InputField = forwardRef(({
                 aria-invalid={!!error}
                 aria-describedby={errorId}
                 className={`w-full px-4 py-3 border rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2C5A8C] transition ${error ? "border-red-500" : "border-gray-200"
-                    }`}
+                    } ${inputClassName || ""}`}
                 {...rest}
             />
 

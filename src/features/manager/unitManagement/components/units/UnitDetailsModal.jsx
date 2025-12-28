@@ -362,7 +362,7 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                             </div>
                         ) : sortedTx.length > 0 ? (
                             <>
-                                {txToShow.map((tx) => {
+                                {txToShow.map((tx, index) => {
                                     // در فرمت جدید، هر آیتم یک فاکتور است و اگر هزینه مشترک باشد، اطلاعات آن در shared_expense_info است
                                     const expenseName =
                                         tx.shared_expense_info?.expense_name ||
@@ -388,7 +388,9 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                                         transaction_type: "invoice",
                                         expense_name: expenseName,
                                     };
-                                    return <UnitTransactionItem key={`${tx.type}-${tx.id}`} transaction={formattedTx} />;
+                                    // Use invoice_id or id as primary key, fallback to index for uniqueness
+                                    const uniqueKey = tx.invoice_id || tx.id || `transaction-${index}`;
+                                    return <UnitTransactionItem key={uniqueKey} transaction={formattedTx} />;
                                 })}
 
                                 {sortedTx.length > 0 && visibleTxCount < Math.min(sortedTx.length, maxTxVisible) && (

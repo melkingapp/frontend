@@ -7,7 +7,7 @@ export const navItemsResident = [
         to: "/resident/finance",
         children: [
             { label: "گردش مالی", to: "finance-reports" },
-            // { label: "بیلان مالی", to: "finance/balance" },
+            { label: "بیلان مالی", to: "finance/balance" },
             { label: "درخواست‌های پرداخت اضافی", to: "/resident/finance/extra-payment-requests" },
         ],
     },
