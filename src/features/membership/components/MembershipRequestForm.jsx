@@ -116,24 +116,66 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   // Fetch membership requests and approved buildings when form opens to check if user is already a member
   useEffect(() => {
     if (isOpen) {
+      // Reset form state when form opens
+      setForm({
+        building_code: "",
+        full_name: "",
+        phone_number: effectivePhoneNumber || "",
+        unit_number: "",
+        floor: "",
+        area: "",
+        resident_count: 1,
+        role: "",
+        owner_type: "",
+        tenant_full_name: "",
+        tenant_phone_number: "",
+        owner_full_name: "",
+        owner_phone_number: "",
+        has_parking: false,
+        parking_count: 0,
+      });
+      setIsFromManagerUnit(false);
+      setOriginalUnitData(null);
+      
       // Fetch membership requests to check existing memberships
       dispatch(fetchMembershipRequests());
       // Also fetch approved buildings (from BuildingUser table) to check if manager added user
       dispatch(fetchApprovedBuildings());
     }
-  }, [isOpen, dispatch]);
+  }, [isOpen, dispatch, effectivePhoneNumber]);
 
   // Fetch unit data when form opens
   useEffect(() => {
     if (isOpen && effectivePhoneNumber) {
-      dispatch(fetchUnitByPhone(effectivePhoneNumber));
-      // Pre-fill phone in form if empty
-      setForm(prev => ({ ...prev, phone_number: prev.phone_number || effectivePhoneNumber }));
+      if (import.meta.env.DEV) {
+        console.log("🔄 Fetching unit data for phone:", effectivePhoneNumber);
+      }
+      // همیشه unit data رو fetch کن (ممکنه برای ساختمان‌های مختلف باشه)
+      dispatch(fetchUnitByPhone(effectivePhoneNumber))
+        .then((result) => {
+          if (import.meta.env.DEV) {
+            console.log("✅ fetchUnitByPhone result:", result);
+          }
+        })
+        .catch((error) => {
+          if (import.meta.env.DEV) {
+            console.error("❌ fetchUnitByPhone error:", error);
+          }
+        });
+      
+      // Pre-fill phone in form if empty (فقط شماره تلفن)
+      setForm(prev => ({ 
+        ...prev, 
+        phone_number: prev.phone_number || effectivePhoneNumber 
+      }));
     }
     
     // Clear unit data when form closes
     if (!isOpen) {
       dispatch(clearUnitData());
+      // Reset form state
+      setIsFromManagerUnit(false);
+      setOriginalUnitData(null);
     }
   }, [isOpen, effectivePhoneNumber, dispatch]);
 
@@ -159,28 +201,61 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   const compareFormWithOriginalData = (formData, originalData) => {
     if (!originalData) return false; // اگر داده اولیه وجود ندارد، فرض می‌کنیم تغییر نکرده
 
-    // فیلدهای کلیدی برای مقایسه
-    const keyFields = ['unit_number', 'floor', 'area', 'role', 'owner_type', 'full_name', 'phone_number'];
+    // تشخیص نقش: مستاجر یا مالک
+    const isTenant = originalData.role === 'tenant' || originalData.match_type === 'tenant' || formData.role === 'resident';
+    const isOwner = originalData.role === 'owner' || formData.role === 'owner';
 
-    // برای مستاجر، اطلاعات مستاجر را مقایسه کن
-    if (originalData.role === 'tenant' || originalData.match_type === 'tenant') {
-      keyFields.push('tenant_full_name', 'tenant_phone_number');
+    // فیلدهای کلیدی برای مقایسه
+    const keyFields = ['unit_number', 'floor', 'area', 'full_name', 'phone_number'];
+
+    if (isTenant) {
+      // برای مستاجر: اطلاعات مستاجر و مالک را مقایسه کن
       // نقش در فرم باید 'resident' باشد برای مستاجر
       if (formData.role !== 'resident') {
         return true; // تغییر کرده
       }
-    } else {
-      // برای مالک، اطلاعات مالک را مقایسه کن
+      // برای مستاجر، اطلاعات مالک را هم چک کن
+      keyFields.push('owner_full_name', 'owner_phone_number');
+      // owner_type برای مستاجر نباید چک شود (چون مالک است که owner_type دارد)
+    } else if (isOwner) {
+      // برای مالک: اطلاعات مالک را مقایسه کن
       if (formData.role !== 'owner') {
         return true; // تغییر کرده
       }
+      // برای مالک، owner_type را چک کن
+      keyFields.push('owner_type');
+      // اگر مالک دارای مستاجر است، اطلاعات مستاجر را هم چک کن
+      if (formData.owner_type === 'landlord') {
+        keyFields.push('tenant_full_name', 'tenant_phone_number');
+      }
+    } else {
+      // اگر نقش مشخص نیست، فرض می‌کنیم تغییر کرده
+      return true;
     }
 
     for (const field of keyFields) {
-      const originalValue = String(originalData[field] || '').trim();
-      const formValue = String(formData[field] || '').trim();
+      let originalValue = originalData[field];
+      let formValue = formData[field];
 
-      if (originalValue !== formValue) {
+      // برای فیلدهای عددی (floor, area)، باید به عدد تبدیل کنیم و سپس مقایسه کنیم
+      if (field === 'floor' || field === 'area') {
+        try {
+          const originalNum = originalValue != null ? Number(originalValue) : 0;
+          const formNum = formValue != null ? Number(formValue) : 0;
+          if (originalNum !== formNum) {
+            return true; // تغییر کرده
+          }
+          continue;
+        } catch (e) {
+          // اگر تبدیل به عدد ممکن نبود، به صورت string مقایسه کن
+        }
+      }
+
+      // تبدیل به string برای مقایسه
+      const originalStr = String(originalValue || '').trim();
+      const formStr = String(formValue || '').trim();
+
+      if (originalStr !== formStr) {
         return true; // تغییر کرده
       }
     }
@@ -191,6 +266,56 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   // Pre-fill form when unit data is loaded
   useEffect(() => {
     if (unitData) {
+      if (import.meta.env.DEV) {
+        console.log("🔍 Checking unitData for pre-fill:", unitData);
+        console.log("🔍 membershipRequests:", membershipRequests);
+        console.log("🔍 approvedBuildings:", approvedBuildings);
+      }
+      
+      // چک کن که آیا کاربر قبلاً درخواست تایید شده برای این ساختمان داره یا نه
+      const hasApprovedRequest = membershipRequests.some(req => {
+        const buildingCodeMatch = req.building_code === unitData.building_code;
+        // استفاده از building_id به جای building (چون سریالایزر building_id برمیگرداند)
+        const buildingIdMatch = (req.building_id === unitData.building_id) || 
+                                (req.building === unitData.building_id) ||
+                                (req.building_id === unitData.id);
+        const statusMatch = req.status === 'approved' || 
+                          req.status === 'owner_approved' || 
+                          req.status === 'manager_approved';
+        return (buildingCodeMatch || buildingIdMatch) && statusMatch;
+      });
+
+      // چک کن که آیا کاربر قبلاً از طریق BuildingUser برای این ساختمان عضو شده یا نه
+      const hasApprovedBuilding = approvedBuildings.some(building => {
+        const buildingCodeMatch = building.building_code === unitData.building_code;
+        // چک با building_id و id (برای پوشش همه حالت‌ها)
+        const buildingIdMatch = (building.building_id === unitData.building_id) || 
+                                (building.id === unitData.building_id) ||
+                                (building.building_id === unitData.id);
+        return buildingCodeMatch || buildingIdMatch;
+      });
+
+      if (import.meta.env.DEV) {
+        console.log("🔍 hasApprovedRequest:", hasApprovedRequest);
+        console.log("🔍 hasApprovedBuilding:", hasApprovedBuilding);
+        console.log("🔍 unitData.building_id:", unitData.building_id);
+        console.log("🔍 unitData.building_code:", unitData.building_code);
+      }
+
+      // اگر کاربر قبلاً join کرده (از طریق MembershipRequest یا BuildingUser)، فرم رو پر نکن
+      if (hasApprovedRequest || hasApprovedBuilding) {
+        if (import.meta.env.DEV) {
+          console.log("❌ Skipping pre-fill: user already has approved request/building for this building");
+        }
+        return;
+      }
+      
+      if (import.meta.env.DEV) {
+        console.log("✅ Pre-filling form with unitData");
+        console.log("🔍 unitData.role:", unitData.role);
+        console.log("🔍 unitData.owner_type:", unitData.owner_type);
+      }
+
       // ذخیره داده‌های اولیه برای مقایسه بعداً
       setOriginalUnitData({...unitData});
       setIsFromManagerUnit(true); // نشان می‌دهد که داده‌ها از واحد مدیر پر شده
@@ -212,7 +337,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         // برای مستاجر، نقش را به 'resident' تغییر می‌دهیم
         role: isTenantMatch ? 'resident' : (unitData.role || ""),
         // owner_type فقط برای مالک (نه مستاجر)
-        owner_type: isTenantMatch ? "" : (unitData.owner_type || ""),
+        // اگر owner_type وجود داره (نه null و نه undefined و نه string خالی)، ازش استفاده کن
+        owner_type: isTenantMatch ? "" : (unitData.owner_type && unitData.owner_type.trim() ? unitData.owner_type : ""),
         // Only pre-fill tenant info if owner_type is 'landlord' (برای مالک دارای مستاجر)
         tenant_full_name: isOwnerWithLandlord ? (unitData.tenant_full_name || "") : "",
         tenant_phone_number: isOwnerWithLandlord ? (unitData.tenant_phone_number || "") : "",
@@ -223,7 +349,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         parking_count: unitData.parking_count || 0,
       }));
     }
-  }, [unitData]);
+  }, [unitData, membershipRequests, approvedBuildings]);
 
   const roleOptions = [
     { value: 'resident', label: 'ساکن' },
@@ -472,7 +598,17 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         console.log("📤 handleAcceptPrefill - unitData:", unitData);
       }
       
-      await dispatch(createMembershipRequest(payload)).unwrap();
+      const result = await dispatch(createMembershipRequest(payload)).unwrap();
+      
+      // اگر درخواست تایید شد (auto_approved یا manager_approved)، لیست‌ها را به‌روز کن
+      if (result?.auto_approved || result?.manager_approved || result?.auto_matched || result?.data_unchanged) {
+        // به‌روزرسانی لیست درخواست‌ها و ساختمان‌های تایید شده - منتظر بمان تا کامل بشه
+        await Promise.all([
+          dispatch(fetchMembershipRequests()),
+          dispatch(fetchApprovedBuildings())
+        ]);
+      }
+      
       toast.success('درخواست عضویت با اطلاعات شناسایی‌شده ثبت شد');
       handleClose();
     } catch (error) {
@@ -562,6 +698,15 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         parking_count: 0,
       });
       
+      // اگر درخواست تایید شد (auto_approved یا manager_approved)، لیست‌ها را به‌روز کن
+      if (result.auto_approved || result.manager_approved || result.auto_matched || result.data_unchanged) {
+        // به‌روزرسانی لیست درخواست‌ها و ساختمان‌های تایید شده - منتظر بمان تا کامل بشه
+        await Promise.all([
+          dispatch(fetchMembershipRequests()),
+          dispatch(fetchApprovedBuildings())
+        ]);
+      }
+      
       onClose();
       
       // Show success message based on approval flow
@@ -647,12 +792,18 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                 {!unitLoading && (() => {
                   // Find buildings where user is a member but doesn't have approved membership request
                   const buildingsNeedingRequest = approvedBuildings.filter(building => {
-                    const hasApprovedRequest = membershipRequests.some(req =>
-                      req.building_code === building.building_code &&
-                      (req.status === 'approved' ||
-                       req.status === 'owner_approved' ||
-                       req.status === 'manager_approved')
-                    );
+                    // چک کردن با building_code و building_id
+                    const hasApprovedRequest = membershipRequests.some(req => {
+                      const buildingCodeMatch = req.building_code === building.building_code;
+                      // استفاده از building_id به جای building
+                      const buildingIdMatch = (req.building_id === building.building_id) ||
+                                            (req.building === building.building_id) ||
+                                            (req.building_id === building.id);
+                      const statusMatch = req.status === 'approved' || 
+                                        req.status === 'owner_approved' || 
+                                        req.status === 'manager_approved';
+                      return (buildingCodeMatch || buildingIdMatch) && statusMatch;
+                    });
                     return !hasApprovedRequest;
                   });
                   
@@ -757,7 +908,15 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                               // Use the same logic as handleAcceptPrefill
                               dispatch(createMembershipRequest(payload))
                                 .unwrap()
-                                .then(() => {
+                                .then(async (result) => {
+                                  // اگر درخواست تایید شد (auto_approved یا manager_approved)، لیست‌ها را به‌روز کن
+                                  if (result?.auto_approved || result?.manager_approved || result?.auto_matched || result?.data_unchanged) {
+                                    // به‌روزرسانی لیست درخواست‌ها و ساختمان‌های تایید شده - منتظر بمان تا کامل بشه
+                                    await Promise.all([
+                                      dispatch(fetchMembershipRequests()),
+                                      dispatch(fetchApprovedBuildings())
+                                    ]);
+                                  }
                                   toast.success('درخواست عضویت با اطلاعات شناسایی‌شده ثبت شد');
                                   handleClose();
                                 })
@@ -831,6 +990,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         value={form.phone_number}
                         onChange={handleChange}
                         required
+                        disabled={true}
                       />
                     </div>
                     {(errors.full_name || errors.phone_number) && (
@@ -855,6 +1015,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         value={form.unit_number}
                         onChange={handleChange}
                         required
+                        disabled={true}
                       />
                       <FormField
                         label="شماره طبقه *"
@@ -921,6 +1082,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                           value={form.owner_type}
                           onChange={handleChange}
                           required
+                          disabled={isFromManagerUnit}
                         />
                       )}
                     </div>
@@ -956,6 +1118,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         value={form.owner_phone_number}
                         onChange={handleChange}
                         required
+                        disabled={true}
                       />
                     </div>
                     {(errors.owner_full_name || errors.owner_phone_number) && (
@@ -998,6 +1161,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                           placeholder="شماره تماس مستاجر (اختیاری)"
                           value={form.tenant_phone_number}
                           onChange={handleChange}
+                          disabled={true}
                         />
                       </div>
                       {(errors.tenant_full_name || errors.tenant_phone_number) && (

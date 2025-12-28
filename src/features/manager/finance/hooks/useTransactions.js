@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { selectSelectedBuilding } from "../../building/buildingSlice";
-import { fetchTransactions, fetchCurrentFundBalance } from "../store/slices/financeSlice";
+import { fetchTransactions, fetchCurrentFundBalance, clearTransactions } from "../store/slices/financeSlice";
 import { fetchBuildings, setSelectedBuilding, fetchBuildingUnits } from "../../building/buildingSlice";
 import { getUnitFinancialTransactions, getUnitFinancialTransactionsForResidents } from "../../../../shared/services/transactionsService";
 
@@ -68,6 +68,13 @@ export function useTransactions() {
     }
   }, [dispatch, building?.building_id, viewMode]);
 
+  // Clear transactions when building changes (to avoid showing old data)
+  useEffect(() => {
+    if (viewMode === 'building' || viewMode === 'charge') {
+      dispatch(clearTransactions());
+    }
+  }, [dispatch, building?.building_id, viewMode]);
+
   // Load transactions when building changes (building or charge view)
   useEffect(() => {
     if (viewMode !== 'building' && viewMode !== 'charge') return;
@@ -130,7 +137,15 @@ export function useTransactions() {
     } else if (viewMode === 'building') {
       setUnitTransactions(null);
     }
-  }, [selectedUnitId, viewMode, dateRange, isManager]);
+  }, [selectedUnitId, viewMode, dateRange, isManager, building?.building_id]);
+
+  // Reset unit transactions when building changes (to avoid showing old data)
+  useEffect(() => {
+    if (viewMode === 'unit') {
+      setUnitTransactions(null);
+      setSelectedUnitId(null);
+    }
+  }, [building?.building_id, viewMode]);
 
   return {
     building,

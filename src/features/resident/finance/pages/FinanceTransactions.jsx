@@ -9,7 +9,7 @@ import { selectSelectedBuilding } from "../../../manager/building/buildingSlice"
 import { TransactionFilter } from "../../../manager/finance/components/transactions/TransactionFilters";
 import SearchBox from "../../../../shared/components/shared/inputs/SearchBox";
 import useCategories from "../../../../shared/hooks/useCategories";
-import { fetchTransactions, fetchCurrentFundBalance, selectCurrentFundBalance } from "../../../manager/finance/store/slices/financeSlice";
+import { fetchTransactions, fetchCurrentFundBalance, selectCurrentFundBalance, clearTransactions } from "../../../manager/finance/store/slices/financeSlice";
 import { fetchBuildings, setSelectedBuilding } from "../../../manager/building/buildingSlice";
 
 moment.loadPersian({ dialect: "persian-modern" });
@@ -67,6 +67,11 @@ export default function FinanceTransactions() {
     if (building?.building_id) {
       dispatch(fetchCurrentFundBalance(building.building_id));
     }
+  }, [dispatch, building?.building_id]);
+
+  // Clear transactions when building changes (to avoid showing old data)
+  useEffect(() => {
+    dispatch(clearTransactions());
   }, [dispatch, building?.building_id]);
 
   // Load transactions when building or date range changes

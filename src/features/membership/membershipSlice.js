@@ -120,10 +120,19 @@ export const rejectMembershipRequest = createAsyncThunk(
 export const fetchUnitByPhone = createAsyncThunk(
   'membership/fetchUnitByPhone',
   async (phoneNumber, { rejectWithValue }) => {
+    if (import.meta.env.DEV) {
+      console.log("🔄 fetchUnitByPhone called with phone:", phoneNumber);
+    }
     try {
       const response = await membershipApi.getUnitByPhone(phoneNumber);
+      if (import.meta.env.DEV) {
+        console.log("✅ fetchUnitByPhone API response:", response);
+      }
       return response;
     } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("❌ fetchUnitByPhone API error:", error);
+      }
       return rejectWithValue(error.response?.data?.error || error.message);
     }
   }
@@ -390,13 +399,28 @@ const membershipSlice = createSlice({
         if (action.payload) {
           // اگر payload خود درخواست است
           if (action.payload.request_id) {
-            state.requests.unshift(action.payload);
-            state.count += 1;
+            // چک کن که آیا قبلاً وجود داره یا نه
+            const existingIndex = state.requests.findIndex(req => req.request_id === action.payload.request_id);
+            if (existingIndex === -1) {
+              state.requests.unshift(action.payload);
+              state.count += 1;
+            } else {
+              // به‌روزرسانی درخواست موجود
+              state.requests[existingIndex] = action.payload;
+            }
           }
           // اگر payload شامل request است
           else if (action.payload.request) {
-            state.requests.unshift(action.payload.request);
-            state.count += 1;
+            const request = action.payload.request;
+            // چک کن که آیا قبلاً وجود داره یا نه
+            const existingIndex = state.requests.findIndex(req => req.request_id === request.request_id);
+            if (existingIndex === -1) {
+              state.requests.unshift(request);
+              state.count += 1;
+            } else {
+              // به‌روزرسانی درخواست موجود
+              state.requests[existingIndex] = request;
+            }
           }
         }
       })
@@ -510,12 +534,21 @@ const membershipSlice = createSlice({
       })
       .addCase(fetchUnitByPhone.fulfilled, (state, action) => {
         state.unitLoading = false;
+        if (import.meta.env.DEV) {
+          console.log("🔍 fetchUnitByPhone.fulfilled payload:", action.payload);
+        }
         state.unitData = action.payload?.unit || null;
+        if (import.meta.env.DEV) {
+          console.log("🔍 unitData set to:", state.unitData);
+        }
       })
       .addCase(fetchUnitByPhone.rejected, (state, action) => {
         state.unitLoading = false;
         state.error = action.payload;
         state.unitData = null;
+        if (import.meta.env.DEV) {
+          console.error("❌ fetchUnitByPhone.rejected:", action.payload);
+        }
       })
       
       // Fetch pending owner approval requests

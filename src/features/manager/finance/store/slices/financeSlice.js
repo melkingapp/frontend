@@ -384,6 +384,9 @@ const financeSlice = createSlice({
         clearTransactionDetails: (state) => {
             state.transactionDetails = null;
         },
+        clearTransactions: (state) => {
+            state.transactions = [];
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -825,7 +828,7 @@ const financeSlice = createSlice({
     },
 });
 
-export const { clearError, setFilters, clearFilters, clearTransactionDetails } = financeSlice.actions;
+export const { clearError, setFilters, clearFilters, clearTransactionDetails, clearTransactions } = financeSlice.actions;
 
 // Selectors
 export const selectFinancialSummary = (state) => state.finance.financialSummary;
