@@ -13,7 +13,7 @@ export default function ServiceItem({ service, onSelect = () => {}, index = 0 })
             return url;
         }
         // Add the backend base URL
-        const baseURL = 'http://171.22.25.201:9000';
+        const baseURL = 'https://melkingapp.ir';
         return `${baseURL}${url}`;
     };
 

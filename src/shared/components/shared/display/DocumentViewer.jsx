@@ -13,7 +13,7 @@ export default function DocumentViewer({ documentUrl }) {
             return url;
         }
         // Add the backend base URL
-        const baseURL = 'http://171.22.25.201:9000';
+        const baseURL = 'https://melkingapp.ir';
         return `${baseURL}${url}`;
     };
 

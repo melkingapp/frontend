@@ -1,5 +1,5 @@
 // API Base URL Configuration
-const API_BASE_URL = 'http://171.22.25.201:9000/api/v1';
+const API_BASE_URL = 'https://melkingapp.ir/api/v1';
 
 class ApiService {
   constructor() {

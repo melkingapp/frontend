@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuration
-const baseURL = 'http://171.22.25.201:9000/api/v1';
+const baseURL = 'https://melkingapp.ir/api/v1';
 
 // Create axios instance
 const client = axios.create({

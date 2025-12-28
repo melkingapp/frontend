@@ -131,7 +131,7 @@ export default function ExtraPaymentRequests() {
 
     const openImagePreview = (imageUrl) => {
         // اگر URL کامل نیست، BASE_URL را اضافه می‌کنیم
-        const MEDIA_URL = 'http://171.22.25.201:9000';
+        const MEDIA_URL = 'https://melkingapp.ir';
         const fullUrl = imageUrl?.startsWith('http') 
             ? imageUrl 
             : `${MEDIA_URL}${imageUrl}`;

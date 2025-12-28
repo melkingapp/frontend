@@ -1,6 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: 'http://171.22.25.201:9000/api/v1',
+  BASE_URL: 'https://melkingapp.ir/api/v1',
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3,
 };

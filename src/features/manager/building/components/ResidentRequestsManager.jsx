@@ -18,7 +18,7 @@ export default function ResidentRequestsManager({ buildingId }) {
     const fetchRequests = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const baseURL = 'http://171.22.25.201:9000';
+            const baseURL = 'https://melkingapp.ir';
             const response = await fetch(`${baseURL}/api/v1/buildings/${buildingId}/resident-requests/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -45,7 +45,7 @@ export default function ResidentRequestsManager({ buildingId }) {
         
         try {
             const token = localStorage.getItem('access_token');
-            const baseURL = 'http://171.22.25.201:9000';
+            const baseURL = 'https://melkingapp.ir';
             const response = await fetch(`${baseURL}/api/v1/buildings/resident-requests/${requestId}/update-status/`, {
                 method: 'PATCH',
                 headers: {

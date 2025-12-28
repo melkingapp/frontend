@@ -1,7 +1,7 @@
 // تنظیمات API
 export const API_CONFIG = {
-    BASE_URL: 'http://171.22.25.201:9000/api/v1',
-    MEDIA_URL: 'http://171.22.25.201:9000',
+    BASE_URL: 'https://melkingapp.ir/api/v1',
+    MEDIA_URL: 'https://melkingapp.ir',
     ENDPOINTS: {
         // Authentication
         LOGIN: '/auth/login/',

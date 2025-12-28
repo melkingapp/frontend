@@ -9,7 +9,7 @@ const handleTokenRefresh = async (dispatch) => {
             throw new Error('No refresh token available');
         }
 
-        const response = await fetch(`http://171.22.25.201:9000/api/v1/refresh/`, {
+        const response = await fetch(`https://melkingapp.ir/api/v1/refresh/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh: refreshToken })
