@@ -48,9 +48,7 @@ export default function BuildingRequestForm({ onSuccess }) {
 
         try {
             const token = localStorage.getItem('access_token');
-            const baseURL = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                ? 'http://127.0.0.1:8000'
-                : 'https://melkingapp.ir';
+            const baseURL = 'http://171.22.25.201:9000';
             const response = await fetch(`${baseURL}/api/v1/buildings/resident-requests/create/`, {
                 method: 'POST',
                 headers: {

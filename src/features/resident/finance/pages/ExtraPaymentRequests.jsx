@@ -131,8 +131,7 @@ export default function ExtraPaymentRequests() {
 
     const openImagePreview = (imageUrl) => {
         // اگر URL کامل نیست، BASE_URL را اضافه می‌کنیم
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const MEDIA_URL = isLocalhost ? 'http://127.0.0.1:8000' : 'https://melkingapp.ir';
+        const MEDIA_URL = 'http://171.22.25.201:9000';
         const fullUrl = imageUrl?.startsWith('http') 
             ? imageUrl 
             : `${MEDIA_URL}${imageUrl}`;

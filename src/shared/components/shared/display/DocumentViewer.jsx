@@ -13,7 +13,7 @@ export default function DocumentViewer({ documentUrl }) {
             return url;
         }
         // Add the backend base URL
-        const baseURL = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || (window.location.protocol === 'https:' ? 'https://melkingapp.ir' : 'http://melkingapp.ir');
+        const baseURL = 'http://171.22.25.201:9000';
         return `${baseURL}${url}`;
     };
 

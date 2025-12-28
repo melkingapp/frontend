@@ -1,13 +1,7 @@
 // تنظیمات API
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
 export const API_CONFIG = {
-    BASE_URL: isLocalhost 
-        ? 'http://127.0.0.1:8000/api/v1' 
-        : 'https://melkingapp.ir/api/v1',
-    MEDIA_URL: isLocalhost 
-        ? 'http://127.0.0.1:8000' 
-        : 'https://melkingapp.ir',
+    BASE_URL: 'http://171.22.25.201:9000/api/v1',
+    MEDIA_URL: 'http://171.22.25.201:9000',
     ENDPOINTS: {
         // Authentication
         LOGIN: '/auth/login/',
