@@ -156,27 +156,32 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, transaction, 
               </div>
 
               {/* دکمه‌های عملیات */}
-              <div className="border-t p-4 flex justify-end gap-3">
-                <button
-                  onClick={handleClose}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  انصراف
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={isPaying}
-                  className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isPaying ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      در حال ثبت...
-                    </>
-                  ) : (
-                    "ثبت پرداخت"
-                  )}
-                </button>
+              <div className="border-t p-4 space-y-3">
+                <p className="text-xs text-center text-gray-500">
+                  پرداخت شما پس از تایید مدیر ساختمان ثبت نهایی خواهد شد
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={handleClose}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    انصراف
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isPaying}
+                    className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isPaying ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        در حال ثبت...
+                      </>
+                    ) : (
+                      "ثبت و ارسال برای تایید"
+                    )}
+                  </button>
+                </div>
               </div>
             </Dialog.Panel>
           </Transition.Child>

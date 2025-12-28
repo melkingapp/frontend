@@ -21,7 +21,6 @@ export default function UnitFinancialDetailsModal({ isOpen, onClose, invoice, un
     expense_type,
     type,
     total_amount,
-    amount,
     issue_date,
     billing_date,
     bill_due,
@@ -37,10 +36,26 @@ export default function UnitFinancialDetailsModal({ isOpen, onClose, invoice, un
     title ||
     getPersianType(expense_type || category_display || category || type || "هزینه", raw);
 
+  // محاسبه مبلغ کل هزینه (برای هزینه‌های مشترک از shared_expense_info.total_amount استفاده میشه)
   const baseAmount = shared_expense_info?.total_amount ?? total_amount ?? 0;
-  const unitShareAmount = shared_expense_info?.unit_share_amount ?? amount ?? total_amount ?? 0;
+  
+  // محاسبه سهم واحد:
+  // اولویت اول: invoice.amount که در useTransactionsData نرمالایز شده (مطمئن‌ترین مقدار)
+  // اولویت دوم: shared_expense_info.unit_share_amount از API
+  // اولویت سوم: total_amount فاکتور
+  const unitShareAmount = invoice.amount ?? shared_expense_info?.unit_share_amount ?? total_amount ?? 0;
+  
+  // Debug log
+  console.log('💰 UnitFinancialDetailsModal amounts:', {
+    'invoice.amount': invoice.amount,
+    'shared_expense_info?.unit_share_amount': shared_expense_info?.unit_share_amount,
+    'total_amount': total_amount,
+    'calculated unitShareAmount': unitShareAmount,
+  });
+  
   const paidAmount = raw.paid_amount ?? 0;
-  const remainingAmount = raw.remaining_amount ?? (baseAmount - paidAmount);
+  // مانده پرداخت باید بر اساس سهم واحد محاسبه شود، نه مبلغ کل
+  const remainingAmount = raw.remaining_amount ?? (unitShareAmount - paidAmount);
 
   const paymentMethodLabel = (() => {
     const pm = shared_expense_info?.payment_method;
@@ -169,14 +184,34 @@ export default function UnitFinancialDetailsModal({ isOpen, onClose, invoice, un
 
               {/* نوار پرداخت برای فاکتورهای منتظر پرداخت */}
               {canPay && (
-                <div className="px-5 pt-3 pb-2 border-b bg-emerald-50/60">
+                <div className="px-5 pt-3 pb-3 border-b bg-emerald-50/60 space-y-3">
+                  {/* نمایش سهم واحد بالای دکمه پرداخت */}
+                  <div className="bg-white rounded-lg p-3 border border-emerald-200 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">سهم واحد شما:</span>
+                      <span className="text-lg font-bold text-emerald-700">
+                        {Number(unitShareAmount).toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+                    {remainingAmount !== unitShareAmount && remainingAmount > 0 && (
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-100">
+                        <span className="text-xs text-gray-500">مانده پرداخت:</span>
+                        <span className="text-sm font-semibold text-orange-600">
+                          {Number(remainingAmount).toLocaleString("fa-IR")} تومان
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => setShowPaymentModal(true)}
-                    className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-sm font-semibold flex items-center justify-center gap-2 shadow-sm"
                   >
                     <CreditCard size={16} />
-                    پرداخت این فاکتور
+                    ثبت پرداخت و ارسال برای تایید مدیر
                   </button>
+                  <p className="text-xs text-center text-gray-500">
+                    پرداخت شما پس از تایید مدیر ساختمان ثبت خواهد شد
+                  </p>
                 </div>
               )}
 

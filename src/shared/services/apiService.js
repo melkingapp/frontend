@@ -3,7 +3,7 @@ import axios from 'axios';
 // Configuration
 const baseURL = import.meta.env.VITE_API_BASE_URL || 
     (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'http://127.0.0.1:8000/api/v1'
+        ? 'http://localhost:8000/api/v1'
         : 'https://melkingapp.ir/api/v1');
 
 // Create axios instance
