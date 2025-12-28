@@ -21,23 +21,11 @@ export const fetchBuildingResidents = createAsyncThunk(
                 return rejectWithValue(data.error || 'خطا در دریافت لیست ساکنان');
             }
 
-            // Log the received data for debugging
-            console.log('Building residents API response:', data);
-            console.log('All requests:', data.requests);
-            
             // Filter only approved residents
             const approvedResidents = (data.requests || []).filter(request => {
-                console.log('Request data:', request);
-                console.log('User data:', {
-                    resident_name: request.resident_name,
-                    resident_username: request.resident_username,
-                    resident_phone: request.resident_phone,
-                    status: request.status
-                });
                 return request.status === 'approved' || request.status === 'owner_approved' || request.status === 'manager_approved';
             });
             
-            console.log('Approved residents:', approvedResidents);
             return approvedResidents;
         } catch (error) {
             return rejectWithValue('خطا در دریافت لیست ساکنان');
