@@ -1,3 +1,3 @@
-## 2024-05-24 - Accessibility improvements for Form Inputs
-**Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
-**Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2024-05-23 - Visual Feedback for Auth Actions
+**Learning:** Async auth actions (OTP send/verify) lacked visual feedback, causing user uncertainty.
+**Action:** Standardized use of loading spinners and text changes (e.g., "Sending...") in submit buttons.
