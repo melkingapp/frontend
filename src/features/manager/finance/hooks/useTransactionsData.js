@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
+import { getPersianType } from "../../../../shared/utils";
 
 /**
  * Hook برای پردازش و نرمال‌سازی داده‌های تراکنش‌ها
@@ -26,11 +27,13 @@ export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter
           tx.description ||
           null;
 
+        // Use getPersianType to translate category_display or category
+        const categoryLabel = tx.category_display || tx.category || tx.expense_type || tx.type || null;
+        const translatedCategory = categoryLabel ? getPersianType(categoryLabel, tx) : null;
         const title =
           expenseName ||
           tx.description ||
-          tx.category_display ||
-          tx.category ||
+          translatedCategory ||
           'تراکنش';
 
         const amount =

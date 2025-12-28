@@ -1,11 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { X, Upload, DollarSign, FileText, Calendar, Image as ImageIcon, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { createExtraPaymentRequest } from "../../../manager/finance/store/slices/extraPaymentSlice";
-import { selectSelectedResidentBuilding } from "../../../resident/building/residentBuildingSlice";
+import { selectSelectedResidentBuilding, selectApprovedBuildings } from "../../../resident/building/residentBuildingSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
+import { useAllApprovedUnits } from "../../../resident/building/hooks/useApprovedRequests";
 import PersianDatePicker from "../../../../shared/components/shared/inputs/PersianDatePicker";
 import { formatNumber } from "../../../../shared/utils/helper";
 
@@ -16,7 +17,65 @@ export default function ExtraPaymentRequestForm({ isOpen, onClose, onSuccess }) 
     // Support both resident and manager building selectors
     const residentBuilding = useSelector(selectSelectedResidentBuilding);
     const managerBuilding = useSelector(selectSelectedBuilding);
-    const building = residentBuilding || managerBuilding;
+    const approvedBuildings = useSelector(selectApprovedBuildings);
+    const allApprovedUnits = useAllApprovedUnits();
+    
+    // Try to find building with building_id from approvedBuildings or allApprovedUnits
+    const buildingWithId = useMemo(() => {
+        // First try manager building
+        if (managerBuilding?.building_id || managerBuilding?.id) {
+            return managerBuilding;
+        }
+        
+        // Then try to find resident building with building_id from approvedBuildings or allApprovedUnits
+        if (residentBuilding) {
+            // Try to find matching building from approvedBuildings that has building_id
+            const matchingBuilding = approvedBuildings.find(b => {
+                if (b.building_id || b.id) {
+                    return (
+                        (b.building_id || b.id) === (residentBuilding.building_id || residentBuilding.id) ||
+                        b.building_code === residentBuilding.building_code ||
+                        b.title === residentBuilding.title
+                    );
+                }
+                return false;
+            });
+            if (matchingBuilding && (matchingBuilding.building_id || matchingBuilding.id)) {
+                return matchingBuilding;
+            }
+            
+            // Try to find from allApprovedUnits
+            const matchingUnit = allApprovedUnits.find(b => {
+                if (b.building_id) {
+                    return (
+                        b.building_id === residentBuilding.building_id ||
+                        b.building_code === residentBuilding.building_code ||
+                        b.title === residentBuilding.title ||
+                        // Extract building_id from residentBuilding.id if it's a string like "2-5"
+                        (residentBuilding.id && typeof residentBuilding.id === 'string' && 
+                         residentBuilding.id.split('-')[0] === b.building_id.toString())
+                    );
+                }
+                return false;
+            });
+            if (matchingUnit && matchingUnit.building_id) {
+                return matchingUnit;
+            }
+        }
+        
+        // Fallback: try first building from approvedBuildings or allApprovedUnits
+        if (approvedBuildings.length > 0 && approvedBuildings[0].building_id) {
+            return approvedBuildings[0];
+        }
+        if (allApprovedUnits.length > 0 && allApprovedUnits[0].building_id) {
+            return allApprovedUnits[0];
+        }
+        
+        // Last fallback to residentBuilding or managerBuilding
+        return residentBuilding || managerBuilding;
+    }, [residentBuilding, managerBuilding, approvedBuildings, allApprovedUnits]);
+    
+    const building = buildingWithId;
     const user = useSelector((state) => state.auth.user);
     const { creating, error } = useSelector((state) => state.extraPayment);
 
@@ -150,9 +209,34 @@ export default function ExtraPaymentRequestForm({ isOpen, onClose, onSuccess }) 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const buildingId = building?.building_id || building?.id || building?.building?.building_id;
-        if (!buildingId) {
-            toast.error("لطفاً ابتدا یک ساختمان انتخاب کنید");
+        // Extract building_id - building should have building_id from useMemo above
+        let buildingId = null;
+        if (building) {
+            // First check building_id directly (should always be available after useMemo)
+            if (building.building_id !== undefined && building.building_id !== null && building.building_id !== 'undefined') {
+                // Convert to number if it's a string
+                const parsed = typeof building.building_id === 'number' 
+                    ? building.building_id 
+                    : parseInt(building.building_id);
+                if (!isNaN(parsed)) {
+                    buildingId = parsed;
+                }
+            }
+            
+            // Fallback: try id field (for manager buildings)
+            if (!buildingId && building.id && typeof building.id === 'number') {
+                buildingId = building.id;
+            }
+        }
+        
+        // Validate that buildingId is a valid number
+        if (!buildingId || isNaN(buildingId)) {
+            console.error("Building structure:", building);
+            console.error("Resident building:", residentBuilding);
+            console.error("Approved buildings:", approvedBuildings);
+            console.error("All approved units:", allApprovedUnits);
+            console.error("Extracted buildingId:", buildingId);
+            toast.error("لطفاً ابتدا یک ساختمان انتخاب کنید. شناسه ساختمان یافت نشد.");
             return;
         }
 

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useEffect, useState, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Plus, Coins } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +30,8 @@ import useCategories from "../../../../../shared/hooks/useCategories";
 import { deleteExpense, fetchTransactions } from "../../store/slices/financeSlice";
 import { getPersianType } from "../../../../../shared/utils/typeUtils";
 import DeleteConfirmModal from "../../../../../shared/components/shared/feedback/DeleteConfirmModal";
+import { getBuildingUnitsDebtCreditSummary, getUnitDebtSummary } from "../../../../../shared/services/billingService";
+import { approveExtraPaymentRequest } from "../../store/slices/extraPaymentSlice";
 
 export default function FinanceTransactions() {
   const dispatch = useDispatch();
@@ -47,6 +49,10 @@ export default function FinanceTransactions() {
   const [selectedUnitInvoice, setSelectedUnitInvoice] = useState(null);
   const [unitStatusFilter, setUnitStatusFilter] = useState("all");
   const [showExtraPaymentForm, setShowExtraPaymentForm] = useState(false);
+  const [debtCreditData, setDebtCreditData] = useState(null);
+  const [debtCreditLoading, setDebtCreditLoading] = useState(false);
+  const [debtCreditError, setDebtCreditError] = useState(null);
+  const fetchDebtCreditRef = useRef(false);
 
   const {
     building,
@@ -64,6 +70,35 @@ export default function FinanceTransactions() {
     dateRange,
     setDateRange,
   } = useTransactions();
+
+  // Listen for extra payment approval to refresh data
+  const extraPaymentState = useSelector((state) => state.extraPayment);
+  useEffect(() => {
+    // Refresh transactions and debt/credit data when an extra payment is approved
+    if (building?.building_id && extraPaymentState.requests.length > 0) {
+      const hasApprovedRequest = extraPaymentState.requests.some(r => r.status === 'approved' && r.manager_approved_at);
+      if (hasApprovedRequest) {
+        // Refresh transactions
+        dispatch(fetchTransactions({ building_id: building.building_id }));
+        // Refresh debt/credit if showing
+        if (showDebtCredit && !debtCreditLoading && !fetchDebtCreditRef.current) {
+          fetchDebtCreditRef.current = true;
+          setDebtCreditLoading(true);
+          getBuildingUnitsDebtCreditSummary(building.building_id)
+            .then((response) => {
+              setDebtCreditData(response);
+              setDebtCreditLoading(false);
+              fetchDebtCreditRef.current = false;
+            })
+            .catch((error) => {
+              fetchDebtCreditRef.current = false;
+              setDebtCreditLoading(false);
+            });
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extraPaymentState.requests]);
 
   const { sortedData, newestDate, oldestDate } = useTransactionsData(
     viewMode,
@@ -134,7 +169,7 @@ export default function FinanceTransactions() {
   const handleExportToExcel = () =>
     exportTransactionsToExcel(filteredData, building);
   const handleExportUnitsDebtCreditToExcel = () =>
-    exportUnitsDebtCreditToExcel(buildingUnits, building);
+    exportUnitsDebtCreditToExcel(debtCreditData?.units || [], building);
 
   const handleDateClick = () => setIsDateModalOpen(true);
 
@@ -213,6 +248,143 @@ export default function FinanceTransactions() {
       setFilter("all"); // Reset to all when switching from charge mode
     }
   }, [viewMode, filter, setFilter]);
+
+  // Fetch debt/credit data when showDebtCredit becomes true
+  useEffect(() => {
+    if (showDebtCredit && building?.building_id && !debtCreditLoading && !fetchDebtCreditRef.current) {
+      fetchDebtCreditRef.current = true;
+      setDebtCreditLoading(true);
+      setDebtCreditError(null);
+      const buildingId = building.building_id;
+      getBuildingUnitsDebtCreditSummary(buildingId)
+        .then((response) => {
+          setDebtCreditData(response);
+          setDebtCreditLoading(false);
+          fetchDebtCreditRef.current = false;
+        })
+        .catch((error) => {
+          fetchDebtCreditRef.current = false;
+          console.error("Error fetching debt/credit data:", error);
+          console.log("userUnits:", userUnits);
+          console.log("buildingUnits:", buildingUnits);
+          
+          // اگر خطای 403 بود (visibility disabled) و کاربر مدیر نیست، بدهکاری/بستانکاری واحد خود کاربر را بگیر
+          if (error.response?.status === 403 && !isManager && userUnits && userUnits.length > 0) {
+            const userUnitId = userUnits[0].units_id || userUnits[0].id;
+            console.log("Fetching own unit debt/credit for unit:", userUnitId);
+            getUnitDebtSummary(userUnitId)
+              .then((unitSummary) => {
+                console.log("Unit debt summary:", unitSummary);
+                // Convert single unit summary to the format expected by DebtCreditView
+                const unitData = {
+                  unit_id: unitSummary.unit_id,
+                  total_debt: unitSummary.total_debt || 0,
+                  total_credit: unitSummary.total_credit || 0,
+                  balance: unitSummary.balance || 0,
+                };
+                
+                // Get unit_number from buildingUnits if available
+                const userUnit = buildingUnits && buildingUnits.length > 0 
+                  ? buildingUnits.find(u => (u.units_id || u.id) === userUnitId)
+                  : null;
+                if (userUnit) {
+                  unitData.unit_number = userUnit.unit_number;
+                } else if (userUnits[0]?.unit_number) {
+                  unitData.unit_number = userUnits[0].unit_number;
+                }
+                
+                setDebtCreditData({
+                  building: {
+                    id: buildingId,
+                    title: building.title,
+                    building_code: building.building_code,
+                  },
+                  summary: {
+                    total_units_debt: unitData.total_debt,
+                    total_units_credit: unitData.total_credit,
+                    total_units_balance: unitData.balance,
+                    units_count: 1,
+                  },
+                  units: [unitData],
+                  is_manager: false,
+                  showOnlyOwnUnit: true, // Flag to indicate only own unit is shown
+                });
+                setDebtCreditLoading(false);
+                fetchDebtCreditRef.current = false;
+              })
+              .catch((unitError) => {
+                fetchDebtCreditRef.current = false;
+                console.error("Error fetching own unit debt/credit:", unitError);
+                console.error("Unit error response:", unitError.response);
+                setDebtCreditError("خطا در دریافت اطلاعات بدهکاری/بستانکاری واحد شما");
+                setDebtCreditLoading(false);
+                toast.error("خطا در دریافت اطلاعات بدهکاری/بستانکاری واحد شما");
+              });
+          } else if (error.response?.status === 403 && !isManager && (!userUnits || userUnits.length === 0)) {
+            // اگر userUnits خالی است، خطای مناسب نمایش دهیم
+            setDebtCreditError("واحدی برای شما یافت نشد. لطفاً مطمئن شوید که به عنوان ساکن یا مالک به ساختمان اضافه شده‌اید.");
+            setDebtCreditLoading(false);
+            toast.error("واحدی برای شما یافت نشد");
+          } else {
+            setDebtCreditError(error.response?.data?.error || error.message || "خطا در دریافت اطلاعات بدهکاری/بستانکاری");
+            setDebtCreditLoading(false);
+            
+            // اگر خطای 403 بود (visibility disabled)، پیام مناسب نشان دهیم
+            if (error.response?.status === 403 && isManager) {
+              toast.error("خطا در دریافت اطلاعات بدهکاری/بستانکاری");
+            } else if (error.response?.status !== 403) {
+              toast.error("خطا در دریافت اطلاعات بدهکاری/بستانکاری");
+            }
+          }
+        });
+    } else if (!showDebtCredit) {
+      // Reset when hiding debt/credit view
+      setDebtCreditData(null);
+      setDebtCreditError(null);
+      fetchDebtCreditRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDebtCredit, building?.building_id, isManager]);
+
+  // Also fetch when buildingUnits become available (in case they load after showDebtCredit is set)
+  // Use a ref to track if we've already tried to fetch when buildingUnits loaded
+  const buildingUnitsLoadedRef = useRef(false);
+  useEffect(() => {
+    if (
+      showDebtCredit && 
+      building?.building_id && 
+      buildingUnits.length > 0 && 
+      !buildingUnitsLoadedRef.current &&
+      !fetchDebtCreditRef.current
+    ) {
+      buildingUnitsLoadedRef.current = true;
+      fetchDebtCreditRef.current = true;
+      setDebtCreditLoading(true);
+      setDebtCreditError(null);
+      const buildingId = building.building_id;
+      getBuildingUnitsDebtCreditSummary(buildingId)
+        .then((response) => {
+          setDebtCreditData(response);
+          setDebtCreditLoading(false);
+          fetchDebtCreditRef.current = false;
+        })
+        .catch((error) => {
+          fetchDebtCreditRef.current = false;
+          buildingUnitsLoadedRef.current = false;
+          console.error("Error fetching debt/credit data (retry):", error);
+          setDebtCreditError(error.response?.data?.error || error.message || "خطا در دریافت اطلاعات بدهکاری/بستانکاری");
+          setDebtCreditLoading(false);
+          if (error.response?.status !== 403) {
+            toast.error("خطا در دریافت اطلاعات بدهکاری/بستانکاری");
+          }
+        });
+    }
+    // Reset when showDebtCredit becomes false
+    if (!showDebtCredit) {
+      buildingUnitsLoadedRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildingUnits.length, showDebtCredit, building?.building_id]);
 
   const handleUnitSelect = (e) => {
     const selectedValue = e.target.value;
@@ -303,9 +475,13 @@ export default function FinanceTransactions() {
 
         {showDebtCredit && (
           <DebtCreditView
-            buildingUnits={buildingUnits}
+            buildingUnits={debtCreditData?.units || []}
             building={building}
             onExport={handleExportUnitsDebtCreditToExcel}
+            isLoading={debtCreditLoading}
+            error={debtCreditError}
+            isManager={isManager}
+            allBuildingUnits={buildingUnits}
           />
         )}
 

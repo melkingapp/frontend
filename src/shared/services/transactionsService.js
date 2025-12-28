@@ -72,6 +72,7 @@ export const getUnitFinancialTransactions = async (unitId, dateFrom = null, date
 };
 
 // Get unit financial transactions for residents (restricted by visibility settings)
+// Note: Uses the same endpoint as managers, but backend checks permissions and visibility settings
 export const getUnitFinancialTransactionsForResidents = async (unitId, dateFrom = null, dateTo = null) => {
     try {
         const params = new URLSearchParams();
@@ -80,7 +81,7 @@ export const getUnitFinancialTransactionsForResidents = async (unitId, dateFrom 
         if (dateTo) params.append('date_to', dateTo);
         
         const queryString = params.toString() ? `?${params.toString()}` : '';
-        const url = `/billing/unit-financial-transactions-residents/${queryString}`;
+        const url = `/billing/unit-financial-transactions/${queryString}`;
         console.log('[getUnitFinancialTransactionsForResidents] Request URL:', url);
         const response = await get(url);
         console.log('[getUnitFinancialTransactionsForResidents] Response:', response);

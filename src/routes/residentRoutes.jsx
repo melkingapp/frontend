@@ -3,6 +3,7 @@ import DashboardResident from "../pages/resident/DashboardResident";
 import Finance from "../pages/resident/Finance";
 import FinanceTransactions from "../features/resident/finance/pages/FinanceTransactions";
 import BuildingBalance from "../features/resident/finance/pages/BuildingBalance";
+import ExtraPaymentRequests from "../features/resident/finance/pages/ExtraPaymentRequests";
 import Notifications from "../pages/resident/Notifications";
 import BuildingNews from "../features/resident/notification/pages/BuildingNews";
 import ServicesPage from "../features/resident/notification/pages/ServicesPage";
@@ -32,6 +33,7 @@ export const residentRoutes = [
             { path: "finance", element: <Finance /> },
             { path: "finance-reports", element: <FinanceTransactions /> },
             { path: "finance/balance", element: <BuildingBalance /> },
+            { path: "finance/extra-payment-requests", element: <ExtraPaymentRequests /> },
             // بررسی پرداخت حذف شده - فقط برای مدیر ساختمان
             { path: "notifications", element: <Notifications /> },
             { path: "notifications/news", element: <BuildingNews /> },

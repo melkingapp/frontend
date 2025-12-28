@@ -47,16 +47,16 @@ export const navItemsManager = [
         icon: <UserPlus size={20} />,
         to: "/manager/membership",
     },
-    {
-        label: "گزارش‌های تعارض",
-        icon: <AlertTriangle size={20} />,
-        to: "/manager/conflict-reports",
-    },
-    {
-        label: "لینک‌های دعوت",
-        icon: <Link size={20} />,
-        to: "/manager/invite-links",
-    },
+    // {
+    //     label: "گزارش‌های تعارض",
+    //     icon: <AlertTriangle size={20} />,
+    //     to: "/manager/conflict-reports",
+    // },
+    // {
+    //     label: "لینک‌های دعوت",
+    //     icon: <Link size={20} />,
+    //     to: "/manager/invite-links",
+    // },
     {
         label: "مدیریت واحد",
         icon: <Home size={20} />,

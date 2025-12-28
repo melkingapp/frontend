@@ -441,6 +441,28 @@ export const exportBalanceSheet = async (buildingId, filters = {}) => {
     }
 };
 
+// Get building units debt credit summary
+export const getBuildingUnitsDebtCreditSummary = async (buildingId) => {
+    try {
+        const response = await get(`/billing/building-units-debt-credit-summary/?building_id=${buildingId}`);
+        return response;
+    } catch (error) {
+        console.error('Get building units debt credit summary error:', error);
+        throw error;
+    }
+};
+
+// Get unit debt summary (single unit)
+export const getUnitDebtSummary = async (unitId) => {
+    try {
+        const response = await get(`/billing/unit-debt/${unitId}/`);
+        return response;
+    } catch (error) {
+        console.error('Get unit debt summary error:', error);
+        throw error;
+    }
+};
+
 // Building Visibility Settings
 export const getBuildingVisibilitySettings = async (buildingId) => {
     try {
@@ -471,8 +493,14 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
     try {
         const formData = new FormData();
         
+        // تبدیل buildingId به number برای اطمینان
+        const buildingIdNum = typeof buildingId === 'number' ? buildingId : parseInt(buildingId);
+        if (isNaN(buildingIdNum)) {
+            throw new Error('building_id باید یک عدد معتبر باشد');
+        }
+        
         // افزودن فیلدهای الزامی
-        formData.append('building_id', buildingId);
+        formData.append('building_id', buildingIdNum);
         formData.append('title', data.title);
         formData.append('amount', data.amount);
         

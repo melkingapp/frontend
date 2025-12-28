@@ -61,12 +61,12 @@ export function useTransactions() {
     }
   }, [dispatch, building?.building_id]);
 
-  // Fetch building units when building changes or view mode changes to unit
+  // Fetch building units when building changes or view mode changes to unit or when buildingUnits are empty
   useEffect(() => {
-    if (building?.building_id && (viewMode === 'unit' || buildingUnits.length === 0)) {
+    if (building?.building_id && buildingUnits.length === 0) {
       dispatch(fetchBuildingUnits(building.building_id));
     }
-  }, [dispatch, building?.building_id, viewMode]);
+  }, [dispatch, building?.building_id, buildingUnits.length]);
 
   // Clear transactions when building changes (to avoid showing old data)
   useEffect(() => {

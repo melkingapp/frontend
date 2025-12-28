@@ -21,6 +21,7 @@ import {
   approveExtraPaymentRequest, 
   rejectExtraPaymentRequest 
 } from "../../store/slices/extraPaymentSlice";
+import { fetchTransactions, fetchCurrentFundBalance } from "../../store/slices/financeSlice";
 import { formatNumber } from "../../../../../shared/utils/helper";
 import { API_CONFIG } from "../../../../../config/api";
 
@@ -62,6 +63,11 @@ export default function PaymentsPage() {
       await dispatch(approveExtraPaymentRequest(requestId)).unwrap();
       toast.success("درخواست با موفقیت تایید شد");
       loadRequests();
+      // Refresh transactions and fund balance to show the new transaction
+      if (buildingId) {
+        dispatch(fetchTransactions({ building_id: buildingId }));
+        dispatch(fetchCurrentFundBalance(buildingId));
+      }
     } catch (error) {
       toast.error(error || "خطا در تایید درخواست");
     }

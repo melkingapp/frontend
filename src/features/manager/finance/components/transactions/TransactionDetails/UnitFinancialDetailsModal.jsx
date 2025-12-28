@@ -18,6 +18,8 @@ export default function UnitFinancialDetailsModal({ isOpen, onClose, invoice, un
     expense_name,
     category,
     category_display,
+    expense_type,
+    type,
     total_amount,
     amount,
     issue_date,
@@ -33,7 +35,7 @@ export default function UnitFinancialDetailsModal({ isOpen, onClose, invoice, un
     expense_name ||
     shared_expense_info?.expense_name ||
     title ||
-    getPersianType(category_display || category || "هزینه");
+    getPersianType(expense_type || category_display || category || type || "هزینه", raw);
 
   const baseAmount = shared_expense_info?.total_amount ?? total_amount ?? 0;
   const unitShareAmount = shared_expense_info?.unit_share_amount ?? amount ?? total_amount ?? 0;
@@ -148,7 +150,7 @@ export default function UnitFinancialDetailsModal({ isOpen, onClose, invoice, un
                     </Dialog.Title>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center rounded-full bg-gray-100 text-[11px] px-2 py-0.5 text-gray-700">
-                        {getPersianType(category_display || category || "هزینه")}
+                        {getPersianType(expense_type || category_display || category || type || "هزینه", raw)}
                       </span>
                       <span className="inline-flex items-center rounded-full bg-emerald-50 text-[11px] px-2 py-0.5 text-emerald-700 border border-emerald-100">
                         وضعیت: {statusText}
@@ -231,7 +233,7 @@ export default function UnitFinancialDetailsModal({ isOpen, onClose, invoice, un
                     <div className="flex flex-col text-xs sm:text-sm">
                       <span className="text-gray-500 text-xs">نوع هزینه</span>
                       <span className="text-gray-800 mt-2 font-medium">
-                        {getPersianType(shared_expense_info?.expense_type || category_display || category)}
+                        {getPersianType(shared_expense_info?.expense_type || expense_type || category_display || category || type, raw)}
                       </span>
                     </div>
                   </div>

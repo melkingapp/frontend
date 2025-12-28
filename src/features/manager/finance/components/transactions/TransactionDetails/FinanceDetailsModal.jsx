@@ -1,6 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState, useEffect } from "react";
-import { X, Wallet, Edit2, Trash2 } from "lucide-react";
+import { X, Wallet, Edit2, Trash2, User, Building2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
 import { useDispatch, useSelector } from "react-redux";
@@ -100,6 +100,14 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
   
   // Early return if transaction is null (after ALL hooks)
   if (!transaction) return null;
+  
+  // بررسی اینکه آیا این یک پرداخت اضافی است
+  const isExtraPayment = transaction.category === 'extra_payment' || 
+                          transaction.expense_type === 'extra_payment' ||
+                          transaction.bill_type === 'extra_payment' ||
+                          transaction.is_extra_payment ||
+                          (typeof transaction.id === 'string' && transaction.id.startsWith('extra_payment_')) ||
+                          (transactionDetails && (transactionDetails.category === 'extra_payment' || transactionDetails.is_extra_payment));
   
   // Use transactionDetails if it matches the current transaction
   const isTransactionDetailsMatch = transactionDetails && (
@@ -245,7 +253,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     ],
     [
       { label: "🏢 ساختمان", value: building?.title || "—" },
-      { label: "📊 نوع هزینه", value: getPersianType(transaction.bill_type || transaction.title) || transaction.title || "—" },
+      { label: "📊 نوع هزینه", value: getPersianType(transaction.expense_type || transaction.bill_type || transaction.category || transaction.category_display || transaction.type || transaction.title, transaction) || transaction.title || "—" },
     ],
     [
       { label: "🔢 نحوه تقسیم", value: distributionLabels[transaction.distribution_method] || "—" },
@@ -414,7 +422,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                   <Dialog.Title className="text-lg font-bold">{transaction.title}</Dialog.Title>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isManager && (
+                  {isManager && !isExtraPayment && (
                     <>
                       <button
                         onClick={handleEdit}
@@ -473,7 +481,82 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
               )}
 
               <div className="overflow-y-auto p-4 space-y-4 text-sm text-gray-700 flex-1">
-                {infoGroups.map((group, i) => (
+                {/* نمایش خاص برای پرداخت‌های اضافی */}
+                {isExtraPayment && (
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 space-y-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <User className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-bold text-blue-900">پرداخت اضافی کاربر</h3>
+                    </div>
+                    
+                    <div className="bg-white rounded-lg p-4 space-y-3 border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">👤 کاربر:</span>
+                        <span className="font-semibold text-gray-900">
+                          {transactionDetails?.user?.full_name || transaction?.user?.full_name || '—'}
+                        </span>
+                      </div>
+                      
+                      {transactionDetails?.unit && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">🏠 واحد:</span>
+                          <span className="font-semibold text-gray-900">
+                            واحد {transactionDetails.unit.unit_number || '—'}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">💰 مبلغ:</span>
+                        <span className="font-bold text-blue-700 text-lg">
+                          {parseFloat(transaction.amount || transactionDetails?.amount || 0).toLocaleString('fa-IR')} تومان
+                        </span>
+                      </div>
+                      
+                      {transactionDetails?.description || transaction?.description ? (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <span className="text-sm text-gray-600 block mb-2">📝 توضیحات:</span>
+                          <p className="text-gray-800">
+                            {transactionDetails?.description || transaction?.description}
+                          </p>
+                        </div>
+                      ) : null}
+                      
+                      {transactionDetails?.approved_by && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span className="text-gray-600">تایید شده توسط:</span>
+                            <span className="font-semibold text-gray-900">
+                              {transactionDetails.approved_by.full_name}
+                            </span>
+                          </div>
+                          {transactionDetails?.approved_at && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              در تاریخ: {formatJalaliDate(transactionDetails.approved_at)}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="mt-3 pt-3 border-t border-blue-300">
+                        <div className="flex items-center gap-2 text-xs text-blue-700 bg-blue-100 px-3 py-2 rounded-lg">
+                          <Building2 className="w-4 h-4" />
+                          <span>این پرداخت توسط کاربر انجام شده و جدا از هزینه‌های ثبت شده توسط مدیر است</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {transactionDetails?.attachment_url || transaction?.attachment_url ? (
+                      <div className="bg-white rounded-lg p-4 border border-blue-200">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">📎 فایل پیوست:</h4>
+                        <DocumentViewer documentUrl={transactionDetails?.attachment_url || transaction?.attachment_url} />
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+                
+                {!isExtraPayment && infoGroups.map((group, i) => (
                   <div key={`info-group-${i}`} className="grid grid-cols-2 gap-x-4 gap-y-3 border rounded-lg p-3">
                     {group.map(({ label, value }, idx) => (
                       <div key={`info-${i}-${idx}-${label}`} className="flex flex-col text-sm">

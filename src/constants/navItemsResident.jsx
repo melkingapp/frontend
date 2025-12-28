@@ -7,8 +7,8 @@ export const navItemsResident = [
         to: "/resident/finance",
         children: [
             { label: "گردش مالی", to: "finance-reports" },
-            { label: "بیلان مالی", to: "finance/balance" },
-            // بررسی پرداخت حذف شده - فقط برای مدیر ساختمان
+            // { label: "بیلان مالی", to: "finance/balance" },
+            { label: "درخواست‌های پرداخت اضافی", to: "/resident/finance/extra-payment-requests" },
         ],
     },
     {
@@ -37,18 +37,13 @@ export const navItemsResident = [
         to: "/resident/membership",
     },
     {
-        label: "دعوت‌نامه خانواده",
-        icon: <Users size={20} />,
-        to: "/resident/family-invitations",
-    },
-    {
         label: "دستیار حقوقی",
         icon: <Sparkles size={20} />,
         to: "/resident/legal-ai",
     },
-    {
-        label: "تنظیمات",
-        icon: <Settings size={20} />,
-        to: "/resident/settings",
-    },
+    // {
+    //     label: "تنظیمات",
+    //     icon: <Settings size={20} />,
+    //     to: "/resident/settings",
+    // },
 ];

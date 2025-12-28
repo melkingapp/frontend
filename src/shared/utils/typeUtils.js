@@ -25,6 +25,8 @@ export const getPersianType = (type, item = null) => {
   const typeMap = {
     // Basic types
     'شارژ': 'شارژ',
+    'charge': 'شارژ',
+    'Charge': 'شارژ',
     
     // Bills
     'electricity': 'قبض برق',
@@ -38,6 +40,7 @@ export const getPersianType = (type, item = null) => {
     'قبض آب': 'قبض آب',
     
     'gas': 'قبض گاز',
+    'Gas': 'قبض گاز',
     'gas_bill': 'قبض گاز',
     'قبض گاز': 'قبض گاز',
     
@@ -45,6 +48,7 @@ export const getPersianType = (type, item = null) => {
     'maintenance': 'تعمیرات',
     'Maintenance': 'تعمیرات',
     'repair': 'تعمیرات',
+    'Repair': 'تعمیرات',
     'تعمیرات': 'تعمیرات',
     
     'cleaning': 'نظافت',
@@ -63,6 +67,16 @@ export const getPersianType = (type, item = null) => {
     'Parking': 'پارکینگ',
     'پارکینگ': 'پارکینگ',
     
+    // Additional expense types
+    'rent': 'اجاره',
+    'Rent': 'اجاره',
+    'اجاره': 'اجاره',
+    
+    'service': 'خدمات',
+    'Service': 'خدمات',
+    'Services': 'خدمات',
+    'خدمات': 'خدمات',
+    
     // Purchases
     'purchases': 'اقلام خریدنی',
     'Purchases': 'اقلام خریدنی',
@@ -72,6 +86,11 @@ export const getPersianType = (type, item = null) => {
     'other': 'سایر',
     'Other': 'سایر',
     'سایر': 'سایر',
+    
+    // Extra Payment
+    'extra_payment': 'پرداخت اضافی',
+    'Extra Payment': 'پرداخت اضافی',
+    'پرداخت اضافی': 'پرداخت اضافی',
     
     // Categories
     'shared_bill': 'قبض مشترک',
