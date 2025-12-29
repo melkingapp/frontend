@@ -21,6 +21,31 @@ export default function StepSummary({ formData, prev }) {
         setIsLoading(true);
         
         try {
+            // Validation فیلدهای اجباری
+            if (!formData.title || !formData.title.trim()) {
+                toast.error("عنوان ساختمان الزامی است");
+                setIsLoading(false);
+                return;
+            }
+            
+            if (!formData.unit_count || parseInt(formData.unit_count) <= 0) {
+                toast.error("تعداد واحدها الزامی است و باید عدد مثبت باشد");
+                setIsLoading(false);
+                return;
+            }
+            
+            if (!formData.fund_balance || parseFloat(formData.fund_balance) < 0) {
+                toast.error("موجودی اولیه صندوق الزامی است");
+                setIsLoading(false);
+                return;
+            }
+            
+            if (!formData.fund_sheba_number || !formData.fund_sheba_number.trim()) {
+                toast.error("شماره شبا صندوق الزامی است");
+                setIsLoading(false);
+                return;
+            }
+            
             // اگر usage_type مسکونی است و residential_type خالی است، مقدار پیش‌فرض تنظیم کن
             if (formData.usage_type === 'residential' && !formData.residential_type) {
                 formData.residential_type = 'apartment';
@@ -53,19 +78,32 @@ export default function StepSummary({ formData, prev }) {
             }
             
             const cleanData = {
-                title: formData.title,
+                title: formData.title.trim(),
                 usage_type: formData.usage_type,
                 property_type: formData.property_type,
-                unit_count: parseInt(formData.unit_count) || 0,
+                unit_count: parseInt(formData.unit_count),
                 is_owner_resident: formData.is_owner_resident || false,
                 resident_floor: resident_floor,
-                fund_balance: parseFloat(formData.fund_balance) || 0,
-                fund_sheba_number: formData.fund_sheba_number,
+                fund_balance: parseFloat(formData.fund_balance),
+                fund_sheba_number: formData.fund_sheba_number.trim(),
                 residential_type: formData.usage_type === 'residential' ? (formData.residential_type || 'apartment') : null,
                 blocks_count: blocks_count
             };
             
-            console.log("🔥 Sending clean data:", cleanData);
+            // لاگ کامل برای دیباگ
+            console.log("🔥 Sending clean data:", JSON.stringify(cleanData, null, 2));
+            console.log("🔥 Data types:", {
+                title: typeof cleanData.title,
+                usage_type: typeof cleanData.usage_type,
+                property_type: typeof cleanData.property_type,
+                unit_count: typeof cleanData.unit_count,
+                is_owner_resident: typeof cleanData.is_owner_resident,
+                resident_floor: typeof cleanData.resident_floor,
+                fund_balance: typeof cleanData.fund_balance,
+                fund_sheba_number: typeof cleanData.fund_sheba_number,
+                residential_type: typeof cleanData.residential_type,
+                blocks_count: typeof cleanData.blocks_count,
+            });
             
             const result = await dispatch(createBuilding(cleanData)).unwrap();
             console.log("✅ Building created successfully:", result);
@@ -120,7 +158,8 @@ export default function StepSummary({ formData, prev }) {
             navigate('/manager');
         } catch (error) {
             console.error("❌ Building creation failed:", error);
-            toast.error("خطا در ثبت ساختمان: " + error.message);
+            const errorMessage = typeof error === 'string' ? error : (error.message || 'خطای نامشخص');
+            toast.error("خطا در ثبت ساختمان: " + errorMessage);
         } finally {
             setIsLoading(false);
         }

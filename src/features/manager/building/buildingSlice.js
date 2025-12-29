@@ -33,7 +33,21 @@ export const createBuilding = createAsyncThunk(
             return response.building;
         } catch (error) {
             console.error("❌ Building creation error:", error);
-            return rejectWithValue(error.message);
+            console.error("❌ Error details:", {
+                message: error.message,
+                status: error.response?.status,
+                data: error.response?.data,
+                config: error.config
+            });
+            
+            // Extract error message from response
+            const errorMessage = error.response?.data?.error || 
+                               error.response?.data?.detail || 
+                               error.response?.data?.message ||
+                               JSON.stringify(error.response?.data) ||
+                               error.message;
+            
+            return rejectWithValue(errorMessage);
         }
     }
 );

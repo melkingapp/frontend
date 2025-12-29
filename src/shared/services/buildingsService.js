@@ -10,6 +10,9 @@ export const registerBuilding = async (buildingData) => {
         return response;
     } catch (error) {
         console.error('Register building error:', error);
+        console.error('Error response:', error.response);
+        console.error('Error response data:', error.response?.data);
+        console.error('Error response status:', error.response?.status);
         throw error;
     }
 };
