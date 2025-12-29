@@ -27,21 +27,42 @@ export default function StepSummary({ formData, prev }) {
             }
 
             // Clean form data for API
+            // Handle blocks_count: required for complex/community, must be integer
+            let blocks_count = null;
+            if (formData.property_type === 'complex' || formData.property_type === 'community') {
+                // برای complex/community، blocks_count اجباری است و باید عدد باشد
+                const blocksCountValue = parseInt(formData.blocks_count);
+                if (isNaN(blocksCountValue) || blocksCountValue <= 0) {
+                    toast.error("تعداد بلوک‌ها برای مجتمع/شهرک الزامی است و باید عدد مثبت باشد");
+                    setIsLoading(false);
+                    return;
+                }
+                blocks_count = blocksCountValue;
+            }
+            
+            // Handle resident_floor: required when is_owner_resident is true, must be integer or null
+            let resident_floor = null;
+            if (formData.is_owner_resident) {
+                const floorValue = parseInt(formData.manager_floor || formData.resident_floor);
+                if (isNaN(floorValue) || floorValue <= 0) {
+                    toast.error("طبقه محل سکونت مدیر الزامی است و باید عدد مثبت باشد");
+                    setIsLoading(false);
+                    return;
+                }
+                resident_floor = floorValue;
+            }
+            
             const cleanData = {
                 title: formData.title,
                 usage_type: formData.usage_type,
                 property_type: formData.property_type,
                 unit_count: parseInt(formData.unit_count) || 0,
-                is_owner_resident: formData.is_owner_resident,
-                resident_floor: formData.is_owner_resident 
-                    ? (formData.manager_floor || formData.resident_floor || '') 
-                    : '',
+                is_owner_resident: formData.is_owner_resident || false,
+                resident_floor: resident_floor,
                 fund_balance: parseFloat(formData.fund_balance) || 0,
                 fund_sheba_number: formData.fund_sheba_number,
                 residential_type: formData.usage_type === 'residential' ? (formData.residential_type || 'apartment') : null,
-                blocks_count: (formData.property_type === 'complex' || formData.property_type === 'community')
-                    ? (formData.blocks_count || '')
-                    : ''
+                blocks_count: blocks_count
             };
             
             console.log("🔥 Sending clean data:", cleanData);
