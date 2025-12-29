@@ -76,12 +76,16 @@ export default function StepSummary({ formData, prev }) {
             }
             
             // Ensure fund_balance is a valid number
-            const fund_balance = parseFloat(formData.fund_balance) || 0;
-            if (isNaN(fund_balance) || fund_balance < 0) {
+            const fund_balance_value = parseFloat(formData.fund_balance);
+            if (isNaN(fund_balance_value) || fund_balance_value < 0) {
                 toast.error("موجودی اولیه صندوق باید عدد معتبر و غیر منفی باشد");
                 setIsLoading(false);
                 return;
             }
+            
+            // Keep as number - backend DecimalField serializer accepts number
+            // Django REST framework will convert it to Decimal properly
+            const fund_balance = fund_balance_value;
             
             // Ensure unit_count is a valid positive integer
             const unit_count = parseInt(formData.unit_count);
