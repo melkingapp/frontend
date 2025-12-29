@@ -18,7 +18,6 @@ export default function CreateBuildingForm() {
         fund_balance: "",
         fund_sheba_number: "",
         blocks_count: "",
-        residential_type: "apartment",
     });
 
     const next = () => setStep((prev) => prev + 1);

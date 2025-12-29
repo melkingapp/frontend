@@ -152,6 +152,14 @@ export const post = async (url, data = {}, config = {}) => {
         return response.data;
     } catch (error) {
         console.error(`POST ${url} error:`, error);
+        if (error.response) {
+            console.error(`POST ${url} error response status:`, error.response.status);
+            console.error(`POST ${url} error response data:`, error.response.data);
+        } else if (error.request) {
+            console.error(`POST ${url} error request:`, error.request);
+        } else {
+            console.error(`POST ${url} error message:`, error.message);
+        }
         throw error;
     }
 };
