@@ -47,6 +47,9 @@ export default function StepSummary({ formData, prev }) {
             }
             
             // Clean form data for API
+            // Ensure is_owner_resident is a boolean
+            const is_owner_resident = Boolean(formData.is_owner_resident);
+            
             // Handle blocks_count: required for complex/community, must be integer
             let blocks_count = null;
             if (formData.property_type === 'complex' || formData.property_type === 'community') {
@@ -62,8 +65,8 @@ export default function StepSummary({ formData, prev }) {
             
             // Handle resident_floor: required when is_owner_resident is true, must be integer or null
             let resident_floor = null;
-            if (formData.is_owner_resident) {
-                const floorValue = parseInt(formData.manager_floor || formData.resident_floor);
+            if (is_owner_resident) {
+                const floorValue = parseInt(formData.manager_floor || formData.resident_floor || '0');
                 if (isNaN(floorValue) || floorValue <= 0) {
                     toast.error("طبقه محل سکونت مدیر الزامی است و باید عدد مثبت باشد");
                     setIsLoading(false);
@@ -72,17 +75,41 @@ export default function StepSummary({ formData, prev }) {
                 resident_floor = floorValue;
             }
             
+            // Ensure fund_balance is a valid number
+            const fund_balance = parseFloat(formData.fund_balance) || 0;
+            if (isNaN(fund_balance) || fund_balance < 0) {
+                toast.error("موجودی اولیه صندوق باید عدد معتبر و غیر منفی باشد");
+                setIsLoading(false);
+                return;
+            }
+            
+            // Ensure unit_count is a valid positive integer
+            const unit_count = parseInt(formData.unit_count);
+            if (isNaN(unit_count) || unit_count <= 0) {
+                toast.error("تعداد واحدها باید عدد مثبت باشد");
+                setIsLoading(false);
+                return;
+            }
+            
             const cleanData = {
                 title: formData.title.trim(),
                 usage_type: formData.usage_type,
                 property_type: formData.property_type,
-                unit_count: parseInt(formData.unit_count),
-                is_owner_resident: formData.is_owner_resident || false,
-                resident_floor: resident_floor,
-                fund_balance: parseFloat(formData.fund_balance),
+                unit_count: unit_count,
+                is_owner_resident: is_owner_resident,
+                fund_balance: fund_balance,
                 fund_sheba_number: formData.fund_sheba_number.trim(),
-                blocks_count: blocks_count
             };
+            
+            // Only include resident_floor if is_owner_resident is true
+            if (is_owner_resident) {
+                cleanData.resident_floor = resident_floor;
+            }
+            
+            // Only include blocks_count if it's not null (for complex/community)
+            if (blocks_count !== null) {
+                cleanData.blocks_count = blocks_count;
+            }
             
             // لاگ کامل برای دیباگ
             console.log("🔥 Sending clean data:", JSON.stringify(cleanData, null, 2));
@@ -151,7 +178,32 @@ export default function StepSummary({ formData, prev }) {
             navigate('/manager');
         } catch (error) {
             console.error("❌ Building creation failed:", error);
-            const errorMessage = typeof error === 'string' ? error : (error.message || 'خطای نامشخص');
+            
+            // Extract error message with priority: userMessage > extractedMessage > response data > message
+            let errorMessage = 'خطای نامشخص';
+            
+            if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error?.userMessage) {
+                errorMessage = error.userMessage;
+            } else if (error?.extractedMessage) {
+                errorMessage = error.extractedMessage;
+            } else if (error?.response?.data) {
+                const data = error.response.data;
+                if (typeof data === 'object') {
+                    errorMessage = data.error || data.detail || data.message || JSON.stringify(data);
+                } else if (typeof data === 'string') {
+                    errorMessage = data;
+                }
+            } else if (error?.message) {
+                errorMessage = error.message;
+            }
+            
+            // Limit error message length for better UX
+            if (errorMessage.length > 200) {
+                errorMessage = errorMessage.substring(0, 200) + '...';
+            }
+            
             toast.error("خطا در ثبت ساختمان: " + errorMessage);
         } finally {
             setIsLoading(false);
