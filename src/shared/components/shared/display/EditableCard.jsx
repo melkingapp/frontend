@@ -1,6 +1,7 @@
 import { Edit, Save, User, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import SelectField from "../inputs/SelectField";
+import InputField from "../inputs/InputField";
 
 export default function EditableCard({ title, data, setData, isEditing, setIsEditing, onSave, loading = false, fields, colorClass }) {
     const handleSave = async () => {
@@ -23,8 +24,13 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
             <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <User /> {title}
                 {!isEditing && (
-                    <button onClick={() => setIsEditing(true)} className="ml-auto text-gray-500 hover:text-gray-700">
-                        <Edit size={16} />
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="ml-auto text-gray-500 hover:text-gray-700"
+                        aria-label="ویرایش"
+                        title="ویرایش"
+                    >
+                        <Edit size={16} aria-hidden="true" />
                     </button>
                 )}
             </h3>
@@ -45,18 +51,15 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
                                 />
                             </div>
                         ) : (
-                            <div key={f.key}>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {f.label}
-                                </label>
-                                <input
-                                    type={f.type || "text"}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    value={data[f.key] || ''}
-                                    onChange={(e) => setData({ ...data, [f.key]: e.target.value })}
-                                    placeholder={f.label}
-                                />
-                            </div>
+                            <InputField
+                                key={f.key}
+                                label={f.label}
+                                name={f.key}
+                                type={f.type || "text"}
+                                value={data[f.key] || ''}
+                                onChange={(e) => setData({ ...data, [f.key]: e.target.value })}
+                                placeholder={f.label}
+                            />
                         )
                     ))}
                     <div className="flex gap-2 mt-4">
