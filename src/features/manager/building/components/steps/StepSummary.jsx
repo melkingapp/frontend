@@ -28,7 +28,14 @@ export default function StepSummary({ formData, prev }) {
                 return;
             }
             
-            if (!formData.unit_count || parseInt(formData.unit_count) <= 0) {
+            // Check if unit_count should be validated (not required for hierarchical structures)
+            const shouldValidateUnitCount = !(
+                (formData.property_type === 'community' && formData.community_has_complex !== null) ||
+                (formData.property_type === 'complex' && formData.complex_has_blocks !== null) ||
+                (formData.property_type === 'block' && formData.block_buildings && formData.block_buildings.length > 0)
+            );
+            
+            if (shouldValidateUnitCount && (!formData.unit_count || parseInt(formData.unit_count) <= 0)) {
                 toast.error("تعداد واحدها الزامی است و باید عدد مثبت باشد");
                 setIsLoading(false);
                 return;
@@ -87,23 +94,30 @@ export default function StepSummary({ formData, prev }) {
             // Django REST framework will convert it to Decimal properly
             const fund_balance = fund_balance_value;
             
-            // Ensure unit_count is a valid positive integer
-            const unit_count = parseInt(formData.unit_count);
-            if (isNaN(unit_count) || unit_count <= 0) {
-                toast.error("تعداد واحدها باید عدد مثبت باشد");
-                setIsLoading(false);
-                return;
+            // Ensure unit_count is a valid positive integer (only for non-hierarchical structures)
+            let unit_count = null;
+            if (shouldValidateUnitCount) {
+                unit_count = parseInt(formData.unit_count);
+                if (isNaN(unit_count) || unit_count <= 0) {
+                    toast.error("تعداد واحدها باید عدد مثبت باشد");
+                    setIsLoading(false);
+                    return;
+                }
             }
             
             const cleanData = {
                 title: formData.title.trim(),
                 usage_type: formData.usage_type,
                 property_type: formData.property_type,
-                unit_count: unit_count,
                 is_owner_resident: is_owner_resident,
                 fund_balance: fund_balance,
                 fund_sheba_number: formData.fund_sheba_number.trim(),
             };
+            
+            // Only include unit_count if it's not null (for non-hierarchical structures)
+            if (unit_count !== null) {
+                cleanData.unit_count = unit_count;
+            }
             
             // Only include resident_floor if is_owner_resident is true
             if (is_owner_resident) {
@@ -113,6 +127,92 @@ export default function StepSummary({ formData, prev }) {
             // Only include blocks_count if it's not null (for complex/community)
             if (blocks_count !== null) {
                 cleanData.blocks_count = blocks_count;
+            }
+            
+            // Add hierarchical structure data based on property_type
+            if (formData.property_type === 'community') {
+                // Community hierarchical structure
+                if (formData.community_has_complex !== null && formData.community_has_complex !== undefined) {
+                    cleanData.community_has_complex = formData.community_has_complex;
+                }
+                if (formData.community_total_buildings) {
+                    cleanData.community_total_buildings = String(formData.community_total_buildings);
+                }
+                if (formData.community_complexes && formData.community_complexes.length > 0) {
+                    cleanData.community_complexes = formData.community_complexes.map(complex => ({
+                        name: complex.name,
+                        has_blocks: complex.has_blocks,
+                        blocks_count: complex.blocks_count ? String(complex.blocks_count) : "",
+                        blocks: complex.blocks ? complex.blocks.map(block => ({
+                            name: block.name,
+                            buildings_count: block.buildings_count ? String(block.buildings_count) : "",
+                            buildings: block.buildings ? block.buildings.map(building => ({
+                                name: building.name,
+                                unit_count: building.unit_count ? String(building.unit_count) : ""
+                            })) : []
+                        })) : [],
+                        buildings_count: complex.buildings_count ? String(complex.buildings_count) : "",
+                        buildings: complex.buildings ? complex.buildings.map(building => ({
+                            name: building.name,
+                            unit_count: building.unit_count ? String(building.unit_count) : ""
+                        })) : []
+                    }));
+                }
+                if (formData.community_has_blocks !== null && formData.community_has_blocks !== undefined) {
+                    cleanData.community_has_blocks = formData.community_has_blocks;
+                }
+                if (formData.community_blocks && formData.community_blocks.length > 0) {
+                    cleanData.community_blocks = formData.community_blocks.map(block => ({
+                        name: block.name,
+                        buildings_count: block.buildings_count ? String(block.buildings_count) : "",
+                        buildings: block.buildings ? block.buildings.map(building => ({
+                            name: building.name
+                        })) : []
+                    }));
+                }
+                if (formData.community_direct_buildings && formData.community_direct_buildings.length > 0) {
+                    cleanData.community_direct_buildings = formData.community_direct_buildings.map(building => ({
+                        name: building.name
+                    }));
+                }
+                if (formData.community_direct_buildings_count) {
+                    cleanData.community_direct_buildings_count = String(formData.community_direct_buildings_count);
+                }
+            } else if (formData.property_type === 'complex') {
+                // Complex hierarchical structure
+                if (formData.complex_has_blocks !== null && formData.complex_has_blocks !== undefined) {
+                    cleanData.complex_has_blocks = formData.complex_has_blocks;
+                }
+                if (formData.complex_blocks && formData.complex_blocks.length > 0) {
+                    cleanData.complex_blocks = formData.complex_blocks.map(block => ({
+                        name: block.name,
+                        buildings_count: block.buildings_count ? String(block.buildings_count) : "",
+                        buildings: block.buildings ? block.buildings.map(building => ({
+                            name: building.name,
+                            unit_count: building.unit_count ? String(building.unit_count) : ""
+                        })) : []
+                    }));
+                }
+                if (formData.complex_direct_buildings && formData.complex_direct_buildings.length > 0) {
+                    cleanData.complex_direct_buildings = formData.complex_direct_buildings.map(building => ({
+                        name: building.name,
+                        unit_count: building.unit_count ? String(building.unit_count) : ""
+                    }));
+                }
+                if (formData.complex_direct_buildings_count) {
+                    cleanData.complex_direct_buildings_count = String(formData.complex_direct_buildings_count);
+                }
+            } else if (formData.property_type === 'block') {
+                // Block hierarchical structure
+                if (formData.block_buildings && formData.block_buildings.length > 0) {
+                    cleanData.block_buildings = formData.block_buildings.map(building => ({
+                        name: building.name,
+                        unit_count: building.unit_count ? String(building.unit_count) : ""
+                    }));
+                }
+                if (formData.block_buildings_count) {
+                    cleanData.block_buildings_count = String(formData.block_buildings_count);
+                }
             }
             
             // لاگ کامل برای دیباگ
