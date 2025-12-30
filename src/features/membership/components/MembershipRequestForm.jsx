@@ -2,7 +2,7 @@ import { useState, Fragment, useEffect, useRef, useCallback, useMemo } from "rea
 import { Dialog, Transition } from "@headlessui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { createMembershipRequest, fetchUnitByPhone, clearUnitData, selectUnitData, selectUnitLoading, fetchMembershipRequests } from "../membershipSlice";
+import { createMembershipRequest, fetchUnitByPhone, clearUnitData, selectUnitData, selectUnitLoading, fetchMembershipRequests, rejectSuggestedMembershipRequest } from "../membershipSlice";
 import { fetchApprovedBuildings } from "../../resident/building/residentBuildingSlice";
 import { X, Building, User, Home, Car, Users } from "lucide-react";
 
@@ -104,7 +104,9 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
 
   const [errors, setErrors] = useState({});
   const [originalUnitData, setOriginalUnitData] = useState(null); // ذخیره داده‌های اولیه واحد
-  const [isFromManagerUnit, setIsFromManagerUnit] = useState(false); // آیا داده‌ها از واحد مدیر پر شده؟
+  const [isFromManagerUnit, setIsFromManagerUnit] = useState(false); // آیا داده‌ها از واحد مدیر پر شده？
+  const [showRejectModal, setShowRejectModal] = useState(false); // نمایش modal رد درخواست
+  const [rejectionReason, setRejectionReason] = useState(''); // دلیل رد درخواست
   const debounceRef = useRef(null);
 
   // Resolve phone number: prefer user.phone_number, fallback to user.username
@@ -640,6 +642,25 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     dispatch(clearUnitData());
   }, [dispatch]);
 
+  const handleRejectSuggested = useCallback(async () => {
+    if (!unitData?.request_id) return;
+
+    try {
+      await dispatch(rejectSuggestedMembershipRequest({
+        requestId: unitData.request_id,
+        rejectionReason: rejectionReason.trim()
+      })).unwrap();
+
+      toast.success('درخواست عضویت رد شد');
+      setShowRejectModal(false);
+      setRejectionReason('');
+      handleClose();
+    } catch (error) {
+      const errorMessage = typeof error === 'string' ? error : (error?.payload || error?.message || 'خطا در رد درخواست');
+      toast.error(errorMessage);
+    }
+  }, [unitData, rejectionReason, dispatch, handleClose]);
+
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     
@@ -727,6 +748,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   }, [form, dispatch, onClose]);
 
   return (
+    <>
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <Transition.Child
@@ -1062,6 +1084,15 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
 
                   {/* Submit Button */}
                   <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    {unitData?.is_suggested && (
+                      <button
+                        type="button"
+                        onClick={() => setShowRejectModal(true)}
+                        className="px-6 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                      >
+                        رد کردن
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={handleClose}
@@ -1091,6 +1122,76 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         </div>
       </Dialog>
     </Transition>
+
+    <Transition appear show={showRejectModal} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={() => setShowRejectModal(false)}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black bg-opacity-25" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                  رد درخواست عضویت
+                </Dialog.Title>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    دلیل رد (اختیاری)
+                  </label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="اگر مایل هستید، دلیل رد درخواست را وارد کنید..."
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-300 shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRejectModal(false);
+                      setRejectionReason('');
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    انصراف
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRejectSuggested}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    رد کردن
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
+    </>
   );
 }
 

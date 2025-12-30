@@ -18,6 +18,14 @@ class MembershipApiService {
   }
 
   /**
+   * دریافت درخواست‌های عضویت پیشنهادی برای رزیدنت
+   */
+  async getSuggestedRequests() {
+    const { data } = await api.get('/membership/suggested-requests/');
+    return data;
+  }
+
+  /**
    * دریافت درخواست‌های عضویت برای مالک
    */
   async getOwnerMembershipRequests(status = null) {
@@ -71,6 +79,16 @@ class MembershipApiService {
    */
   async rejectMembershipRequest(requestId, rejectionReason) {
     const { data } = await api.post(`/membership/${requestId}/reject/`, {
+      rejection_reason: rejectionReason
+    });
+    return data;
+  }
+
+  /**
+   * رد درخواست suggested عضویت توسط کاربر صاحب درخواست
+   */
+  async rejectSuggestedMembershipRequest(requestId, rejectionReason = '') {
+    const { data } = await api.post(`/membership/${requestId}/reject-suggested/`, {
       rejection_reason: rejectionReason
     });
     return data;

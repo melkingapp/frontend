@@ -1,17 +1,14 @@
-import { ChevronLeft, HomeIcon, UserPlus } from "lucide-react";
+import { ChevronLeft, HomeIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { toast } from "sonner";
+import { useSelector } from "react-redux";
 import UnitBase from "../components/units/UnitBase";
 import CreateUnitModal from "../components/units/CreateUnitModal";
 import FloatingActionButton from "../../../../shared/components/shared/feedback/FloatingActionButton";
 import { selectSelectedBuilding } from "../../building/buildingSlice";
-import { createManagerUnit } from "../slices/unitsSlice";
 
 export default function UnitsPage() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [activeModal, setActiveModal] = useState(null);
   const selectedBuilding = useSelector(selectSelectedBuilding);
 
@@ -22,21 +19,6 @@ export default function UnitsPage() {
   console.log("🔥 UnitsPage - Building ID:", buildingId);
 
   const handleCreateUnit = () => setActiveModal("createUnit");
-  
-  const handleCreateManagerUnit = async () => {
-    if (!buildingId) {
-      toast.error("لطفاً ابتدا یک ساختمان انتخاب کنید");
-      return;
-    }
-    
-    try {
-      await dispatch(createManagerUnit(buildingId)).unwrap();
-      toast.success("واحد مدیر با موفقیت ایجاد شد!");
-    } catch (error) {
-      console.error("Error creating manager unit:", error);
-      toast.error(error || "خطا در ایجاد واحد مدیر");
-    }
-  };
 
   return (
     <div className="p-2 space-y-6">
@@ -63,12 +45,6 @@ export default function UnitsPage() {
             label: "ایجاد واحد",
             icon: <HomeIcon className="w-4 h-4" />,
             onClick: handleCreateUnit,
-          },
-          {
-            key: "createManagerUnit",
-            label: "ایجاد واحد مدیر",
-            icon: <UserPlus className="w-4 h-4" />,
-            onClick: handleCreateManagerUnit,
           },
         ]}
       />
