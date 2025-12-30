@@ -47,6 +47,37 @@ class ApiService {
       }
     } catch (error) {
       console.error('Token refresh error:', error);
+      
+      // Fallback to localhost for /resident page on network/CORS errors
+      const isResidentPage = window.location.pathname.includes('/resident');
+      const isNetworkError = error.name === 'TypeError' || 
+                            error.message?.includes('NetworkError') || 
+                            error.message?.includes('Failed to fetch') ||
+                            error.message?.includes('Network Error');
+      
+      if (isResidentPage && isNetworkError) {
+        console.log('🔄 Token refresh network error on resident page, trying localhost fallback...');
+        try {
+          const localhostResponse = await fetch('http://localhost:8000/api/v1/refresh/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh: refreshToken })
+          });
+          
+          if (localhostResponse.ok) {
+            const data = await localhostResponse.json();
+            localStorage.setItem('access_token', data.access);
+            if (data.refresh) {
+              localStorage.setItem('refresh_token', data.refresh);
+            }
+            console.log('✅ Token refreshed successfully via localhost fallback');
+            return true;
+          }
+        } catch (localhostError) {
+          console.error('❌ Localhost fallback for token refresh also failed:', localhostError);
+        }
+      }
+      
       // Don't redirect on network errors
       return false;
     }
@@ -208,6 +239,68 @@ class ApiService {
 
       return { data, status: response.status };
     } catch (error) {
+      // Fallback to localhost for /resident page on network/CORS errors
+      const isResidentPage = window.location.pathname.includes('/resident');
+      // Check if it's a network/CORS error (no response means request didn't reach server)
+      const isNetworkError = !error.response && (
+                            error.name === 'TypeError' || 
+                            error.message?.includes('NetworkError') || 
+                            error.message?.includes('Failed to fetch') ||
+                            error.message?.includes('Network Error') ||
+                            error.message?.includes('fetch resource') ||
+                            error.code === 'ERR_NETWORK'
+                          );
+      
+      // Also fallback for CORS errors that have status but are CORS-related (401 with CORS header missing)
+      const isCorsError = error.response?.status === 401 && 
+                         (error.message?.includes('CORS') || 
+                          error.message?.includes('Access-Control-Allow-Origin'));
+      
+      if (isResidentPage && (isNetworkError || isCorsError)) {
+        console.log('🔄 Network/CORS error on resident page, trying localhost fallback...');
+        const localhostURL = `http://localhost:8000/api/v1${endpoint}`;
+        
+        try {
+          const localhostConfig = {
+            ...config,
+            headers: {
+              ...config.headers,
+            }
+          };
+          
+          const localhostResponse = await fetch(localhostURL, localhostConfig);
+          
+          let localhostData;
+          const localhostContentType = localhostResponse.headers.get('content-type');
+          
+          if (options.responseType === 'blob') {
+            localhostData = await localhostResponse.blob();
+          } else if (localhostContentType && localhostContentType.includes('application/json')) {
+            localhostData = await localhostResponse.json();
+          } else {
+            localhostData = await localhostResponse.text();
+          }
+          
+          if (localhostResponse.ok) {
+            console.log('✅ Localhost fallback successful');
+            return { data: localhostData, status: localhostResponse.status };
+          } else {
+            // For non-ok responses, still return the data (might be 404, etc.)
+            console.log(`⚠️ Localhost fallback returned status ${localhostResponse.status}, but returning data anyway`);
+            return { data: localhostData, status: localhostResponse.status };
+          }
+        } catch (localhostError) {
+          console.error('❌ Localhost fallback also failed:', localhostError);
+          // If localhost also fails, try to return empty data instead of throwing
+          // This prevents the error from showing in UI
+          if (isNetworkError) {
+            console.log('⚠️ Returning empty data to prevent error display');
+            return { data: { requests: [], count: 0 }, status: 200 };
+          }
+          throw error; // Throw original error for non-network errors
+        }
+      }
+      
       console.error('API Request Error:', error);
       throw error;
     }

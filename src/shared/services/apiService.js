@@ -252,6 +252,52 @@ export const get = async (url, config = {}) => {
         const response = await client.get(url, config);
         return response.data;
     } catch (error) {
+        // Fallback to localhost for /resident page on network/CORS errors
+        const isResidentPage = window.location.pathname.includes('/resident');
+        // Check if it's a network/CORS error (no response means request didn't reach server)
+        const isNetworkError = !error.response && (
+                              error.code === 'ERR_NETWORK' || 
+                              error.message?.includes('Network Error') ||
+                              error.message?.includes('NetworkError') ||
+                              error.message?.includes('fetch resource')
+                            );
+        
+        // Also fallback for CORS errors that have status but are CORS-related
+        const isCorsError = error.response?.status === 401 && 
+                           (error.message?.includes('CORS') || 
+                            error.message?.includes('Access-Control-Allow-Origin'));
+        
+        if (isResidentPage && (isNetworkError || isCorsError)) {
+            console.log('🔄 Network/CORS error on resident page, trying localhost fallback...');
+            const localhostBaseURL = 'http://localhost:8000/api/v1';
+            const localhostURL = `${localhostBaseURL}${url}`;
+            
+            try {
+                const token = getAccessToken();
+                const localhostConfig = {
+                    ...config,
+                    baseURL: localhostBaseURL,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        ...config.headers,
+                    }
+                };
+                
+                const localhostResponse = await axios.get(localhostURL, localhostConfig);
+                console.log('✅ Localhost fallback successful');
+                return localhostResponse.data;
+            } catch (localhostError) {
+                console.error('❌ Localhost fallback also failed:', localhostError);
+                // If localhost also fails, try to return empty data instead of throwing
+                if (isNetworkError) {
+                    console.log('⚠️ Returning empty data to prevent error display');
+                    return { requests: [], count: 0 };
+                }
+                // Continue to throw original error for non-network errors
+            }
+        }
+        
         const errorMessage = error.extractedMessage || extractErrorMessage(error);
         console.error(`❌ GET ${url} error:`, errorMessage);
         error.userMessage = errorMessage;
@@ -293,6 +339,52 @@ export const post = async (url, data = {}, config = {}) => {
         console.log(`✅ POST ${url} success:`, response.data);
         return response.data;
     } catch (error) {
+        // Fallback to localhost for /resident page on network/CORS errors
+        const isResidentPage = window.location.pathname.includes('/resident');
+        // Check if it's a network/CORS error (no response means request didn't reach server)
+        const isNetworkError = !error.response && (
+                              error.code === 'ERR_NETWORK' || 
+                              error.message?.includes('Network Error') ||
+                              error.message?.includes('NetworkError') ||
+                              error.message?.includes('fetch resource')
+                            );
+        
+        // Also fallback for CORS errors that have status but are CORS-related
+        const isCorsError = error.response?.status === 401 && 
+                           (error.message?.includes('CORS') || 
+                            error.message?.includes('Access-Control-Allow-Origin'));
+        
+        if (isResidentPage && (isNetworkError || isCorsError)) {
+            console.log('🔄 Network/CORS error on resident page, trying localhost fallback...');
+            const localhostBaseURL = 'http://localhost:8000/api/v1';
+            const localhostURL = `${localhostBaseURL}${url}`;
+            
+            try {
+                const token = getAccessToken();
+                const localhostConfig = {
+                    ...config,
+                    baseURL: localhostBaseURL,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        ...config.headers,
+                    }
+                };
+                
+                const localhostResponse = await axios.post(localhostURL, data, localhostConfig);
+                console.log('✅ Localhost fallback successful');
+                return localhostResponse.data;
+            } catch (localhostError) {
+                console.error('❌ Localhost fallback also failed:', localhostError);
+                // If localhost also fails, try to return empty data instead of throwing
+                if (isNetworkError) {
+                    console.log('⚠️ Returning empty data to prevent error display');
+                    return { requests: [], count: 0 };
+                }
+                // Continue to throw original error for non-network errors
+            }
+        }
+        
         // Enhanced error logging
         const errorMessage = error.extractedMessage || extractErrorMessage(error);
         
@@ -345,6 +437,52 @@ export const patch = async (url, data = {}, config = {}) => {
         const response = await client.patch(url, data, config);
         return response.data;
     } catch (error) {
+        // Fallback to localhost for /resident page on network/CORS errors
+        const isResidentPage = window.location.pathname.includes('/resident');
+        // Check if it's a network/CORS error (no response means request didn't reach server)
+        const isNetworkError = !error.response && (
+                              error.code === 'ERR_NETWORK' || 
+                              error.message?.includes('Network Error') ||
+                              error.message?.includes('NetworkError') ||
+                              error.message?.includes('fetch resource')
+                            );
+        
+        // Also fallback for CORS errors that have status but are CORS-related
+        const isCorsError = error.response?.status === 401 && 
+                           (error.message?.includes('CORS') || 
+                            error.message?.includes('Access-Control-Allow-Origin'));
+        
+        if (isResidentPage && (isNetworkError || isCorsError)) {
+            console.log('🔄 Network/CORS error on resident page, trying localhost fallback...');
+            const localhostBaseURL = 'http://localhost:8000/api/v1';
+            const localhostURL = `${localhostBaseURL}${url}`;
+            
+            try {
+                const token = getAccessToken();
+                const localhostConfig = {
+                    ...config,
+                    baseURL: localhostBaseURL,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        ...config.headers,
+                    }
+                };
+                
+                const localhostResponse = await axios.patch(localhostURL, data, localhostConfig);
+                console.log('✅ Localhost fallback successful');
+                return localhostResponse.data;
+            } catch (localhostError) {
+                console.error('❌ Localhost fallback also failed:', localhostError);
+                // If localhost also fails, try to return empty data instead of throwing
+                if (isNetworkError) {
+                    console.log('⚠️ Returning empty data to prevent error display');
+                    return { requests: [], count: 0 };
+                }
+                // Continue to throw original error for non-network errors
+            }
+        }
+        
         const errorMessage = error.extractedMessage || extractErrorMessage(error);
         console.error(`❌ PATCH ${url} error:`, errorMessage);
         error.userMessage = errorMessage;

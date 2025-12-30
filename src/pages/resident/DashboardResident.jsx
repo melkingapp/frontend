@@ -9,8 +9,10 @@ import BuildingRequestStatus from "../../features/resident/building/components/B
 import BuildingSelector from "../../features/resident/building/components/BuildingSelector";
 import Button from "../../shared/components/shared/feedback/Button";
 import { selectSelectedResidentBuilding } from "../../features/resident/building/residentBuildingSlice";
-import { selectMembershipRequests, fetchMembershipRequests } from "../../features/membership/membershipSlice";
+import { selectMembershipRequests, fetchMembershipRequests, fetchSuggestedRequests } from "../../features/membership/membershipSlice";
 import { useApprovedRequests } from "../../features/resident/building/hooks/useApprovedRequests";
+import SuggestedRequestsBanner from "../../features/membership/components/SuggestedRequestsBanner";
+import SuggestedRequestsList from "../../features/membership/components/SuggestedRequestsList";
 
 // Wrapper component for the membership request form
 function MembershipRequestFormWrapper() {
@@ -45,12 +47,14 @@ export default function ResidentDashboard() {
   const dispatch = useDispatch();
   const selectedBuilding = useSelector(selectSelectedResidentBuilding);
   const membershipRequests = useSelector(selectMembershipRequests);
+  const [showSuggestedRequestsList, setShowSuggestedRequestsList] = useState(false);
 
   const approvedRequests = useApprovedRequests();
 
   // Load data when component mounts
   useEffect(() => {
     dispatch(fetchMembershipRequests());
+    dispatch(fetchSuggestedRequests());
   }, [dispatch]);
 
   const hasBuilding = approvedRequests.length > 0;
@@ -60,6 +64,17 @@ export default function ResidentDashboard() {
   
   return (
     <div className="p-4 space-y-6">
+      {/* نوار اعلان درخواست‌های suggested */}
+      <SuggestedRequestsBanner onViewRequests={() => setShowSuggestedRequestsList(true)} />
+
+      {/* لیست درخواست‌های suggested */}
+      {showSuggestedRequestsList && (
+        <SuggestedRequestsList
+          isOpen={showSuggestedRequestsList}
+          onClose={() => setShowSuggestedRequestsList(false)}
+        />
+      )}
+
       {/* نمایش ساختمان‌های عضو شده */}
       {hasBuilding && (
         <div>
