@@ -18,6 +18,22 @@ export default function CreateBuildingForm() {
         fund_balance: "",
         fund_sheba_number: "",
         blocks_count: "",
+        // Block hierarchical structure
+        block_buildings: [],
+        block_buildings_count: "",
+        // Complex hierarchical structure
+        complex_has_blocks: null,
+        complex_blocks: [],
+        complex_direct_buildings: [],
+        complex_direct_buildings_count: "",
+        // Community (Township) hierarchical structure
+        community_has_complex: null,
+        community_total_buildings: "",
+        community_complexes: [],
+        community_has_blocks: null,
+        community_blocks: [],
+        community_direct_buildings: [],
+        community_direct_buildings_count: "",
     });
 
     const next = () => setStep((prev) => prev + 1);

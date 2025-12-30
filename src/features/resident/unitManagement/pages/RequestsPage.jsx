@@ -65,22 +65,11 @@ export default function RequestsPage() {
             {/* {user?.role === 'owner' && <BuildingSelector />} */}
             
             {/* درخواست‌های عادی */}
-            <RegularRequestsManager />
+            <RequestsBase />
             
-            {/* راهنمای درخواست عضویت */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <div className="text-center">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                        راهنمای درخواست عضویت
-                    </h3>
-                    <p className="text-blue-700 mb-4">
-                        برای عضویت در ساختمان، لطفاً از فرم درخواست عضویت در صفحه اصلی استفاده کنید.
-                    </p>
-                    <p className="text-sm text-blue-600">
-                        پس از ارسال درخواست عضویت، مدیر آن را بررسی و تایید خواهد کرد.
-                    </p>
-                </div>
-            </div>
+            {/* RegularRequestsManager - kept for backward compatibility if needed */}
+            {/* <RegularRequestsManager /> */}
+           
             
             {/* درخواست‌های اجاره برای مالکان - غیرفعال شده چون مالک باید فقط درخواست‌های عضویت را ببیند */}
             {/* {user?.role === 'owner' && <OwnerRentalRequestsList />} */}

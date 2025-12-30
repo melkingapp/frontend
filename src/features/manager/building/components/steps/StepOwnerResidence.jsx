@@ -102,25 +102,21 @@ export default function StepOwnerResidence({ formData, setFormData, next, prev }
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <InputField
-                                    label="تعداد پارکینگ"
-                                    type="number"
-                                    placeholder="مثلاً 1"
-                                    min="0"
-                                    value={formData.manager_parking_count || ""}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, manager_parking_count: e.target.value })
-                                    }
-                                />
-                                <div className="flex items-center gap-3 pt-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
                                     <input
                                         id="manager_has_parking"
                                         type="checkbox"
                                         checked={formData.manager_has_parking || false}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, manager_has_parking: e.target.checked })
-                                        }
+                                        onChange={(e) => {
+                                            const hasParking = e.target.checked;
+                                            setFormData({ 
+                                                ...formData, 
+                                                manager_has_parking: hasParking,
+                                                // اگر تیک برداشته شد، تعداد پارکینگ را پاک کن
+                                                manager_parking_count: hasParking ? formData.manager_parking_count : ""
+                                            });
+                                        }}
                                         className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-[#2C5A8C]"
                                     />
                                     <label
@@ -130,6 +126,19 @@ export default function StepOwnerResidence({ formData, setFormData, next, prev }
                                         پارکینگ دارد
                                     </label>
                                 </div>
+                                
+                                {formData.manager_has_parking && (
+                                    <InputField
+                                        label="تعداد پارکینگ"
+                                        type="number"
+                                        placeholder="مثلاً 1"
+                                        min="0"
+                                        value={formData.manager_parking_count || ""}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, manager_parking_count: e.target.value })
+                                        }
+                                    />
+                                )}
                             </div>
 
                             <SelectField

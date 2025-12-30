@@ -2,13 +2,14 @@ import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import RequestBase from "../components/requests/RequestBase";
+import { selectSelectedBuilding } from "../../building/buildingSlice";
 
 export default function RequestsPage() {
   const navigate = useNavigate();
-  const { user } = useSelector(state => state.auth);
+  const selectedBuilding = useSelector(selectSelectedBuilding);
 
-  // Get building ID from user's current building or first building
-  const buildingId = user?.buildings?.[0]?.building_id || null;
+  // Get building ID from selected building
+  const buildingId = selectedBuilding?.building_id || selectedBuilding?.id || null;
 
   return (
     <div className="p-2 space-y-6">

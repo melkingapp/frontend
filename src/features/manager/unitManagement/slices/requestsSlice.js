@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getUnitRequests, getAllRequests, createUnitRequest as createUnitRequestService, updateRequestStatus as updateRequestStatusService } from "../../../../shared/services/requestsService";
+import { getUnitRequests, createUnitRequest as createUnitRequestService, updateRequestStatus as updateRequestStatusService } from "../../../../shared/services/requestsService";
 
 // Async thunks
 export const fetchRequests = createAsyncThunk(
@@ -7,9 +7,13 @@ export const fetchRequests = createAsyncThunk(
   async (buildingId, { rejectWithValue }) => {
     try {
       console.log("🔥 fetchRequests - Building ID:", buildingId);
-      const response = buildingId 
-        ? await getUnitRequests(buildingId)
-        : await getAllRequests();
+      
+      // Only fetch if buildingId is provided
+      if (!buildingId) {
+        return [];
+      }
+      
+      const response = await getUnitRequests(buildingId);
       console.log("🔥 fetchRequests - API response:", response);
       return response.requests || [];
     } catch (error) {

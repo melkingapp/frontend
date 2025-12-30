@@ -9,7 +9,11 @@ export default function RequestItem({ request }) {
     const dispatch = useDispatch();
     const { updateLoading } = useSelector(state => state.requests);
     const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
+    const { user } = useSelector(state => state.auth);
     const [expanded, setExpanded] = useState(false);
+    
+    // Only show approve/reject buttons for managers
+    const isManager = user?.role === 'manager';
 
     const buildingId = selectedBuildingId || (buildings && buildings.length > 0 ? buildings[0].building_id : null);
 
@@ -116,7 +120,7 @@ export default function RequestItem({ request }) {
 
                 {/* ستون ۳: دکمه‌ها */}
                 <div className="col-span-12 md:col-span-12 lg:col-span-3 flex flex-col sm:flex-row sm:justify-start gap-2 mt-2 lg:mt-0">
-                    {request?.status === 'pending' ? (
+                    {isManager && request?.status === 'pending' ? (
                         <>
                             <button
                                 onClick={handleApprove}

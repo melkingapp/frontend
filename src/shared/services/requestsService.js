@@ -49,18 +49,24 @@ export const getAllRequests = async () => {
         const buildingsResponse = await get('/buildings/list/');
         const allRequests = [];
         
-        for (const building of buildingsResponse.buildings || []) {
-            try {
-                const requestsData = await getUnitRequests(building.building_id);
-                const requests = requestsData.requests.map(request => ({
-                    ...request,
-                    building_id: building.building_id,
-                    building_title: building.title
-                }));
-                allRequests.push(...requests);
-            } catch (error) {
-                console.warn(`Failed to fetch requests for building ${building.building_id}:`, error);
-            }
+        // Limit to first building only to avoid performance issues
+        // Or return empty array if no buildings
+        if (!buildingsResponse.buildings || buildingsResponse.buildings.length === 0) {
+            return { requests: [] };
+        }
+        
+        // Only get requests for the first building to avoid timeout
+        const firstBuilding = buildingsResponse.buildings[0];
+        try {
+            const requestsData = await getUnitRequests(firstBuilding.building_id);
+            const requests = (requestsData.requests || []).map(request => ({
+                ...request,
+                building_id: firstBuilding.building_id,
+                building_title: firstBuilding.title
+            }));
+            allRequests.push(...requests);
+        } catch (error) {
+            console.warn(`Failed to fetch requests for building ${firstBuilding.building_id}:`, error);
         }
         
         return { requests: allRequests };
