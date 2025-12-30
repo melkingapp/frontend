@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { X, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import UnitRequestItem from "./modalItem/UnitRequestItem";
@@ -108,23 +108,27 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
         }
     };
 
+    // Use financial transactions if available, otherwise fall back to unit.transactions
+    const transactionsToUse = useMemo(() => {
+        return financialTransactions.length > 0
+            ? financialTransactions
+            : ((unit && unit.transactions) || []);
+    }, [financialTransactions, unit]);
+
+    const sortedTx = useMemo(() => {
+        return transactionsToUse
+            ? [...transactionsToUse].sort((a, b) => {
+                const dateA = (a.date || a.issue_date) ? moment(a.date || a.issue_date).valueOf() : 0;
+                const dateB = (b.date || b.issue_date) ? moment(b.date || b.issue_date).valueOf() : 0;
+                return dateB - dateA;
+            })
+            : [];
+    }, [transactionsToUse]);
+
     if (!isOpen || !unit) return null;
 
     const handleShowMoreTx = () => setVisibleTxCount((prev) => Math.min(prev + 4, maxTxVisible));
     const handleShowLessTx = () => setVisibleTxCount(initialTxCount);
-    
-    // Use financial transactions if available, otherwise fall back to unit.transactions
-    const transactionsToUse = financialTransactions.length > 0 
-        ? financialTransactions 
-        : (unit.transactions || []);
-    
-    const sortedTx = transactionsToUse
-        ? [...transactionsToUse].sort((a, b) => {
-            const dateA = (a.date || a.issue_date) ? moment(a.date || a.issue_date).valueOf() : 0;
-            const dateB = (b.date || b.issue_date) ? moment(b.date || b.issue_date).valueOf() : 0;
-            return dateB - dateA;
-        })
-        : [];
 
     // در فرمت جدید API، فقط فاکتورها (invoices) برگردانده می‌شوند
     const expenseTransactions = sortedTx;
