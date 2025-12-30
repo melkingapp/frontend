@@ -117,6 +117,18 @@ export const rejectMembershipRequest = createAsyncThunk(
   }
 );
 
+export const rejectSuggestedMembershipRequest = createAsyncThunk(
+  'membership/rejectSuggestedRequest',
+  async ({ requestId, rejectionReason }, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.rejectSuggestedMembershipRequest(requestId, rejectionReason);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
 export const fetchUnitByPhone = createAsyncThunk(
   'membership/fetchUnitByPhone',
   async (phoneNumber, { rejectWithValue }) => {
@@ -312,6 +324,19 @@ export const joinByManagerPhone = createAsyncThunk(
   }
 );
 
+// ===== PRD: Suggested Requests =====
+export const fetchSuggestedRequests = createAsyncThunk(
+  'membership/fetchSuggestedRequests',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.getSuggestedRequests();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
+    }
+  }
+);
+
 // ===== PRD: Transfer Management =====
 export const transferBuildingManagement = createAsyncThunk(
   'membership/transferBuildingManagement',
@@ -347,6 +372,9 @@ const initialState = {
   inviteLinkData: null,
   // PRD: Transfer Management
   transferManagementLoading: false,
+  // PRD: Suggested Requests
+  suggestedRequests: [],
+  suggestedRequestsLoading: false,
   // Common
   loading: false,
   error: null,
@@ -736,6 +764,20 @@ const membershipSlice = createSlice({
         state.error = action.payload;
       })
 
+      // ===== PRD: Suggested Requests =====
+      .addCase(fetchSuggestedRequests.pending, (state) => {
+        state.suggestedRequestsLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchSuggestedRequests.fulfilled, (state, action) => {
+        state.suggestedRequestsLoading = false;
+        state.suggestedRequests = action.payload?.requests || [];
+      })
+      .addCase(fetchSuggestedRequests.rejected, (state, action) => {
+        state.suggestedRequestsLoading = false;
+        state.error = action.payload;
+      })
+
       // ===== PRD: Transfer Management =====
       .addCase(transferBuildingManagement.pending, (state) => {
         state.transferManagementLoading = true;
@@ -796,5 +838,9 @@ export const selectInviteLinkData = (state) => state.membership.inviteLinkData;
 
 // PRD: Transfer Management
 export const selectTransferManagementLoading = (state) => state.membership.transferManagementLoading;
+
+// PRD: Suggested Requests
+export const selectSuggestedRequests = (state) => state.membership.suggestedRequests;
+export const selectSuggestedRequestsLoading = (state) => state.membership.suggestedRequestsLoading;
 
 export default membershipSlice.reducer;
