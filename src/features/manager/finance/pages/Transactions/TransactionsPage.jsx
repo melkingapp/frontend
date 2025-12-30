@@ -27,7 +27,7 @@ import FloatingActionButton from "../../../../../shared/components/shared/feedba
 import { AddExpenseModal } from "../../components/transactions/AddExpense";
 import { PayBillModal } from "../../components/transactions/PayBill";
 import useCategories from "../../../../../shared/hooks/useCategories";
-import { deleteExpense, fetchTransactions } from "../../store/slices/financeSlice";
+import { deleteExpense, fetchTransactions, selectFinanceLoading } from "../../store/slices/financeSlice";
 import { getPersianType } from "../../../../../shared/utils/typeUtils";
 import DeleteConfirmModal from "../../../../../shared/components/shared/feedback/DeleteConfirmModal";
 import { getBuildingUnitsDebtCreditSummary, getUnitDebtSummary } from "../../../../../shared/services/billingService";
@@ -37,6 +37,7 @@ export default function FinanceTransactions() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const categories = useCategories();
+  const transactionsLoading = useSelector(selectFinanceLoading);
 
   const [selected, setSelected] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
@@ -53,6 +54,8 @@ export default function FinanceTransactions() {
   const [debtCreditLoading, setDebtCreditLoading] = useState(false);
   const [debtCreditError, setDebtCreditError] = useState(null);
   const fetchDebtCreditRef = useRef(false);
+  const expenseSubmittedRef = useRef(false);
+  const expenseSubmittedSuccessfullyRef = useRef(false);
 
   const {
     building,
@@ -190,8 +193,20 @@ export default function FinanceTransactions() {
   };
 
   const handleSubmitExpense = (data) => {
+    expenseSubmittedRef.current = true;
     submitExpense(data, editingExpense, setEditingExpense, setActiveModal);
   };
+
+  // Refresh transactions when expense is successfully submitted and modal is closed
+  useEffect(() => {
+    // When isSubmitting changes from true to false and expense was submitted, refresh
+    if (!isSubmitting && expenseSubmittedRef.current && activeModal === null) {
+      expenseSubmittedSuccessfullyRef.current = true;
+      refreshTransactions();
+      expenseSubmittedRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSubmitting, activeModal]);
 
   const handleEditExpense = (expense) => {
     setEditingExpense(expense);
@@ -505,6 +520,7 @@ export default function FinanceTransactions() {
                 onEdit={handleEditExpense}
                 onDelete={handleDeleteExpense}
                 isManager={isManager}
+                loading={transactionsLoading}
               />
             )}
           </>
@@ -543,9 +559,16 @@ export default function FinanceTransactions() {
       <AddExpenseModal
         isOpen={activeModal === "expense"}
         onClose={() => {
+          const wasSubmitted = expenseSubmittedRef.current;
           setActiveModal(null);
           setEditingExpense(null);
-          refreshTransactions();
+          
+          // If modal was closed without submitting (user cancels), refresh
+          if (!wasSubmitted && !isSubmitting) {
+            refreshTransactions();
+            expenseSubmittedRef.current = false;
+          }
+          // If expense was submitted, the useEffect will handle the refresh
         }}
         onSubmit={handleSubmitExpense}
         isLoading={isSubmitting}

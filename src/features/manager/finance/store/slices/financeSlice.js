@@ -412,16 +412,82 @@ const financeSlice = createSlice({
             })
             .addCase(fetchTransactions.fulfilled, (state, action) => {
                 state.loading = false;
-                // Handle both array and object responses
+                
+                // Extract transactions from response
+                let newTransactions = [];
                 if (Array.isArray(action.payload)) {
-                    state.transactions = action.payload;
+                    newTransactions = action.payload;
                 } else if (action.payload.results) {
-                    state.transactions = action.payload.results;
+                    newTransactions = action.payload.results;
                 } else if (action.payload.transactions) {
-                    state.transactions = action.payload.transactions;
+                    newTransactions = action.payload.transactions;
                 } else {
-                    // Ensure we only store serializable data
-                    state.transactions = Array.isArray(action.payload) ? action.payload : [];
+                    newTransactions = Array.isArray(action.payload) ? action.payload : [];
+                }
+
+                // Merge strategy: preserve recently added expenses that might not be in API response yet
+                // This handles the case where cache hasn't updated or database replication delay
+                if (Array.isArray(state.transactions) && state.transactions.length > 0) {
+                    // If API returns empty array, don't replace existing transactions
+                    // (likely a cache issue - backend cache was invalidated but not yet refreshed)
+                    if (newTransactions.length === 0) {
+                        // Keep existing transactions - don't replace with empty array
+                        state.error = null;
+                        return;
+                    }
+
+                    // Create a map of new transactions by ID for quick lookup
+                    const newTransactionsMap = new Map();
+                    newTransactions.forEach(tx => {
+                        const id = tx.id || tx.shared_bill_id || tx.transaction_id;
+                        if (id) {
+                            newTransactionsMap.set(String(id), tx);
+                        }
+                    });
+
+                    // Find transactions in current state that aren't in the new response
+                    // These might be recently added expenses that haven't been indexed yet
+                    const existingTransactionsMap = new Map();
+                    state.transactions.forEach(tx => {
+                        const id = tx.id || tx.shared_bill_id || tx.transaction_id;
+                        if (id) {
+                            existingTransactionsMap.set(String(id), tx);
+                        }
+                    });
+
+                    // Merge: use new transactions from API (they're the source of truth)
+                    // But preserve existing transactions that aren't in the new response
+                    // (they might be recently added and not yet in the API response)
+                    const mergedTransactions = [...newTransactions];
+                    
+                    // Add existing transactions that aren't in the new response
+                    // Only preserve if they look like valid transactions (have required fields)
+                    existingTransactionsMap.forEach((tx, id) => {
+                        if (!newTransactionsMap.has(id)) {
+                            // Only preserve if it looks like a valid transaction
+                            // (has required fields like amount, type, etc.)
+                            if (tx.amount !== undefined || tx.total_amount !== undefined || tx.expense_type) {
+                                mergedTransactions.push(tx);
+                            }
+                        }
+                    });
+
+                    // Sort by date (newest first) or by ID if no date
+                    mergedTransactions.sort((a, b) => {
+                        const dateA = a.created_at || a.date || a.billing_date || '';
+                        const dateB = b.created_at || b.date || b.billing_date || '';
+                        if (dateA && dateB) {
+                            return new Date(dateB) - new Date(dateA);
+                        }
+                        const idA = a.id || a.shared_bill_id || a.transaction_id || 0;
+                        const idB = b.id || b.shared_bill_id || b.transaction_id || 0;
+                        return idB - idA;
+                    });
+
+                    state.transactions = mergedTransactions;
+                } else {
+                    // If no existing transactions, just use the new ones
+                    state.transactions = newTransactions;
                 }
                 state.error = null;
             })

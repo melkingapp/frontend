@@ -1,4 +1,5 @@
 import FinanceTableRow from "./FinanceTableRow";
+import { Loader2 } from "lucide-react";
 
 export default function UnitTransactionsView({
   unitTransactions,
@@ -12,28 +13,28 @@ export default function UnitTransactionsView({
 }) {
   if (!selectedUnitId && !unitTransactionsLoading) {
     return (
-      <p className="text-sm text-gray-400 mt-4">لطفاً یک واحد را انتخاب کنید.</p>
-    );
-  }
-
-  if (selectedUnitId && !unitTransactions && !unitTransactionsLoading) {
-    return (
-      <p className="text-sm text-gray-400 mt-4">در حال بارگذاری...</p>
-    );
-  }
-
-  if (unitTransactionsLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-melkingDarkBlue"></div>
-        <span className="mr-2 text-gray-600">در حال بارگذاری گردش مالی واحد...</span>
+      <div className="text-center py-12">
+        <p className="text-sm text-gray-400">لطفاً یک واحد را انتخاب کنید.</p>
       </div>
     );
   }
 
+  // Show loading state when data is being fetched
+  if (unitTransactionsLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-melkingDarkBlue" />
+        <span className="mr-3 text-gray-600">در حال بارگذاری گردش مالی واحد...</span>
+      </div>
+    );
+  }
+
+  // Show empty message only after loading is complete
   if (filteredData.length === 0 && selectedUnitId && unitTransactions && !unitTransactionsLoading) {
     return (
-      <p className="text-sm text-gray-400 mt-4">این واحد تراکنشی ندارد.</p>
+      <div className="text-center py-12">
+        <p className="text-sm text-gray-400">این واحد تراکنشی ندارد.</p>
+      </div>
     );
   }
 

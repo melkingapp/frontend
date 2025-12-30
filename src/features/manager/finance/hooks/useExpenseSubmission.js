@@ -79,12 +79,17 @@ export function useExpenseSubmission(building, buildings, buildingUnits) {
         toast.success("هزینه با موفقیت ثبت شد");
       }
 
-      // Refresh transactions
+      // Refresh transactions with a small delay to allow backend to process
+      // and invalidate cache, ensuring the newly created expense is included
       const filters = {};
       if (buildingId) {
         filters.building_id = buildingId;
       }
-      dispatch(fetchTransactions(filters));
+      
+      // Add a small delay to allow backend cache invalidation and database update
+      setTimeout(() => {
+        dispatch(fetchTransactions(filters));
+      }, 500);
 
       // Close modal and reset editing state
       setActiveModal(null);
