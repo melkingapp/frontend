@@ -3,33 +3,240 @@ import { get, post, put, patch, deleteRequest } from './apiService';
 // Register new expense
 export const registerExpense = async (expenseData) => {
     try {
-        // اگر فایل داریم، باید از FormData استفاده کنیم
+        // همیشه از FormData استفاده می‌کنیم (حتی اگر فایلی نداشته باشیم)
         const formData = new FormData();
         
+        // بررسی اینکه آیا فایلی وجود دارد
+        const hasFile = expenseData.attachment && (
+            expenseData.attachment instanceof File || 
+            expenseData.attachment instanceof Blob ||
+            (typeof expenseData.attachment === 'object' && expenseData.attachment.constructor?.name === 'File')
+        );
+        
+        // ابتدا تمام فیلدهای غیر فایلی را اضافه می‌کنیم
+        // این کار باعث می‌شود که فایل در انتهای FormData قرار بگیرد
         for (const key in expenseData) {
-            if (expenseData[key] !== undefined && expenseData[key] !== null) {
+            if (expenseData[key] !== undefined && expenseData[key] !== null && key !== 'attachment') {
+                // مدیریت آرایه specific_units
                 if (key === 'specific_units' && Array.isArray(expenseData[key])) {
-                    // آرایه‌ها رو به JSON تبدیل می‌کنیم
                     formData.append(key, JSON.stringify(expenseData[key]));
-                } else if (expenseData[key] instanceof File) {
-                    // فایل‌ها رو مستقیماً اضافه می‌کنیم
-                    formData.append(key, expenseData[key], expenseData[key].name);
-                } else {
-                    // بقیه فیلدها رو به صورت عادی اضافه می‌کنیم
-                    formData.append(key, expenseData[key]);
+                }
+                // مدیریت custom_unit_costs (اگر object است)
+                else if (key === 'custom_unit_costs' && typeof expenseData[key] === 'object' && !Array.isArray(expenseData[key])) {
+                    formData.append(key, JSON.stringify(expenseData[key]));
+                }
+                // مدیریت boolean values - برای Django بهتر است به '1'/'0' تبدیل شود
+                else if (typeof expenseData[key] === 'boolean') {
+                    formData.append(key, expenseData[key] ? '1' : '0');
+                }
+                // مدیریت بقیه فیلدها
+                else {
+                    // تبدیل به string برای اطمینان از صحت ارسال
+                    const value = expenseData[key];
+                    if (value !== null && value !== undefined) {
+                        formData.append(key, String(value));
+                    }
                 }
             }
         }
         
+        // در انتها فایل را اضافه می‌کنیم (این کار ممکن است به Cloudflare کمک کند)
+        if (hasFile && expenseData.attachment) {
+            const file = expenseData.attachment;
+            // بررسی اینکه آیا واقعاً یک فایل است
+            if (file instanceof File || file instanceof Blob) {
+                // Validation: بررسی اندازه فایل (حداکثر 10MB)
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    throw new Error(`حجم فایل (${(file.size / 1024 / 1024).toFixed(2)} MB) بیشتر از حد مجاز (10 MB) است`);
+                }
+                
+                // Validation: بررسی نوع فایل
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 
+                                   'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+                                   'text/plain'];
+                const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt'];
+                
+                const fileExtension = file.name?.split('.').pop()?.toLowerCase();
+                const isValidType = file.type && allowedTypes.some(type => file.type.toLowerCase().includes(type.split('/')[1]));
+                const isValidExtension = fileExtension && allowedExtensions.includes(fileExtension);
+                
+                if (!isValidType && !isValidExtension) {
+                    throw new Error(`نوع فایل نامعتبر است. فایل‌های مجاز: JPG, PNG, PDF, DOC, DOCX, TXT`);
+                }
+                
+                // Validation: بررسی اینکه فایل خالی نباشد
+                if (file.size === 0) {
+                    throw new Error('فایل انتخاب شده خالی است');
+                }
+                
+                // استفاده از نام فایل یا یک نام پیش‌فرض بر اساس نوع فایل
+                const fileName = file.name || (file.type ? `attachment.${file.type.split('/')[1]}` : 'attachment');
+                formData.append('attachment', file, fileName);
+            } else if (file && typeof file === 'object' && file.constructor?.name === 'File') {
+                // برای مواردی که instanceof کار نمی‌کند
+                // Validation: بررسی اندازه فایل
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    throw new Error(`حجم فایل (${(file.size / 1024 / 1024).toFixed(2)} MB) بیشتر از حد مجاز (10 MB) است`);
+                }
+                
+                if (file.size === 0) {
+                    throw new Error('فایل انتخاب شده خالی است');
+                }
+                
+                // استفاده از نام فایل یا یک نام پیش‌فرض بر اساس نوع فایل
+                const fileName = file.name || (file.type ? `attachment.${file.type.split('/')[1]}` : 'attachment');
+                formData.append('attachment', file, fileName);
+            }
+        }
+        
+        // بررسی اینکه آیا فایل واقعاً append شده است
+        const formDataHasAttachment = formData.has('attachment');
+        
+        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
+        const formDataEntries = {};
+        const formDataKeys = Array.from(formData.keys());
+        for (const key of formDataKeys) {
+            const value = formData.get(key);
+            if (value instanceof File || value instanceof Blob) {
+                formDataEntries[key] = {
+                    type: 'File',
+                    name: value.name,
+                    size: value.size,
+                    mimeType: value.type
+                };
+            } else {
+                formDataEntries[key] = value;
+            }
+        }
+        
+        // محاسبه اندازه تقریبی FormData
+        let estimatedSize = 0;
+        for (const key of formDataKeys) {
+            const value = formData.get(key);
+            if (value instanceof File || value instanceof Blob) {
+                estimatedSize += value.size;
+            } else if (typeof value === 'string') {
+                estimatedSize += new Blob([value]).size;
+            }
+        }
+        
+        console.log('📤 FormData contents:', {
+            hasFile: hasFile,
+            formDataHasAttachment: formDataHasAttachment,
+            keys: formDataKeys,
+            entries: formDataEntries,
+            estimatedSize: `${(estimatedSize / 1024 / 1024).toFixed(2)} MB`,
+            attachment: expenseData.attachment ? {
+                name: expenseData.attachment.name,
+                size: expenseData.attachment.size,
+                type: expenseData.attachment.type,
+                isFile: expenseData.attachment instanceof File
+            } : null,
+            // نمایش تمام فیلدهای expenseData برای مقایسه
+            expenseDataKeys: Object.keys(expenseData),
+            expenseDataValues: Object.fromEntries(
+                Object.entries(expenseData).map(([k, v]) => [
+                    k, 
+                    v instanceof File ? { type: 'File', name: v.name, size: v.size } : v
+                ])
+            )
+        });
+        
+        // بررسی اینکه آیا همه فیلدها معتبر هستند
+        const requiredFields = ['building_id', 'expense_type', 'total_amount', 'unit_selection', 'distribution_method', 'role', 'bill_due'];
+        const missingFields = requiredFields.filter(field => !formDataKeys.includes(field));
+        if (missingFields.length > 0) {
+            console.warn('⚠️ Missing required fields in FormData:', missingFields);
+        }
+        
+        // اگر فایل وجود دارد اما append نشده، خطا بده
+        if (hasFile && !formDataHasAttachment) {
+            console.error('❌ File exists but was not appended to FormData!');
+            throw new Error('خطا در آماده‌سازی فایل برای ارسال');
+        }
+        
         // بذار axios خودش Content-Type رو با boundary مناسب set کنه
-        const response = await post('/billing/register-expense/', formData);
+        // اگر فایل داریم، timeout بیشتری تنظیم می‌کنیم و maxContentLength و maxBodyLength را افزایش می‌دهیم
+        const config = hasFile ? { 
+            timeout: 60000, // 60 ثانیه برای فایل‌ها
+            maxContentLength: Infinity, // بدون محدودیت برای محتوای پاسخ
+            maxBodyLength: Infinity, // بدون محدودیت برای بدنه درخواست
+            onUploadProgress: (progressEvent) => {
+                // لاگ پیشرفت آپلود (اختیاری)
+                if (progressEvent.total) {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    console.log(`📤 Upload progress: ${percentCompleted}%`);
+                }
+            }
+        } : {};
+        
+        const response = await post('/billing/register-expense/', formData, config);
         return response;
     } catch (error) {
         console.error('Register expense error:', error);
-        // نمایش پیام خطای Backend اگر موجود باشد
-        if (error.response?.data?.error) {
-            console.error('Backend error:', error.response.data.error);
+        
+        // بهبود مدیریت خطا و نمایش پیام‌های واضح‌تر
+        let errorMessage = 'خطا در ثبت هزینه';
+        
+        // اگر خطا از validation فایل است، پیام را مستقیماً برگردان
+        if (error.message && (
+            error.message.includes('حجم فایل') || 
+            error.message.includes('نوع فایل') || 
+            error.message.includes('خالی است')
+        )) {
+            error.userMessage = error.message;
+            throw error;
         }
+        
+        // بررسی خطاهای شبکه
+        if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+            errorMessage = 'زمان ارسال درخواست به پایان رسید. لطفاً دوباره تلاش کنید.';
+        } else if (error.code === 'ERR_NETWORK' || !error.response) {
+            errorMessage = 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.';
+        }
+        // بررسی خطاهای HTTP
+        else if (error.response) {
+            const status = error.response.status;
+            const data = error.response.data;
+            
+            // بررسی اینکه آیا پاسخ HTML است (مثلاً از Cloudflare)
+            const isHtmlResponse = typeof data === 'string' && (
+                data.trim().startsWith('<!DOCTYPE') || 
+                data.trim().startsWith('<html')
+            );
+            
+            if (isHtmlResponse) {
+                errorMessage = 'خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.';
+                console.error('❌ Received HTML response instead of JSON. This might be a Cloudflare error or server misconfiguration.');
+            } else if (data?.error) {
+                // استفاده از پیام خطای بک‌اند
+                errorMessage = data.error;
+            } else if (status === 400) {
+                errorMessage = 'داده‌های ارسالی نامعتبر است. لطفاً تمام فیلدها را بررسی کنید.';
+            } else if (status === 413) {
+                errorMessage = 'حجم فایل ارسالی بیش از حد مجاز است. لطفاً فایل کوچک‌تری انتخاب کنید.';
+            } else if (status === 500) {
+                errorMessage = 'خطای داخلی سرور. لطفاً دوباره تلاش کنید.';
+            } else {
+                errorMessage = `خطا در ثبت هزینه (کد خطا: ${status})`;
+            }
+        }
+        
+        // اضافه کردن پیام خطا به error object
+        error.userMessage = errorMessage;
+        
+        // لاگ جزئیات بیشتر برای دیباگ
+        console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            userMessage: errorMessage
+        });
+        
         throw error;
     }
 };
@@ -71,19 +278,64 @@ export const registerCharge = async (chargeData) => {
 // Update expense
 export const updateExpense = async (expenseData) => {
     try {
-        // اگر فایل داریم، باید از FormData استفاده کنیم
+        // همیشه از FormData استفاده می‌کنیم (حتی اگر فایلی نداشته باشیم)
         const formData = new FormData();
+        
+        // بررسی اینکه آیا فایلی وجود دارد
+        const hasFile = expenseData.attachment && (
+            expenseData.attachment instanceof File || 
+            expenseData.attachment instanceof Blob ||
+            (typeof expenseData.attachment === 'object' && expenseData.attachment.constructor?.name === 'File')
+        );
         
         for (const key in expenseData) {
             if (expenseData[key] !== undefined && expenseData[key] !== null) {
-                if (key === 'specific_units' && Array.isArray(expenseData[key])) {
+                // مدیریت فایل attachment
+                if (key === 'attachment') {
+                    const file = expenseData[key];
+                    // بررسی اینکه آیا واقعاً یک فایل است
+                    if (file instanceof File || file instanceof Blob) {
+                        formData.append('attachment', file, file.name || 'attachment');
+                    } else if (file && typeof file === 'object' && file.constructor?.name === 'File') {
+                        // برای مواردی که instanceof کار نمی‌کند
+                        formData.append('attachment', file, file.name || 'attachment');
+                    }
+                }
+                // مدیریت آرایه specific_units
+                else if (key === 'specific_units' && Array.isArray(expenseData[key])) {
                     formData.append(key, JSON.stringify(expenseData[key]));
-                } else if (expenseData[key] instanceof File) {
-                    formData.append(key, expenseData[key], expenseData[key].name);
-                } else {
-                    formData.append(key, expenseData[key]);
+                }
+                // مدیریت custom_unit_costs (اگر object است)
+                else if (key === 'custom_unit_costs' && typeof expenseData[key] === 'object' && !Array.isArray(expenseData[key])) {
+                    formData.append(key, JSON.stringify(expenseData[key]));
+                }
+                // مدیریت boolean values
+                else if (typeof expenseData[key] === 'boolean') {
+                    formData.append(key, expenseData[key] ? 'true' : 'false');
+                }
+                // مدیریت بقیه فیلدها
+                else if (key !== 'attachment') {
+                    // تبدیل به string برای اطمینان از صحت ارسال
+                    const value = expenseData[key];
+                    if (value !== null && value !== undefined) {
+                        formData.append(key, String(value));
+                    }
                 }
             }
+        }
+        
+        // لاگ برای دیباگ (فقط در حالت development)
+        if (process.env.NODE_ENV === 'development') {
+            console.log('📤 Update Expense FormData contents:', {
+                hasFile: hasFile,
+                keys: Array.from(formData.keys()),
+                attachment: expenseData.attachment ? {
+                    name: expenseData.attachment.name,
+                    size: expenseData.attachment.size,
+                    type: expenseData.attachment.type,
+                    isFile: expenseData.attachment instanceof File
+                } : null
+            });
         }
         
         const response = await put('/billing/update-expense/', formData);
@@ -514,8 +766,56 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
         if (data.payment_date) {
             formData.append('payment_date', data.payment_date);
         }
-        if (data.attachment && data.attachment instanceof File) {
-            formData.append('attachment', data.attachment, data.attachment.name);
+        
+        // مدیریت فایل attachment - منطق یکسان با registerExpense
+        if (data.attachment) {
+            const file = data.attachment;
+            // بررسی اینکه آیا واقعاً یک فایل است
+            if (file instanceof File || file instanceof Blob) {
+                // Validation: بررسی اندازه فایل (حداکثر 10MB)
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    throw new Error(`حجم فایل (${(file.size / 1024 / 1024).toFixed(2)} MB) بیشتر از حد مجاز (10 MB) است`);
+                }
+                
+                // Validation: بررسی نوع فایل
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 
+                                   'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+                                   'text/plain'];
+                const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt'];
+                
+                const fileExtension = file.name?.split('.').pop()?.toLowerCase();
+                const isValidType = file.type && allowedTypes.some(type => file.type.toLowerCase().includes(type.split('/')[1]));
+                const isValidExtension = fileExtension && allowedExtensions.includes(fileExtension);
+                
+                if (!isValidType && !isValidExtension) {
+                    throw new Error(`نوع فایل نامعتبر است. فایل‌های مجاز: JPG, PNG, PDF, DOC, DOCX, TXT`);
+                }
+                
+                // Validation: بررسی اینکه فایل خالی نباشد
+                if (file.size === 0) {
+                    throw new Error('فایل انتخاب شده خالی است');
+                }
+                
+                // استفاده از نام فایل یا یک نام پیش‌فرض بر اساس نوع فایل
+                const fileName = file.name || (file.type ? `attachment.${file.type.split('/')[1]}` : 'attachment');
+                formData.append('attachment', file, fileName);
+            } else if (file && typeof file === 'object' && file.constructor?.name === 'File') {
+                // برای مواردی که instanceof کار نمی‌کند
+                // Validation: بررسی اندازه فایل
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    throw new Error(`حجم فایل (${(file.size / 1024 / 1024).toFixed(2)} MB) بیشتر از حد مجاز (10 MB) است`);
+                }
+                
+                if (file.size === 0) {
+                    throw new Error('فایل انتخاب شده خالی است');
+                }
+                
+                // استفاده از نام فایل یا یک نام پیش‌فرض بر اساس نوع فایل
+                const fileName = file.name || (file.type ? `attachment.${file.type.split('/')[1]}` : 'attachment');
+                formData.append('attachment', file, fileName);
+            }
         }
         
         const response = await post('/billing/extra-payment-request/', formData);

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getResidentRequests, getApprovedBuildings, getBuildingDetails } from '../../../shared/services/residentRequestsService';
+import { getApiBaseUrl } from '../../../shared/utils/apiConfig';
 
 // Token refresh helper
 const handleTokenRefresh = async (dispatch) => {
@@ -9,7 +10,7 @@ const handleTokenRefresh = async (dispatch) => {
             throw new Error('No refresh token available');
         }
 
-        const response = await fetch(`https://melkingapp.ir/api/v1/refresh/`, {
+        const response = await fetch(`${getApiBaseUrl()}/refresh/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh: refreshToken })

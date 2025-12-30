@@ -1,6 +1,8 @@
+import { getApiBaseUrl } from '../utils/apiConfig';
+
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: 'https://melkingapp.ir/api/v1',
+  BASE_URL: getApiBaseUrl(),
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3,
 };

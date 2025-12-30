@@ -3,6 +3,7 @@ import { Building2, Send, AlertCircle, CheckCircle } from "lucide-react";
 import { useDispatch } from "react-redux";
 import Button from "../../../../shared/components/shared/feedback/Button";
 import InputField from "../../../../shared/components/shared/inputs/InputField";
+import { getApiBaseUrl } from "../../../../shared/utils/apiConfig";
 import { fetchResidentRequests } from "../residentBuildingSlice";
 
 export default function BuildingRequestForm({ onSuccess }) {
@@ -48,8 +49,7 @@ export default function BuildingRequestForm({ onSuccess }) {
 
         try {
             const token = localStorage.getItem('access_token');
-            const baseURL = 'https://melkingapp.ir';
-            const response = await fetch(`${baseURL}/api/v1/buildings/resident-requests/create/`, {
+            const response = await fetch(`${getApiBaseUrl()}/buildings/resident-requests/create/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

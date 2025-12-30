@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { getApiBaseUrl } from '../utils/apiConfig';
 
 // Configuration
-const baseURL = 'https://melkingapp.ir/api/v1';
+const baseURL = getApiBaseUrl();
 
 // Helper function to extract error message from HTML response
 const extractErrorMessage = (error) => {
@@ -85,9 +86,26 @@ client.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        // If data is FormData, let axios set Content-Type automatically
+        // If data is FormData, let axios set Content-Type automatically with boundary
         if (config.data instanceof FormData) {
+            // حذف Content-Type برای اجازه دادن به axios برای تنظیم خودکار boundary
             delete config.headers['Content-Type'];
+            
+            // لاگ برای دیباگ
+            if (process.env.NODE_ENV === 'development') {
+                const formDataKeys = Array.from(config.data.keys());
+                const hasFile = formDataKeys.some(key => {
+                    const value = config.data.get(key);
+                    return value instanceof File || value instanceof Blob;
+                });
+                console.log('📋 FormData request:', {
+                    url: config.url,
+                    method: config.method,
+                    keys: formDataKeys,
+                    hasFile: hasFile,
+                    contentType: config.headers['Content-Type'] || 'multipart/form-data (auto)'
+                });
+            }
         }
         return config;
     },
@@ -244,10 +262,32 @@ export const get = async (url, config = {}) => {
 export const post = async (url, data = {}, config = {}) => {
     try {
         // Log request details for debugging
-        console.log(`📤 POST ${url}`, {
-            data: data,
-            config: config
-        });
+        if (data instanceof FormData) {
+            // برای FormData، فقط اطلاعات کلی را لاگ می‌کنیم
+            const formDataKeys = Array.from(data.keys());
+            const fileInfo = {};
+            formDataKeys.forEach(key => {
+                const value = data.get(key);
+                if (value instanceof File || value instanceof Blob) {
+                    fileInfo[key] = {
+                        name: value.name,
+                        size: value.size,
+                        type: value.type
+                    };
+                }
+            });
+            console.log(`📤 POST ${url} (FormData)`, {
+                keys: formDataKeys,
+                files: Object.keys(fileInfo).length > 0 ? fileInfo : 'none',
+                timeout: config.timeout,
+                hasFiles: Object.keys(fileInfo).length > 0
+            });
+        } else {
+            console.log(`📤 POST ${url}`, {
+                data: data,
+                config: config
+            });
+        }
         
         const response = await client.post(url, data, config);
         console.log(`✅ POST ${url} success:`, response.data);

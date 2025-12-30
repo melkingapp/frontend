@@ -1,5 +1,7 @@
+import { getApiBaseUrl } from '../utils/apiConfig';
+
 // API Base URL Configuration
-const API_BASE_URL = 'https://melkingapp.ir/api/v1';
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiService {
   constructor() {

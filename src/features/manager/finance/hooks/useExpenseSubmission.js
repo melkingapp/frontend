@@ -45,12 +45,22 @@ export function useExpenseSubmission(building, buildings, buildingUnits) {
         expenseData.custom_unit_costs = data.customUnitCosts;
       }
 
-      // Handle files
-      if (data.files && Array.isArray(data.files) && data.files.length > 0) {
-        // Use the first file as attachment
-        expenseData.attachment = data.files[0];
-      } else if (data.files && data.files instanceof File) {
-        expenseData.attachment = data.files;
+      // Handle files - ensure proper File object extraction
+      if (data.files) {
+        if (Array.isArray(data.files) && data.files.length > 0) {
+          // Use the first file as attachment
+          const file = data.files[0];
+          // Validate that it's actually a File object
+          if (file instanceof File || file instanceof Blob) {
+            expenseData.attachment = file;
+          } else {
+            console.warn('File in array is not a valid File object:', file);
+          }
+        } else if (data.files instanceof File || data.files instanceof Blob) {
+          expenseData.attachment = data.files;
+        } else {
+          console.warn('Files data is not in expected format:', data.files);
+        }
       }
 
       // Handle grace period and auto transfer if provided

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
+import { getMediaBaseUrl } from "../../../../shared/utils/apiConfig";
 import { 
     fetchExtraPaymentRequests
 } from "../../../manager/finance/store/slices/extraPaymentSlice";
@@ -131,7 +132,7 @@ export default function ExtraPaymentRequests() {
 
     const openImagePreview = (imageUrl) => {
         // اگر URL کامل نیست، BASE_URL را اضافه می‌کنیم
-        const MEDIA_URL = 'https://melkingapp.ir';
+        const MEDIA_URL = getMediaBaseUrl();
         const fullUrl = imageUrl?.startsWith('http') 
             ? imageUrl 
             : `${MEDIA_URL}${imageUrl}`;

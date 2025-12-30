@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { selectSelectedBuilding } from "../../building/buildingSlice";
@@ -20,6 +20,7 @@ export function useTransactions() {
   const [unitTransactionsLoading, setUnitTransactionsLoading] = useState(false);
   const [dateRange, setDateRange] = useState(null);
 
+  // Memoize buildingUnits selector to prevent unnecessary rerenders
   const buildingUnits = useSelector(state => {
     const buildingId = building?.building_id || building?.id;
     if (!buildingId) return [];
@@ -30,6 +31,15 @@ export function useTransactions() {
       return unitsData.units;
     }
     return [];
+  }, (prev, next) => {
+    // Custom equality check to prevent unnecessary rerenders
+    if (!prev && !next) return true;
+    if (!prev || !next) return false;
+    if (prev.length !== next.length) return false;
+    return prev.every((item, index) => {
+      const nextItem = next[index];
+      return item?.units_id === nextItem?.units_id && item?.id === nextItem?.id;
+    });
   });
 
   const userUnits = buildingUnits.filter(unit => 

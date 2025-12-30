@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { getApiBaseUrl } from '../../../../shared/utils/apiConfig';
 
 // Async thunk for fetching building residents
 export const fetchBuildingResidents = createAsyncThunk(
@@ -6,8 +7,7 @@ export const fetchBuildingResidents = createAsyncThunk(
     async (buildingId, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem('access_token');
-            const baseURL = 'https://melkingapp.ir';
-            const response = await fetch(`${baseURL}/api/v1/buildings/${buildingId}/resident-requests/`, {
+            const response = await fetch(`${getApiBaseUrl()}/buildings/${buildingId}/resident-requests/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -49,8 +49,7 @@ export const updateResidentStatus = createAsyncThunk(
     async ({ requestId, status }, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem('access_token');
-            const baseURL = 'https://melkingapp.ir';
-            const response = await fetch(`${baseURL}/api/v1/buildings/resident-requests/${requestId}/update-status/`, {
+            const response = await fetch(`${getApiBaseUrl()}/buildings/resident-requests/${requestId}/update-status/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import { User } from "lucide-react";
 import moment from "moment-jalaali";
+import { getBaseUrl } from "../../../../../shared/utils/apiConfig";
 
 export default function LetterItem({ letter, index, onSelect }) {
     const iconBg =
@@ -13,7 +14,7 @@ export default function LetterItem({ letter, index, onSelect }) {
             return url;
         }
         // Add the backend base URL
-        const baseURL = 'https://melkingapp.ir';
+        const baseURL = getBaseUrl();
         return `${baseURL}${url}`;
     };
 

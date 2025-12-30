@@ -1,7 +1,9 @@
+import { getApiBaseUrl, getMediaBaseUrl } from '../shared/utils/apiConfig';
+
 // تنظیمات API
 export const API_CONFIG = {
-    BASE_URL: 'https://melkingapp.ir/api/v1',
-    MEDIA_URL: 'https://melkingapp.ir',
+    BASE_URL: getApiBaseUrl(),
+    MEDIA_URL: getMediaBaseUrl(),
     ENDPOINTS: {
         // Authentication
         LOGIN: '/auth/login/',

@@ -1,6 +1,7 @@
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Download, X } from "lucide-react";
+import { getBaseUrl } from "../../../utils/apiConfig";
 
 export default function DocumentViewer({ documentUrl }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +14,7 @@ export default function DocumentViewer({ documentUrl }) {
             return url;
         }
         // Add the backend base URL
-        const baseURL = 'https://melkingapp.ir';
+        const baseURL = getBaseUrl();
         return `${baseURL}${url}`;
     };
 

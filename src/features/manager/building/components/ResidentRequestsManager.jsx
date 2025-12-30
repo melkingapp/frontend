@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Clock, User, Building2, Calendar, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { getApiBaseUrl } from "../../../../shared/utils/apiConfig";
 import Button from "../../../../shared/components/shared/feedback/Button";
 
 export default function ResidentRequestsManager({ buildingId }) {
@@ -18,8 +19,7 @@ export default function ResidentRequestsManager({ buildingId }) {
     const fetchRequests = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const baseURL = 'https://melkingapp.ir';
-            const response = await fetch(`${baseURL}/api/v1/buildings/${buildingId}/resident-requests/`, {
+            const response = await fetch(`${getApiBaseUrl()}/buildings/${buildingId}/resident-requests/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -45,8 +45,7 @@ export default function ResidentRequestsManager({ buildingId }) {
         
         try {
             const token = localStorage.getItem('access_token');
-            const baseURL = 'https://melkingapp.ir';
-            const response = await fetch(`${baseURL}/api/v1/buildings/resident-requests/${requestId}/update-status/`, {
+            const response = await fetch(`${getApiBaseUrl()}/buildings/resident-requests/${requestId}/update-status/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

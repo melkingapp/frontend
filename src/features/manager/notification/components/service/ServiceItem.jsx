@@ -1,5 +1,6 @@
 import { Wrench } from "lucide-react";
 import moment from "moment-jalaali";
+import { getBaseUrl } from "../../../../../shared/utils/apiConfig";
 
 export default function ServiceItem({ service, onSelect = () => {}, index = 0 }) {
     const iconBg =
@@ -13,7 +14,7 @@ export default function ServiceItem({ service, onSelect = () => {}, index = 0 })
             return url;
         }
         // Add the backend base URL
-        const baseURL = 'https://melkingapp.ir';
+        const baseURL = getBaseUrl();
         return `${baseURL}${url}`;
     };
 
