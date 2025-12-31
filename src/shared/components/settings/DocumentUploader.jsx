@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { uploadBuildingDocument, deleteBuildingDocument } from '../../../features/settings/settingsSlice';
 import { toast } from 'sonner';
 import { FileText, Upload, Trash2, Download, X, File, Loader2, AlertTriangle } from 'lucide-react';
-import { API_CONFIG } from '../../../config/api';
+import { getFullMediaUrl } from '../../utils/fileUrl';
 
 const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumentDeleted }) => {
     const dispatch = useDispatch();
@@ -130,8 +130,8 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
             // استخراج نام فایل از URL
             const fileName = fileUrl.split('/').pop() || title;
             
-            // ساخت URL کامل - استفاده از MEDIA_URL بجای BASE_URL
-            const fullUrl = `${API_CONFIG.MEDIA_URL}${fileUrl}`;
+            // ساخت URL کامل
+            const fullUrl = getFullMediaUrl(fileUrl);
             
             // ایجاد link با download attribute
             const link = document.createElement('a');
@@ -317,7 +317,7 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                     {doc.file_url && (
                                         <>
                                             <a
-                                                href={`${API_CONFIG.MEDIA_URL}${doc.file_url}`}
+                                                href={getFullMediaUrl(doc.file_url)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

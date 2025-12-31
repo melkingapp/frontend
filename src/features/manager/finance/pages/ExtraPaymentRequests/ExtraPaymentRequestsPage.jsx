@@ -21,7 +21,7 @@ import {
 } from "../../store/slices/extraPaymentSlice";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
 import { formatNumber } from "../../../../../shared/utils/helper";
-import { API_CONFIG } from "../../../../../config/api";
+import { getFullMediaUrl } from "../../../../../shared/utils/fileUrl";
 
 moment.loadPersian({ dialect: "persian-modern" });
 
@@ -95,10 +95,7 @@ export default function ExtraPaymentRequestsPage() {
     };
 
     const openImagePreview = (imageUrl) => {
-        // اگر URL کامل نیست، MEDIA_URL را اضافه می‌کنیم
-        const fullUrl = imageUrl?.startsWith('http') 
-            ? imageUrl 
-            : `${API_CONFIG.MEDIA_URL}${imageUrl}`;
+        const fullUrl = getFullMediaUrl(imageUrl);
         setImagePreview(fullUrl);
     };
 

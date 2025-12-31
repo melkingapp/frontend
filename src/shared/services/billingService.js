@@ -766,6 +766,10 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
         if (data.payment_date) {
             formData.append('payment_date', data.payment_date);
         }
+        // اگر user_id ارائه شده (برای مدیران)، آن را اضافه می‌کنیم
+        if (data.user_id) {
+            formData.append('user_id', data.user_id);
+        }
         
         // مدیریت فایل attachment - منطق یکسان با registerExpense
         if (data.attachment) {
@@ -847,7 +851,8 @@ export const getExtraPaymentRequests = async (buildingId, filters = {}) => {
 
 export const approveExtraPaymentRequest = async (requestId) => {
     try {
-        const response = await patch(`/billing/extra-payment-request/${requestId}/approve/`, {});
+        // استفاده از POST به جای PATCH برای جلوگیری از مشکل CORS
+        const response = await post(`/billing/extra-payment-request/${requestId}/approve/`, {});
         return response;
     } catch (error) {
         console.error('Approve extra payment request error:', error);
@@ -857,7 +862,8 @@ export const approveExtraPaymentRequest = async (requestId) => {
 
 export const rejectExtraPaymentRequest = async (requestId, reason = '') => {
     try {
-        const response = await patch(`/billing/extra-payment-request/${requestId}/reject/`, {
+        // استفاده از POST به جای PATCH برای جلوگیری از مشکل CORS
+        const response = await post(`/billing/extra-payment-request/${requestId}/reject/`, {
             rejection_reason: reason
         });
         return response;

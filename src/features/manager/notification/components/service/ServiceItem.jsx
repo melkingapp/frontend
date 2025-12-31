@@ -1,22 +1,12 @@
 import { Wrench } from "lucide-react";
 import moment from "moment-jalaali";
-import { getBaseUrl } from "../../../../../shared/utils/apiConfig";
+import { getFullMediaUrl } from "../../../../../shared/utils/fileUrl";
 
 export default function ServiceItem({ service, onSelect = () => {}, index = 0 }) {
     const iconBg =
         index % 2 === 0
             ? "bg-melkingDarkBlue text-white"
             : "bg-melkingGold text-melkingDarkBlue";
-
-    // Add base URL if the URL is relative
-    const getFullUrl = (url) => {
-        if (url.startsWith('http') || url.startsWith('data:')) {
-            return url;
-        }
-        // Add the backend base URL
-        const baseURL = getBaseUrl();
-        return `${baseURL}${url}`;
-    };
 
     return (
         <div
@@ -39,7 +29,7 @@ export default function ServiceItem({ service, onSelect = () => {}, index = 0 })
                 {(service.attachment_url || service.attachmentUrl || service.attachment) && (
                     <div className="mt-2">
                         <img
-                            src={getFullUrl(service.attachment_url || service.attachmentUrl || service.attachment)}
+                            src={getFullMediaUrl(service.attachment_url || service.attachmentUrl || service.attachment)}
                             alt="پیوست"
                             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                             onError={(e) => {

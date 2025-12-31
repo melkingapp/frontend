@@ -11,10 +11,23 @@ export const getApiBaseUrl = () => {
 
 /**
  * دریافت MEDIA_URL از متغیر محیطی یا استفاده از مقدار پیش‌فرض
+ * اگر VITE_MEDIA_BASE_URL تنظیم نشده باشد، از VITE_API_BASE_URL استفاده می‌کند
  * @returns {string} Base URL for media files
  */
 export const getMediaBaseUrl = () => {
-  return import.meta.env.VITE_MEDIA_BASE_URL || 'https://melkingapp.ir';
+  // اگر VITE_MEDIA_BASE_URL تنظیم شده باشد، از آن استفاده می‌کنیم
+  if (import.meta.env.VITE_MEDIA_BASE_URL) {
+    return import.meta.env.VITE_MEDIA_BASE_URL;
+  }
+  
+  // در غیر این صورت، از VITE_API_BASE_URL استفاده می‌کنیم و /api/v1 را حذف می‌کنیم
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://melkingapp.ir/api/v1';
+  if (apiBaseUrl.endsWith('/api/v1')) {
+    return apiBaseUrl.replace('/api/v1', '');
+  }
+  
+  // اگر /api/v1 نداشت، همان را برمی‌گردانیم
+  return apiBaseUrl;
 };
 
 /**

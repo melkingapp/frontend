@@ -1,22 +1,12 @@
 import { User } from "lucide-react";
 import moment from "moment-jalaali";
-import { getBaseUrl } from "../../../../../shared/utils/apiConfig";
+import { getFullMediaUrl } from "../../../../../shared/utils/fileUrl";
 
 export default function LetterItem({ letter, index, onSelect }) {
     const iconBg =
         index % 2 === 0
             ? "bg-melkingDarkBlue text-white"
             : "bg-melkingGold text-melkingDarkBlue";
-
-    // Add base URL if the URL is relative
-    const getFullUrl = (url) => {
-        if (url.startsWith('http') || url.startsWith('data:')) {
-            return url;
-        }
-        // Add the backend base URL
-        const baseURL = getBaseUrl();
-        return `${baseURL}${url}`;
-    };
 
     return (
         <div
@@ -47,7 +37,7 @@ export default function LetterItem({ letter, index, onSelect }) {
                 {(letter.attachment_url || letter.attachmentUrl) && (
                     <div className="mt-2">
                         <img
-                            src={getFullUrl(letter.attachment_url || letter.attachmentUrl)}
+                            src={getFullMediaUrl(letter.attachment_url || letter.attachmentUrl)}
                             alt="پیوست"
                             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                             onError={(e) => {

@@ -3,6 +3,7 @@ import { Fragment, useState, useEffect } from "react";
 import { X, Wallet, Edit2, Trash2, User, Building2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
+import { getFullMediaUrl } from "../../../../../../shared/utils/fileUrl";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTransactionDetails, payBill, deleteExpense } from "../../../store/slices/financeSlice";
 import { useSelector as useReduxSelector } from "react-redux";
@@ -603,7 +604,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                       {transaction.attachments.map((attachment, index) => (
                         <a
                           key={index}
-                          href={attachment.url}
+                          href={getFullMediaUrl(attachment.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="relative group flex flex-col items-center justify-center p-2 border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
@@ -611,7 +612,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                         >
                           {attachment.type && attachment.type.startsWith('image/') ? (
                             <img
-                              src={attachment.url}
+                              src={getFullMediaUrl(attachment.url)}
                               alt={attachment.name}
                               className="w-full h-20 object-cover rounded-md mb-2"
                             />

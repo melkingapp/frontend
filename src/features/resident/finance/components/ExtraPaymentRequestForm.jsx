@@ -253,6 +253,11 @@ export default function ExtraPaymentRequestForm({ isOpen, onClose, onSuccess }) 
                 attachment: formData.attachment || undefined
             };
 
+            // اگر کاربر مدیر است، باید user_id را ارسال کنیم
+            if (user?.role === 'manager' && user?.id) {
+                submitData.user_id = user.id;
+            }
+
             await dispatch(createExtraPaymentRequest({
                 buildingId: buildingId,
                 data: submitData

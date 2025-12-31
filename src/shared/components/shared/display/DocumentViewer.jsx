@@ -1,24 +1,17 @@
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Download, X } from "lucide-react";
-import { getBaseUrl } from "../../../utils/apiConfig";
+import { getFullMediaUrl } from "../../../utils/fileUrl";
 
 export default function DocumentViewer({ documentUrl }) {
     const [isOpen, setIsOpen] = useState(false);
 
     if (!documentUrl) return null;
 
-    // Add base URL if the URL is relative
-    const getFullUrl = (url) => {
-        if (url.startsWith('http') || url.startsWith('data:')) {
-            return url;
-        }
-        // Add the backend base URL
-        const baseURL = getBaseUrl();
-        return `${baseURL}${url}`;
-    };
-
-    const fullUrl = getFullUrl(documentUrl);
+    const fullUrl = getFullMediaUrl(documentUrl);
+    
+    // اگر fullUrl null باشد، چیزی نمایش نمی‌دهیم
+    if (!fullUrl) return null;
 
     return (
         <>

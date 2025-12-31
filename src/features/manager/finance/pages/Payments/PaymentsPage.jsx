@@ -25,6 +25,7 @@ import { fetchTransactions, fetchCurrentFundBalance } from "../../store/slices/f
 import { fetchPendingPayments } from "../../store/slices/paymentsSlice";
 import { formatNumber } from "../../../../../shared/utils/helper";
 import { API_CONFIG } from "../../../../../config/api";
+import { getFullMediaUrl } from "../../../../../shared/utils/fileUrl";
 
 moment.loadPersian({ dialect: "persian-modern" });
 
@@ -120,10 +121,20 @@ export default function PaymentsPage() {
   };
 
   const openImagePreview = (imageUrl) => {
-    const fullUrl = imageUrl?.startsWith('http') 
-      ? imageUrl 
-      : `${API_CONFIG.MEDIA_URL}${imageUrl}`;
+    if (!imageUrl) {
+      console.warn('No image URL provided');
+      return;
+    }
+    
+    // ساخت URL کامل برای تصویر
+    const fullUrl = getFullMediaUrl(imageUrl);
+    console.log('Opening image preview:', { original: imageUrl, fullUrl });
     setImagePreview(fullUrl);
+  };
+  
+  // تابع کمکی برای ساخت URL تصویر
+  const getImageUrl = (imageUrl) => {
+    return getFullMediaUrl(imageUrl);
   };
 
   const closeImagePreview = () => {
@@ -342,13 +353,30 @@ export default function PaymentsPage() {
                         {/* Image Preview */}
                         {request.attachment_url && (
                           <div className="mt-3">
-                            <button
-                              onClick={() => openImagePreview(request.attachment_url)}
-                              className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-                            >
-                              <ImageIcon size={18} />
-                              <span className="text-sm font-medium">مشاهده تصویر فیش</span>
-                            </button>
+                            <div className="flex items-center gap-3">
+                              {/* نمایش thumbnail تصویر */}
+                              {request.attachment_url && (
+                                <img
+                                  src={getImageUrl(request.attachment_url)}
+                                  alt="فیش پرداخت"
+                                  className="w-24 h-24 object-cover rounded-lg border-2 border-slate-300 cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
+                                  onClick={() => openImagePreview(request.attachment_url)}
+                                  onError={(e) => {
+                                    // اگر تصویر لود نشد، آن را مخفی کن و خطا را لاگ کن
+                                    console.error('Error loading image:', request.attachment_url, e);
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
+                              )}
+                              {/* دکمه مشاهده تصویر */}
+                              <button
+                                onClick={() => openImagePreview(request.attachment_url)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors border border-blue-200"
+                              >
+                                <ImageIcon size={18} />
+                                <span className="text-sm font-medium">مشاهده تصویر فیش</span>
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -435,6 +463,11 @@ export default function PaymentsPage() {
               src={imagePreview}
               alt="فیش پرداخت"
               className="w-full h-auto rounded-lg"
+              onError={(e) => {
+                console.error('Error loading image in modal:', imagePreview);
+                e.target.src = '/placeholder-image.png'; // یا یک placeholder
+                e.target.alt = 'تصویر قابل نمایش نیست';
+              }}
             />
           </div>
         </div>
