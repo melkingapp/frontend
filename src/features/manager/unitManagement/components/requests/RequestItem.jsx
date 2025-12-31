@@ -78,13 +78,13 @@ export default function RequestItem({ request }) {
     return (
         <article className="group relative overflow-hidden rounded-2xl my-4 border-b border-gray-200 bg-gray-50 p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow" dir="rtl">
             <div className="grid grid-cols-12 gap-4 items-start lg:grid-cols-12">
-                {/* ستون ۱: نام + نقش + واحد */}
+                {/* ستون ۱: عنوان + نقش + واحد */}
                 <div className="col-span-12 md:col-span-12 lg:col-span-4 flex items-center gap-4 min-w-0">
                     <div className={`w-10 h-10 shrink-0 rounded-full bg-gray-100 text-gray-700 grid place-items-center font-bold ${avatarColor}`}>
-                        {request?.name?.[0] || "?"}
+                        {(request?.title?.[0] || request?.name?.[0] || "?").toUpperCase()}
                     </div>
                     <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:gap-3 min-w-0">
-                        <h3 className="text-base font-semibold text-gray-900 break-words">{request?.name || "—"}</h3>
+                        <h3 className="text-base font-semibold text-gray-900 break-words">{request?.title || request?.name || "—"}</h3>
                         {request?.role && (
                             <span
                                 className={`inline-flex max-w-max px-2 py-0.5 rounded-full text-xs ${roleStyle}`}
@@ -93,7 +93,11 @@ export default function RequestItem({ request }) {
                             </span>
                         )}
                         <span className="flex items-center gap-1 text-sm text-gray-600 break-words">
-                            <Home size={14} /> واحد: {request?.unit ?? "—"}
+                            <Home size={14} /> واحد: {
+                                typeof request?.unit === 'object' && request?.unit !== null
+                                    ? (request.unit.unit_number || request.unit.units_id || "—")
+                                    : (request?.unit ?? "—")
+                            }
                         </span>
                     </div>
                 </div>
@@ -104,7 +108,7 @@ export default function RequestItem({ request }) {
                         className={`text-sm text-gray-700 whitespace-pre-wrap break-words transition-all ${!expanded && isLongText ? "line-clamp-3" : ""
                             }`}
                     >
-                        {request?.description}
+                        {request?.description || "—"}
                     </p>
 
                     {isLongText && (
@@ -142,13 +146,16 @@ export default function RequestItem({ request }) {
                             request?.status === 'approved' ? 'bg-green-100 text-green-800' :
                             request?.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                             request?.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                            request?.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                            request?.status === 'pending' ? 'bg-gray-100 text-gray-800' :
                             'bg-gray-100 text-gray-800'
                         }`}>
                             {request?.status === 'approved' ? 'پذیرفته شده' :
                              request?.status === 'cancelled' ? 'رد شده' :
                              request?.status === 'completed' ? 'تکمیل شده' :
                              request?.status === 'in_progress' ? 'در حال انجام' :
-                             'نامشخص'}
+                             request?.status === 'pending' ? 'در انتظار' :
+                             (request?.status ? `وضعیت: ${request.status}` : 'نامشخص')}
                         </span>
                     )}
                 </div>

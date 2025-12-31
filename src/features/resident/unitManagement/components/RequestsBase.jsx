@@ -38,10 +38,11 @@ export default function RequestsBase({ requests: propRequests, limit }) {
         );
     }, [membershipRequests]);
     
-    // Get building ID based on user role
+    // Get building ID based on user role - memoized with stable dependencies
     const buildingId = useMemo(() => {
         if (user?.role === 'manager') {
-            return managerBuilding?.building_id || managerBuilding?.id || null;
+            const id = managerBuilding?.building_id || managerBuilding?.id || null;
+            return typeof id === 'number' && !isNaN(id) ? id : null;
         } else if (user?.role === 'resident') {
             // Priority 1: Direct from approved membership requests (most reliable)
             if (approvedMembershipRequests.length > 0) {
@@ -49,28 +50,31 @@ export default function RequestsBase({ requests: propRequests, limit }) {
                 // Try building field (could be building_id or building object)
                 if (firstRequest.building) {
                     // If building is a number, use it directly
-                    if (typeof firstRequest.building === 'number') {
+                    if (typeof firstRequest.building === 'number' && !isNaN(firstRequest.building)) {
                         return firstRequest.building;
                     }
                     // If building is an object with id, use it
                     if (typeof firstRequest.building === 'object' && firstRequest.building.id) {
-                        return firstRequest.building.id;
+                        const id = firstRequest.building.id;
+                        return typeof id === 'number' && !isNaN(id) ? id : null;
                     }
                 }
                 // Try building_id field
                 if (firstRequest.building_id) {
-                    return firstRequest.building_id;
+                    const id = firstRequest.building_id;
+                    return typeof id === 'number' && !isNaN(id) ? id : null;
                 }
             }
             
             // Priority 2: residentBuilding from Redux (direct building_id)
             if (residentBuilding?.building_id && residentBuilding.building_id !== 'undefined' && residentBuilding.building_id !== null) {
-                return residentBuilding.building_id;
+                const id = residentBuilding.building_id;
+                return typeof id === 'number' && !isNaN(id) ? id : null;
             }
             
             // Priority 3: Extract building_id from residentBuilding.id (format: "building_id-unit_number")
             if (residentBuilding?.id) {
-                if (typeof residentBuilding.id === 'number') {
+                if (typeof residentBuilding.id === 'number' && !isNaN(residentBuilding.id)) {
                     return residentBuilding.id;
                 } else if (typeof residentBuilding.id === 'string') {
                     const parts = residentBuilding.id.split('-');
@@ -84,7 +88,8 @@ export default function RequestsBase({ requests: propRequests, limit }) {
             if (allApprovedUnits.length > 0) {
                 const unit = allApprovedUnits.find(u => u.building_id && u.building_id !== 'undefined' && u.building_id !== null);
                 if (unit?.building_id) {
-                    return unit.building_id;
+                    const id = unit.building_id;
+                    return typeof id === 'number' && !isNaN(id) ? id : null;
                 }
             }
             
@@ -92,12 +97,13 @@ export default function RequestsBase({ requests: propRequests, limit }) {
             if (approvedBuildings.length > 0) {
                 const building = approvedBuildings.find(b => b.building_id && b.building_id !== 'undefined' && b.building_id !== null);
                 if (building?.building_id) {
-                    return building.building_id;
+                    const id = building.building_id;
+                    return typeof id === 'number' && !isNaN(id) ? id : null;
                 }
             }
         }
         return null;
-    }, [user?.role, managerBuilding, residentBuilding, approvedBuildings, allApprovedUnits, approvedMembershipRequests]);
+    }, [user?.role, managerBuilding?.building_id, managerBuilding?.id, residentBuilding?.building_id, residentBuilding?.id, approvedBuildings.length, allApprovedUnits.length, approvedMembershipRequests.length]);
 
     // Get user's approved units to match with requests
     const userApprovedUnits = useMemo(() => {
@@ -146,7 +152,37 @@ export default function RequestsBase({ requests: propRequests, limit }) {
             const userId = user?.id;
             
             return allRequests.filter(request => {
-                // Method 1: Check by unit_id (match with user's approved units)
+                // Method 1: Check by created_by (most reliable - the user who created the request)
+                if (request.created_by) {
+                    const creator = typeof request.created_by === 'object' ? request.created_by : null;
+                    if (creator) {
+                        // Check by creator ID
+                        if (creator.id && userId && creator.id === userId) {
+                            return true;
+                        }
+                        // Check by creator phone number
+                        if (userPhoneStr && creator.phone_number) {
+                            const creatorPhone = creator.phone_number.toString().trim();
+                            if (creatorPhone === userPhoneStr) {
+                                return true;
+                            }
+                        }
+                        // Check by creator username
+                        if (userPhoneStr && creator.username) {
+                            const creatorUsername = creator.username.toString().trim();
+                            if (creatorUsername === userPhoneStr) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                
+                // Method 2: Check by user_id (if available in request)
+                if (request.user_id && userId && request.user_id === userId) {
+                    return true;
+                }
+                
+                // Method 3: Check by unit_id (match with user's approved units)
                 if (request.unit_id && userUnitIds.length > 0) {
                     const requestUnitId = request.unit_id;
                     if (userUnitIds.includes(requestUnitId)) {
@@ -154,39 +190,32 @@ export default function RequestsBase({ requests: propRequests, limit }) {
                     }
                 }
                 
-                // Method 2: Check by unit object's id
-                if (request.unit) {
-                    const unit = typeof request.unit === 'object' ? request.unit : null;
-                    if (unit) {
-                        const unitId = unit.units_id || unit.unit_id || unit.id;
-                        if (unitId && userUnitIds.includes(unitId)) {
-                            return true;
-                        }
-                        
-                        // Check unit owner/tenant phone
-                        if (userPhoneStr) {
-                            if (unit.phone_number) {
-                                const unitPhone = unit.phone_number.toString().trim();
-                                if (unitPhone === userPhoneStr) {
-                                    return true;
-                                }
+                // Method 4: Check by unit object's id (support both unit and unit_object)
+                const unitObj = request.unit_object || (typeof request.unit === 'object' && request.unit !== null ? request.unit : null);
+                if (unitObj) {
+                    const unitId = unitObj.units_id || unitObj.unit_id || unitObj.id;
+                    if (unitId && userUnitIds.includes(unitId)) {
+                        return true;
+                    }
+                    
+                    // Check unit owner/tenant phone
+                    if (userPhoneStr) {
+                        if (unitObj.phone_number) {
+                            const unitPhone = unitObj.phone_number.toString().trim();
+                            if (unitPhone === userPhoneStr) {
+                                return true;
                             }
-                            if (unit.tenant_phone_number) {
-                                const tenantPhone = unit.tenant_phone_number.toString().trim();
-                                if (tenantPhone === userPhoneStr) {
-                                    return true;
-                                }
+                        }
+                        if (unitObj.tenant_phone_number) {
+                            const tenantPhone = unitObj.tenant_phone_number.toString().trim();
+                            if (tenantPhone === userPhoneStr) {
+                                return true;
                             }
                         }
                     }
                 }
                 
-                // Method 3: Check by user_id (if available in request)
-                if (request.user_id && userId && request.user_id === userId) {
-                    return true;
-                }
-                
-                // Method 4: Check by phone_number in request (if available)
+                // Method 5: Check by phone_number in request (if available)
                 if (request.phone_number && userPhoneStr) {
                     const requestPhone = request.phone_number.toString().trim();
                     if (requestPhone === userPhoneStr) {
@@ -219,6 +248,7 @@ export default function RequestsBase({ requests: propRequests, limit }) {
 
     // Track last fetched buildingId to prevent duplicate requests (works with React Strict Mode)
     const lastFetchedBuildingId = useRef(null);
+    const isFetchingRef = useRef(false);
     
     // Clear error when buildingId changes or is invalid
     useEffect(() => {
@@ -227,19 +257,24 @@ export default function RequestsBase({ requests: propRequests, limit }) {
                 dispatch(clearError());
             }
         }
-    }, [dispatch, buildingId]); // Don't include error to avoid infinite loops
+    }, [dispatch, buildingId, error]); // Include error but check it inside
     
     // Fetch requests when component mounts (prevent duplicate calls)
     useEffect(() => {
         // Only fetch if buildingId is valid (not null/undefined) and is a number
         // And it's different from the last fetched buildingId
+        // And we're not already fetching
         if (buildingId && typeof buildingId === 'number' && !isNaN(buildingId)) {
-            if (lastFetchedBuildingId.current !== buildingId) {
+            if (lastFetchedBuildingId.current !== buildingId && !isFetchingRef.current) {
                 console.log('🔥 RequestsBase - Fetching requests for buildingId:', buildingId);
                 lastFetchedBuildingId.current = buildingId;
+                isFetchingRef.current = true;
                 // Clear error before fetching
                 dispatch(clearError());
-                dispatch(fetchRequests(buildingId));
+                dispatch(fetchRequests(buildingId))
+                    .finally(() => {
+                        isFetchingRef.current = false;
+                    });
             } else {
                 console.log('🔥 RequestsBase - Skipping duplicate fetch for buildingId:', buildingId);
             }
@@ -248,6 +283,7 @@ export default function RequestsBase({ requests: propRequests, limit }) {
             // Only reset if buildingId is explicitly null/undefined, not if it's still loading
             if (buildingId === null || buildingId === undefined) {
                 lastFetchedBuildingId.current = null;
+                isFetchingRef.current = false;
             }
         }
         

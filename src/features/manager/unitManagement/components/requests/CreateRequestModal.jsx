@@ -1,6 +1,6 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment, useMemo, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { createRequest, clearError } from "../../slices/requestsSlice";
@@ -11,7 +11,7 @@ import InputField from "../../../../../shared/components/shared/inputs/InputFiel
 export default function CreateRequestModal({ isOpen, onClose, buildingId, onSuccess }) {
     const dispatch = useDispatch();
     const { createLoading, error } = useSelector(state => state.requests);
-    const { units } = useSelector(state => state.units);
+    const { units, loading: unitsLoading } = useSelector(state => state.units);
     const user = useSelector(state => state.auth.user);
     
     const [form, setForm] = useState({
@@ -21,15 +21,20 @@ export default function CreateRequestModal({ isOpen, onClose, buildingId, onSucc
     });
     
     const [errors, setErrors] = useState({});
+    const hasFetchedRef = useRef(new Map()); // Use Map to track per buildingId
 
-    // Fetch units when modal opens
+    // Fetch units when modal opens (only once per buildingId)
     useEffect(() => {
-        if (isOpen && buildingId) {
-            dispatch(fetchUnits(buildingId));
+        if (isOpen && buildingId && typeof buildingId === 'number' && !isNaN(buildingId)) {
+            const fetchKey = `${buildingId}`;
+            if (!hasFetchedRef.current.has(fetchKey)) {
+                hasFetchedRef.current.set(fetchKey, true);
+                dispatch(fetchUnits(buildingId));
+            }
         }
     }, [isOpen, buildingId, dispatch]);
 
-    // Clear errors when modal closes
+    // Clear errors and reset form when modal closes
     useEffect(() => {
         if (!isOpen) {
             dispatch(clearError());
@@ -39,8 +44,12 @@ export default function CreateRequestModal({ isOpen, onClose, buildingId, onSucc
                 title: "",
                 description: "",
             });
+            // Reset fetch flag for this buildingId when modal closes
+            if (buildingId) {
+                hasFetchedRef.current.delete(`${buildingId}`);
+            }
         }
-    }, [isOpen, dispatch]);
+    }, [isOpen, dispatch, buildingId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -109,54 +118,49 @@ export default function CreateRequestModal({ isOpen, onClose, buildingId, onSucc
         }
     };
 
-    // Filter units to show only user's units
-    // IMPORTANT: Only check by phone_number and tenant_phone_number
-    // Do NOT check by owner ID because multiple units can have the same owner ID but different phone numbers
-    // The user should only see units where their phone number matches the unit's phone_number or tenant_phone_number
-    const userPhone = user?.phone_number || user?.phone || user?.username;
-    const userPhoneStr = userPhone ? userPhone.toString().trim() : '';
-    
-    const userUnits = userPhoneStr ? units.filter(unit => {
-        // 1. Check by owner phone number
-        if (unit.phone_number) {
-            const unitPhone = unit.phone_number.toString().trim();
-            if (unitPhone === userPhoneStr) {
-                return true;
-            }
-        }
-        
-        // 2. Check by tenant phone number
-        if (unit.tenant_phone_number) {
-            const tenantPhone = unit.tenant_phone_number.toString().trim();
-            if (tenantPhone === userPhoneStr) {
-                return true;
-            }
-        }
-        
-        return false;
-    }) : [];
-    
-    // Debug logging
-    if (isOpen && units.length > 0) {
-        console.log('🔍 CreateRequestModal - Filtering units:', {
-            totalUnits: units.length,
-            userPhone: userPhoneStr,
-            userId: user?.id,
-            userUnitsCount: userUnits.length,
-            userUnits: userUnits.map(u => ({
-                unit_number: u.unit_number,
-                phone_number: u.phone_number,
-                tenant_phone_number: u.tenant_phone_number,
-                owner: u.owner
-            }))
-        });
-    }
+    // Memoize user phone string
+    const userPhoneStr = useMemo(() => {
+        const userPhone = user?.phone_number || user?.phone || user?.username;
+        return userPhone ? userPhone.toString().trim() : '';
+    }, [user?.phone_number, user?.phone, user?.username]);
 
-    // Prepare unit options for select (only user's units)
-    const unitOptions = userUnits.map(unit => ({
-        value: unit.units_id || unit.id,
-        label: `واحد ${unit.unit_number || 'نامشخص'} - طبقه ${unit.floor || 'نامشخص'}`
-    }));
+    // Memoize filtered units to avoid recalculating on every render
+    const userUnits = useMemo(() => {
+        if (!userPhoneStr || units.length === 0) {
+            return [];
+        }
+        
+        return units.filter(unit => {
+            // 1. Check by owner phone number
+            if (unit.phone_number) {
+                const unitPhone = unit.phone_number.toString().trim();
+                if (unitPhone === userPhoneStr) {
+                    return true;
+                }
+            }
+            
+            // 2. Check by tenant phone number
+            if (unit.tenant_phone_number) {
+                const tenantPhone = unit.tenant_phone_number.toString().trim();
+                if (tenantPhone === userPhoneStr) {
+                    return true;
+                }
+            }
+            
+            return false;
+        });
+    }, [units, userPhoneStr]);
+
+    // Debug logging (only once when units are loaded) - removed to prevent infinite loops
+    // Logging is now handled conditionally in render if needed
+
+    // Memoize unit options to avoid recreating on every render
+    const unitOptions = useMemo(() => {
+        return userUnits.map(unit => ({
+            value: unit.units_id || unit.id,
+            label: `واحد ${unit.unit_number || 'نامشخص'} - طبقه ${unit.floor || 'نامشخص'}`
+        }));
+    }, [userUnits]);
 
     return (
         <Transition show={isOpen} as={Fragment}>
@@ -201,21 +205,37 @@ export default function CreateRequestModal({ isOpen, onClose, buildingId, onSucc
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-4">
-                                    <SelectField
-                                        label="واحد"
-                                        name="unit_id"
-                                        value={form.unit_id}
-                                        onChange={handleChange}
-                                        options={unitOptions}
-                                        error={errors.unit_id}
-                                        disabled={createLoading || userUnits.length === 0}
-                                    />
-
-                                    {userUnits.length === 0 && (
-                                        <p className="text-sm text-gray-500 mb-4">
-                                            هیچ واحدی برای شما در این ساختمان یافت نشد
-                                        </p>
-                                    )}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            واحد <span className="text-red-500">*</span>
+                                        </label>
+                                        {unitsLoading ? (
+                                            <div className="flex items-center justify-center py-4 border border-gray-200 rounded-lg">
+                                                <Loader2 className="w-5 h-5 animate-spin text-blue-500 ml-2" />
+                                                <span className="text-sm text-gray-600">در حال بارگذاری واحدها...</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <SelectField
+                                                    label=""
+                                                    name="unit_id"
+                                                    value={form.unit_id}
+                                                    onChange={handleChange}
+                                                    options={unitOptions}
+                                                    error={errors.unit_id}
+                                                    disabled={createLoading || userUnits.length === 0}
+                                                />
+                                                {userUnits.length === 0 && !unitsLoading && (
+                                                    <p className="text-sm text-gray-500 mt-2">
+                                                        هیچ واحدی برای شما در این ساختمان یافت نشد
+                                                    </p>
+                                                )}
+                                            </>
+                                        )}
+                                        {errors.unit_id && (
+                                            <p className="text-red-500 text-xs mt-1">{errors.unit_id}</p>
+                                        )}
+                                    </div>
 
                                     <InputField
                                         label="عنوان درخواست"
@@ -266,7 +286,7 @@ export default function CreateRequestModal({ isOpen, onClose, buildingId, onSucc
                                         </button>
                                         <button
                                             type="submit"
-                                            disabled={createLoading || userUnits.length === 0}
+                                            disabled={createLoading || unitsLoading || userUnits.length === 0}
                                             className="px-4 py-2 bg-melkingDarkBlue text-white rounded-lg hover:bg-melkingGold hover:text-melkingDarkBlue transition disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {createLoading ? "در حال ایجاد..." : "ایجاد درخواست"}

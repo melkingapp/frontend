@@ -95,7 +95,19 @@ const requestsSlice = createSlice({
       })
       .addCase(createRequest.fulfilled, (state, action) => {
         state.createLoading = false;
-        state.requests.push(action.payload);
+        console.log('🔥 createRequest.fulfilled - Adding request to state:', action.payload);
+        // Check if request already exists (by request_id or id)
+        const existingIndex = state.requests.findIndex(
+          req => (req.request_id && req.request_id === action.payload.request_id) ||
+                 (req.id && req.id === action.payload.id)
+        );
+        if (existingIndex === -1) {
+          state.requests.push(action.payload);
+          console.log('🔥 createRequest.fulfilled - Request added, total requests:', state.requests.length);
+        } else {
+          console.log('🔥 createRequest.fulfilled - Request already exists, updating instead');
+          state.requests[existingIndex] = action.payload;
+        }
       })
       .addCase(createRequest.rejected, (state, action) => {
         state.createLoading = false;
