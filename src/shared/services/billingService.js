@@ -447,11 +447,8 @@ export const uploadExpenseAttachment = async (expenseId, file) => {
         const formData = new FormData();
         formData.append('attachment', file);
         
-        const response = await post(`/billing/expenses/${expenseId}/attachment/`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        // نیازی به تنظیم دستی Content-Type نیست - axios به صورت خودکار با boundary تنظیم می‌کند
+        const response = await post(`/billing/expenses/${expenseId}/attachment/`, formData);
         return response;
     } catch (error) {
         console.error('Upload expense attachment error:', error);

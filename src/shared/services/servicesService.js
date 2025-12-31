@@ -56,11 +56,8 @@ export const createService = async (buildingId, serviceData) => {
             console.log("🔥 ServicesService: FormData with attachment:", formData);
             
             try {
-                const response = await post(`/services/building/${buildingId}/create/`, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
+                // نیازی به تنظیم دستی Content-Type نیست - axios به صورت خودکار با boundary تنظیم می‌کند
+                const response = await post(`/services/building/${buildingId}/create/`, formData);
                 console.log("🔥 ServicesService: Response with attachment:", response);
                 return response;
             } catch (error) {
@@ -68,11 +65,8 @@ export const createService = async (buildingId, serviceData) => {
                 console.warn('Authentication failed, using test endpoint:', error.message);
                 
                 try {
-                    const response = await post(`/services/building/${buildingId}/create/test/`, formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    });
+                    // نیازی به تنظیم دستی Content-Type نیست - axios به صورت خودکار با boundary تنظیم می‌کند
+                    const response = await post(`/services/building/${buildingId}/create/test/`, formData);
                     console.log("🔥 ServicesService: Test response with attachment:", response);
                     return response;
                 } catch (testError) {

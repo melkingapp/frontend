@@ -19,11 +19,8 @@ export const registerLetter = async (letterData) => {
             console.log("🔥 LettersService: FormData with attachment:", formData);
             
             try {
-                const response = await post('/letters/register/', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
+                // نیازی به تنظیم دستی Content-Type نیست - axios به صورت خودکار با boundary تنظیم می‌کند
+                const response = await post('/letters/register/', formData);
                 console.log("🔥 LettersService: Response with attachment:", response);
                 return response;
             } catch (error) {
@@ -31,11 +28,8 @@ export const registerLetter = async (letterData) => {
                 console.warn('Authentication failed, using test endpoint:', error.message);
                 
                 try {
-                    const response = await post('/letters/register/test/', formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    });
+                    // نیازی به تنظیم دستی Content-Type نیست - axios به صورت خودکار با boundary تنظیم می‌کند
+                    const response = await post('/letters/register/test/', formData);
                     console.log("🔥 LettersService: Test response with attachment:", response);
                     return response;
                 } catch (testError) {
