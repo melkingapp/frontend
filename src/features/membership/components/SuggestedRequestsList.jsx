@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { selectSuggestedRequests, selectSuggestedRequestsLoading } from '../membershipSlice';
 import { fetchSuggestedRequests, createMembershipRequest } from '../membershipSlice';
 import MembershipRequestForm from './MembershipRequestForm';
+import Button from '../../../shared/components/shared/feedback/Button';
 
 export default function SuggestedRequestsList({ isOpen, onClose }) {
   const dispatch = useDispatch();
@@ -110,7 +111,7 @@ export default function SuggestedRequestsList({ isOpen, onClose }) {
           </div>
           <Button
             size="small"
-            color="secondary"
+            color="whiteBlue"
             onClick={onClose}
           >
             بستن

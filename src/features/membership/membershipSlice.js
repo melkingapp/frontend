@@ -81,6 +81,34 @@ export const fetchMembershipRequest = createAsyncThunk(
   }
 );
 
+export const editMembershipRequest = createAsyncThunk(
+  'membership/editRequest',
+  async ({ requestId, requestData }, { rejectWithValue }) => {
+    try {
+      const response = await membershipApi.editMembershipRequest(requestId, requestData);
+      return response;
+    } catch (error) {
+      const errorData = error.data || error.response?.data;
+      if (errorData) {
+        if (typeof errorData === 'object' && !errorData.error && !errorData.message && !errorData.detail) {
+          const validationErrors = Object.entries(errorData)
+            .map(([field, messages]) => {
+              const message = Array.isArray(messages) ? messages[0] : messages;
+              return `${field}: ${message}`;
+            })
+            .join(', ');
+          return rejectWithValue(validationErrors || 'خطا در اعتبارسنجی داده‌ها');
+        }
+        if (errorData.error) {
+          return rejectWithValue(errorData.error);
+        }
+        return rejectWithValue(errorData.detail || errorData.message || 'خطا در ویرایش درخواست');
+      }
+      return rejectWithValue(error.message || 'خطا در ویرایش درخواست');
+    }
+  }
+);
+
 export const approveMembershipRequestByOwner = createAsyncThunk(
   'membership/approveRequestByOwner',
   async (requestId, { rejectWithValue }) => {
@@ -354,6 +382,7 @@ const initialState = {
   requests: [],
   selectedRequest: null,
   unitData: null,
+  unitsData: [],  // لیست تمام واحدها و درخواست‌های suggested
   pendingOwnerApprovalRequests: [],
   // US6: Family Invitations
   familyInvitations: [],
@@ -406,6 +435,7 @@ const membershipSlice = createSlice({
     },
     clearUnitData: (state) => {
       state.unitData = null;
+      state.unitsData = [];
     },
     clearPendingOwnerApprovalRequests: (state) => {
       state.pendingOwnerApprovalRequests = [];
@@ -483,6 +513,29 @@ const membershipSlice = createSlice({
       })
       .addCase(fetchMembershipRequest.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Edit membership request
+      .addCase(editMembershipRequest.pending, (state) => {
+        state.createLoading = true;
+        state.error = null;
+      })
+      .addCase(editMembershipRequest.fulfilled, (state, action) => {
+        state.createLoading = false;
+        if (action.payload?.request) {
+          const requestId = action.payload.request.request_id;
+          const index = state.requests.findIndex(req => req.request_id === requestId);
+          if (index !== -1) {
+            state.requests[index] = action.payload.request;
+          }
+          if (state.selectedRequest?.request_id === requestId) {
+            state.selectedRequest = action.payload.request;
+          }
+        }
+      })
+      .addCase(editMembershipRequest.rejected, (state, action) => {
+        state.createLoading = false;
         state.error = action.payload;
       })
       
@@ -566,14 +619,17 @@ const membershipSlice = createSlice({
           console.log("🔍 fetchUnitByPhone.fulfilled payload:", action.payload);
         }
         state.unitData = action.payload?.unit || null;
+        state.unitsData = action.payload?.units || [];
         if (import.meta.env.DEV) {
           console.log("🔍 unitData set to:", state.unitData);
+          console.log("🔍 unitsData set to:", state.unitsData);
         }
       })
       .addCase(fetchUnitByPhone.rejected, (state, action) => {
         state.unitLoading = false;
         state.error = action.payload;
         state.unitData = null;
+        state.unitsData = [];
         if (import.meta.env.DEV) {
           console.error("❌ fetchUnitByPhone.rejected:", action.payload);
         }
@@ -813,6 +869,7 @@ export const selectMembershipRejectLoading = (state) => state.membership.rejectL
 export const selectSelectedMembershipRequest = (state) => state.membership.selectedRequest;
 export const selectMembershipCount = (state) => state.membership.count;
 export const selectUnitData = (state) => state.membership.unitData;
+export const selectUnitsData = (state) => state.membership.unitsData;
 export const selectUnitLoading = (state) => state.membership.unitLoading;
 export const selectPendingOwnerApprovalRequests = (state) => state.membership.pendingOwnerApprovalRequests;
 export const selectPendingOwnerApprovalLoading = (state) => state.membership.pendingOwnerApprovalLoading;

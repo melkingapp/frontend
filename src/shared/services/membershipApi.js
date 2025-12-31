@@ -59,6 +59,14 @@ class MembershipApiService {
   }
 
   /**
+   * ویرایش درخواست عضویت
+   */
+  async editMembershipRequest(requestId, requestData) {
+    const { data } = await api.put(`/membership/${requestId}/edit/`, requestData);
+    return data;
+  }
+
+  /**
    * تایید درخواست عضویت توسط مالک
    */
   async approveMembershipRequestByOwner(requestId) {

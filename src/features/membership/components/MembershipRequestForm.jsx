@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { createMembershipRequest, fetchUnitByPhone, clearUnitData, selectUnitData, selectUnitLoading, fetchMembershipRequests, rejectSuggestedMembershipRequest } from "../membershipSlice";
 import { fetchApprovedBuildings } from "../../resident/building/residentBuildingSlice";
-import { X, Building, User, Home, Car, Users } from "lucide-react";
+import { X, Building, User, Home, Car, Users, XCircle } from "lucide-react";
 
 // توابع تبدیل نقش و نوع مالک به فارسی
 const getPersianRole = (role) => {
@@ -27,9 +27,13 @@ const getPersianOwnerType = (ownerType) => {
   return ownerTypeMap[ownerType] || ownerType;
 };
 
-const FormField = ({ label, name, type = "text", placeholder, value, onChange, min, required, options = null, disabled = false }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+const FormField = ({ label, name, type = "text", placeholder, value, onChange, min, required, options = null, disabled = false, icon: Icon }) => (
+  <div className="group">
+    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+      {Icon && <Icon size={16} className="text-indigo-500" />}
+      <span>{label}</span>
+      {required && <span className="text-red-500">*</span>}
+    </label>
     {options ? (
       <select
         name={name}
@@ -37,7 +41,7 @@ const FormField = ({ label, name, type = "text", placeholder, value, onChange, m
         onChange={onChange}
         required={required}
         disabled={disabled}
-        className="mt-1 block w-full rounded-2xl border border-gray-300 shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3 disabled:bg-gray-100 disabled:text-gray-500"
+        className="mt-1 block w-full rounded-xl border-2 border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3.5 transition-all duration-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed hover:border-gray-300"
       >
         <option value="">انتخاب کنید</option>
         {options.map((option) => (
@@ -56,7 +60,7 @@ const FormField = ({ label, name, type = "text", placeholder, value, onChange, m
         min={min}
         required={required}
         disabled={disabled}
-        className="mt-1 block w-full rounded-2xl border border-gray-300 shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3 disabled:bg-gray-100 disabled:text-gray-500"
+        className="mt-1 block w-full rounded-xl border-2 border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3.5 transition-all duration-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed hover:border-gray-300 placeholder:text-gray-400"
       />
     )}
   </div>
@@ -774,35 +778,42 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Building size={24} className="text-blue-600" />
+              <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-2xl transition-all border border-gray-100">
+                {/* Header with gradient */}
+                <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-6 py-5 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-yellow-300/20 rounded-full -ml-12 -mb-12 blur-2xl"></div>
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg">
+                        <Building size={28} className="text-yellow-200" />
+                      </div>
+                      <div>
+                        <Dialog.Title as="h3" className="text-2xl font-bold mb-1">
+                          درخواست عضویت در ساختمان
+                        </Dialog.Title>
+                        <p className="text-blue-100 text-sm font-medium">
+                          برای عضویت در ساختمان، اطلاعات زیر را تکمیل کنید
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <Dialog.Title as="h3" className="text-lg font-semibold text-gray-900">
-                        درخواست عضویت در ساختمان
-                      </Dialog.Title>
-                      <p className="text-sm text-gray-600">
-                        برای عضویت در ساختمان، اطلاعات زیر را تکمیل کنید
-                      </p>
-                    </div>
+                    <button
+                      onClick={handleClose}
+                      className="p-2.5 hover:bg-white/20 rounded-xl transition-all duration-200 backdrop-blur-sm hover:scale-110"
+                    >
+                      <X size={22} className="text-white" />
+                    </button>
                   </div>
-                  <button
-                    onClick={handleClose}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X size={20} className="text-gray-500" />
-                  </button>
                 </div>
+
+                <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
 
                 {/* Loading indicator for unit data */}
                 {unitLoading && (
-                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-sm text-blue-700">
+                  <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500 rounded-xl shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-sm font-medium text-blue-700">
                         در حال بارگذاری اطلاعات واحد شما...
                       </p>
                     </div>
@@ -812,43 +823,51 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* اطلاعات ساختمان */}
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Building size={20} className="text-gray-600" />
-                      <h4 className="font-semibold text-gray-800">اطلاعات ساختمان</h4>
+                  <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-indigo-200">
+                      <div className="p-2 bg-indigo-100 rounded-lg">
+                        <Building size={22} className="text-indigo-600" />
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-800">اطلاعات ساختمان</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <FormField
-                        label="کد ساختمان *"
+                        label="کد ساختمان"
                         name="building_code"
                         placeholder="کد ساختمان را وارد کنید"
                         value={form.building_code}
                         onChange={handleChange}
                         required
+                        icon={Building}
                       />
                     </div>
                     {errors.building_code && (
-                      <p className="text-red-500 text-sm mt-1">{errors.building_code}</p>
+                      <div className="mt-2 p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                        <p className="text-red-600 text-sm font-medium">{errors.building_code}</p>
+                      </div>
                     )}
                   </div>
 
                   {/* اطلاعات شخصی */}
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <div className="flex items-center gap-2 mb-4">
-                      <User size={20} className="text-gray-600" />
-                      <h4 className="font-semibold text-gray-800">اطلاعات شخصی</h4>
+                  <div className="bg-gradient-to-br from-gray-50 to-purple-50/30 p-6 rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-purple-200">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <User size={22} className="text-purple-600" />
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-800">اطلاعات شخصی</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <FormField
-                        label={form.role === 'resident' ? "نام و نام خانوادگی مستاجر *" : "نام و نام خانوادگی *"}
+                        label={form.role === 'resident' ? "نام و نام خانوادگی مستاجر" : "نام و نام خانوادگی"}
                         name="full_name"
                         placeholder={form.role === 'resident' ? "نام و نام خانوادگی مستاجر را وارد کنید" : "نام و نام خانوادگی خود را وارد کنید"}
                         value={form.full_name}
                         onChange={handleChange}
                         required
+                        icon={User}
                       />
                       <FormField
-                        label={form.role === 'resident' ? "شماره تماس مستاجر *" : "شماره تماس *"}
+                        label={form.role === 'resident' ? "شماره تماس مستاجر" : "شماره تماس"}
                         name="phone_number"
                         type="tel"
                         placeholder={form.role === 'resident' ? "شماره تماس مستاجر را وارد کنید" : "شماره تماس خود را وارد کنید"}
@@ -856,34 +875,46 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         onChange={handleChange}
                         required
                         disabled={true}
+                        icon={User}
                       />
                     </div>
                     {(errors.full_name || errors.phone_number) && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {errors.full_name && <p>{errors.full_name}</p>}
-                        {errors.phone_number && <p>{errors.phone_number}</p>}
+                      <div className="mt-2 space-y-2">
+                        {errors.full_name && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.full_name}</p>
+                          </div>
+                        )}
+                        {errors.phone_number && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.phone_number}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
 
                   {/* اطلاعات واحد */}
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Home size={20} className="text-gray-600" />
-                      <h4 className="font-semibold text-gray-800">اطلاعات واحد</h4>
+                  <div className="bg-gradient-to-br from-gray-50 to-green-50/30 p-6 rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-green-200">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Home size={22} className="text-green-600" />
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-800">اطلاعات واحد</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                       <FormField
-                        label="شماره واحد *"
+                        label="شماره واحد"
                         name="unit_number"
                         placeholder="شماره واحد"
                         value={form.unit_number}
                         onChange={handleChange}
                         required
-                        disabled={true}
+                        disabled={isFromManagerUnit}
+                        icon={Home}
                       />
                       <FormField
-                        label="شماره طبقه *"
+                        label="شماره طبقه"
                         name="floor"
                         type="number"
                         placeholder="شماره طبقه"
@@ -891,9 +922,10 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         onChange={handleChange}
                         min="1"
                         required
+                        icon={Home}
                       />
                       <FormField
-                        label="متراژ (متر مربع) *"
+                        label="متراژ (متر مربع)"
                         name="area"
                         type="number"
                         placeholder="متراژ واحد"
@@ -901,9 +933,10 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         onChange={handleChange}
                         min="1"
                         required
+                        icon={Home}
                       />
                       <FormField
-                        label="تعداد نفر *"
+                        label="تعداد نفر"
                         name="resident_count"
                         type="number"
                         placeholder="تعداد نفر"
@@ -911,85 +944,126 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         onChange={handleChange}
                         min="1"
                         required
+                        icon={Users}
                       />
                     </div>
                     {(errors.unit_number || errors.floor || errors.area || errors.resident_count) && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {errors.unit_number && <p>{errors.unit_number}</p>}
-                        {errors.floor && <p>{errors.floor}</p>}
-                        {errors.area && <p>{errors.area}</p>}
-                        {errors.resident_count && <p>{errors.resident_count}</p>}
+                      <div className="mt-2 space-y-2">
+                        {errors.unit_number && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.unit_number}</p>
+                          </div>
+                        )}
+                        {errors.floor && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.floor}</p>
+                          </div>
+                        )}
+                        {errors.area && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.area}</p>
+                          </div>
+                        )}
+                        {errors.resident_count && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.resident_count}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
 
                   {/* نقش و نوع مالک */}
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Users size={20} className="text-gray-600" />
-                      <h4 className="font-semibold text-gray-800">نقش و نوع مالک</h4>
+                  <div className="bg-gradient-to-br from-gray-50 to-yellow-50/30 p-6 rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-yellow-200">
+                      <div className="p-2 bg-yellow-100 rounded-lg">
+                        <Users size={22} className="text-yellow-600" />
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-800">نقش و نوع مالک</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <FormField
-                        label="نقش *"
+                        label="نقش"
                         name="role"
                         options={roleOptions}
                         value={form.role}
                         onChange={handleChange}
                         required
                         disabled={isFromManagerUnit}
+                        icon={Users}
                       />
                       {form.role === 'owner' && (
                         <FormField
-                          label="نوع مالک *"
+                          label="نوع مالک"
                           name="owner_type"
                           options={ownerTypeOptions}
                           value={form.owner_type}
                           onChange={handleChange}
                           required
                           disabled={isFromManagerUnit}
+                          icon={Users}
                         />
                       )}
                     </div>
                     {(errors.role || errors.owner_type) && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {errors.role && <p>{errors.role}</p>}
-                        {errors.owner_type && <p>{errors.owner_type}</p>}
+                      <div className="mt-2 space-y-2">
+                        {errors.role && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.role}</p>
+                          </div>
+                        )}
+                        {errors.owner_type && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.owner_type}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 
                 {/* اطلاعات مالک برای نقش ساکن */}
                 {form.role === 'resident' && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <div className="flex items-center gap-2 mb-4">
-                      <User size={20} className="text-gray-600" />
-                      <h4 className="font-semibold text-gray-800">اطلاعات مالک</h4>
+                  <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-blue-200">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <User size={22} className="text-blue-600" />
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-800">اطلاعات مالک</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <FormField
-                        label="نام و نام خانوادگی مالک *"
+                        label="نام و نام خانوادگی مالک"
                         name="owner_full_name"
                         placeholder="نام و نام خانوادگی مالک"
                         value={form.owner_full_name}
                         onChange={handleChange}
                         required
+                        icon={User}
                       />
                       <FormField
-                        label="شماره تماس مالک *"
+                        label="شماره تماس مالک"
                         name="owner_phone_number"
                         type="tel"
                         placeholder="شماره تماس مالک"
                         value={form.owner_phone_number}
                         onChange={handleChange}
                         required
-                        disabled={true}
+                        disabled={isFromManagerUnit}
+                        icon={User}
                       />
                     </div>
                     {(errors.owner_full_name || errors.owner_phone_number) && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {errors.owner_full_name && <p>{errors.owner_full_name}</p>}
-                        {errors.owner_phone_number && <p>{errors.owner_phone_number}</p>}
+                      <div className="mt-2 space-y-2">
+                        {errors.owner_full_name && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.owner_full_name}</p>
+                          </div>
+                        )}
+                        {errors.owner_phone_number && (
+                          <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                            <p className="text-red-600 text-sm font-medium">{errors.owner_phone_number}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -997,27 +1071,33 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
 
                   {/* اطلاعات مستاجر - فقط برای مالک دارای مستاجر */}
                   {form.role === 'owner' && form.owner_type === 'landlord' && (
-                    <div className="bg-gray-50 p-4 rounded-xl">
-                      <div className="flex items-center gap-2 mb-4">
-                        <User size={20} className="text-gray-600" />
-                        <h4 className="font-semibold text-gray-800">اطلاعات مستاجر</h4>
+                    <div className="bg-gradient-to-br from-gray-50 to-orange-50/30 p-6 rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-orange-200">
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                          <User size={22} className="text-orange-600" />
+                        </div>
+                        <h4 className="font-bold text-lg text-gray-800">اطلاعات مستاجر</h4>
                       </div>
                       
                       {/* راهنمای کاربر */}
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-blue-700">
-                          💡 <strong>راهنما:</strong> اگر هنوز مستاجر ندارید، این فیلدها را خالی بگذارید. 
-                          واحد شما در حالت "منتظر مستاجر" قرار می‌گیرد و بعداً می‌توانید اطلاعات مستاجر را اضافه کنید.
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500 rounded-xl p-4 mb-5 shadow-sm">
+                        <p className="text-sm text-blue-800 font-medium flex items-start gap-2">
+                          <span className="text-lg">💡</span>
+                          <span>
+                            <strong>راهنما:</strong> اگر هنوز مستاجر ندارید، این فیلدها را خالی بگذارید. 
+                            واحد شما در حالت "منتظر مستاجر" قرار می‌گیرد و بعداً می‌توانید اطلاعات مستاجر را اضافه کنید.
+                          </span>
                         </p>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <FormField
                           label="نام و نام خانوادگی مستاجر"
                           name="tenant_full_name"
                           placeholder="نام و نام خانوادگی مستاجر (اختیاری)"
                           value={form.tenant_full_name}
                           onChange={handleChange}
+                          icon={User}
                         />
                         <FormField
                           label="شماره تماس مستاجر"
@@ -1026,40 +1106,51 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                           placeholder="شماره تماس مستاجر (اختیاری)"
                           value={form.tenant_phone_number}
                           onChange={handleChange}
-                          disabled={true}
+                          disabled={isFromManagerUnit}
+                          icon={User}
                         />
                       </div>
                       {(errors.tenant_full_name || errors.tenant_phone_number) && (
-                        <div className="text-red-500 text-sm mt-1">
-                          {errors.tenant_full_name && <p>{errors.tenant_full_name}</p>}
-                          {errors.tenant_phone_number && <p>{errors.tenant_phone_number}</p>}
+                        <div className="mt-2 space-y-2">
+                          {errors.tenant_full_name && (
+                            <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                              <p className="text-red-600 text-sm font-medium">{errors.tenant_full_name}</p>
+                            </div>
+                          )}
+                          {errors.tenant_phone_number && (
+                            <div className="p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                              <p className="text-red-600 text-sm font-medium">{errors.tenant_phone_number}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   )}
 
                   {/* پارکینگ */}
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Car size={20} className="text-gray-600" />
-                      <h4 className="font-semibold text-gray-800">پارکینگ</h4>
+                  <div className="bg-gradient-to-br from-gray-50 to-teal-50/30 p-6 rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-teal-200">
+                      <div className="p-2 bg-teal-100 rounded-lg">
+                        <Car size={22} className="text-teal-600" />
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-800">پارکینگ</h4>
                     </div>
-                    <div className="space-y-4">
-                      <div className="flex items-center">
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-teal-300 transition-colors cursor-pointer group">
                         <input
                           type="checkbox"
                           name="has_parking"
                           checked={form.has_parking}
                           onChange={handleChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
                         />
-                        <label className="ml-2 block text-sm text-gray-900">
+                        <label className="text-sm font-semibold text-gray-900 cursor-pointer group-hover:text-indigo-600 transition-colors">
                           دارای پارکینگ
                         </label>
                       </div>
                       {form.has_parking && (
                         <FormField
-                          label="تعداد پارکینگ *"
+                          label="تعداد پارکینگ"
                           name="parking_count"
                           type="number"
                           placeholder="تعداد پارکینگ"
@@ -1067,28 +1158,31 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                           onChange={handleChange}
                           min="1"
                           required
+                          icon={Car}
                         />
                       )}
                     </div>
                     {errors.parking_count && (
-                      <p className="text-red-500 text-sm mt-1">{errors.parking_count}</p>
+                      <div className="mt-2 p-3 bg-red-50 border-r-4 border-red-500 rounded-lg">
+                        <p className="text-red-600 text-sm font-medium">{errors.parking_count}</p>
+                      </div>
                     )}
                   </div>
 
                   {/* Submit Error */}
                   {errors.submit && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <p className="text-red-600 text-sm">{errors.submit}</p>
+                    <div className="bg-gradient-to-r from-red-50 to-rose-50 border-r-4 border-red-500 rounded-xl p-4 shadow-sm">
+                      <p className="text-red-700 text-sm font-medium">{errors.submit}</p>
                     </div>
                   )}
 
                   {/* Submit Button */}
-                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t-2 border-gray-200 mt-6">
                     {unitData?.is_suggested && (
                       <button
                         type="button"
                         onClick={() => setShowRejectModal(true)}
-                        className="px-6 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                        className="px-6 py-3 border-2 border-red-300 text-red-700 font-semibold rounded-xl hover:bg-red-50 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                       >
                         رد کردن
                       </button>
@@ -1096,26 +1190,30 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                     <button
                       type="button"
                       onClick={handleClose}
-                      className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                     >
                       انصراف
                     </button>
                     <button
                       type="submit"
                       disabled={createLoading}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                      className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                     >
                       {createLoading ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           در حال ارسال...
                         </>
                       ) : (
-                        'ارسال درخواست'
+                        <>
+                          <span>ارسال درخواست</span>
+                          <Building size={18} />
+                        </>
                       )}
                     </button>
                   </div>
                 </form>
+                </div>
               </Dialog.Panel>
             </Transition.Child>
           </div>
@@ -1148,42 +1246,47 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                  رد درخواست عضویت
-                </Dialog.Title>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    دلیل رد (اختیاری)
-                  </label>
-                  <textarea
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    placeholder="اگر مایل هستید، دلیل رد درخواست را وارد کنید..."
-                    rows={3}
-                    className="w-full rounded-lg border border-gray-300 shadow-sm focus:ring-melkingDarkBlue focus:border-melkingDarkBlue sm:text-sm p-3"
-                  />
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-2xl transition-all border border-gray-100">
+                <div className="bg-gradient-to-r from-red-500 to-rose-500 px-6 py-4 text-white">
+                  <Dialog.Title as="h3" className="text-xl font-bold flex items-center gap-2">
+                    <XCircle size={24} />
+                    رد درخواست عضویت
+                  </Dialog.Title>
                 </div>
 
-                <div className="flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowRejectModal(false);
-                      setRejectionReason('');
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    انصراف
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleRejectSuggested}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    رد کردن
-                  </button>
+                <div className="p-6">
+                  <div className="mb-5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      دلیل رد (اختیاری)
+                    </label>
+                    <textarea
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="اگر مایل هستید، دلیل رد درخواست را وارد کنید..."
+                      rows={4}
+                      className="w-full rounded-xl border-2 border-gray-200 shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 sm:text-sm p-4 transition-all duration-200 hover:border-gray-300 resize-none"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRejectModal(false);
+                        setRejectionReason('');
+                      }}
+                      className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                    >
+                      انصراف
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRejectSuggested}
+                      className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold rounded-xl hover:from-red-700 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    >
+                      رد کردن
+                    </button>
+                  </div>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
