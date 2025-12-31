@@ -3,7 +3,7 @@ import { FileText, Loader2, RefreshCw, Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import RequestItem from "../../../manager/unitManagement/components/requests/RequestItem";
-import { fetchRequests } from "../../../manager/unitManagement/slices/requestsSlice";
+import { fetchRequests, clearError } from "../../../manager/unitManagement/slices/requestsSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
 import { selectSelectedResidentBuilding } from "../../building/residentBuildingSlice";
 import CreateRequestModal from "../../../manager/unitManagement/components/requests/CreateRequestModal";
@@ -220,6 +220,15 @@ export default function RequestsBase({ requests: propRequests, limit }) {
     // Track last fetched buildingId to prevent duplicate requests (works with React Strict Mode)
     const lastFetchedBuildingId = useRef(null);
     
+    // Clear error when buildingId changes or is invalid
+    useEffect(() => {
+        if (!buildingId || typeof buildingId !== 'number' || isNaN(buildingId)) {
+            if (error) {
+                dispatch(clearError());
+            }
+        }
+    }, [dispatch, buildingId]); // Don't include error to avoid infinite loops
+    
     // Fetch requests when component mounts (prevent duplicate calls)
     useEffect(() => {
         // Only fetch if buildingId is valid (not null/undefined) and is a number
@@ -228,6 +237,8 @@ export default function RequestsBase({ requests: propRequests, limit }) {
             if (lastFetchedBuildingId.current !== buildingId) {
                 console.log('🔥 RequestsBase - Fetching requests for buildingId:', buildingId);
                 lastFetchedBuildingId.current = buildingId;
+                // Clear error before fetching
+                dispatch(clearError());
                 dispatch(fetchRequests(buildingId));
             } else {
                 console.log('🔥 RequestsBase - Skipping duplicate fetch for buildingId:', buildingId);
@@ -249,6 +260,8 @@ export default function RequestsBase({ requests: propRequests, limit }) {
 
     const handleRefresh = () => {
         if (buildingId) {
+            // Clear error before retrying
+            dispatch(clearError());
             dispatch(fetchRequests(buildingId));
         }
     };
@@ -266,6 +279,9 @@ export default function RequestsBase({ requests: propRequests, limit }) {
     // 3. If requests are loading and we have a buildingId
     const isWaitingForBuildingId = user?.role === 'resident' && !buildingId && (membershipLoading || membershipRequests.length === 0);
     const isLoadingRequests = loading && displayed.length === 0 && buildingId;
+    
+    // Don't show error if we're still waiting for buildingId to be calculated
+    const shouldShowError = error && buildingId && !isWaitingForBuildingId;
     
     if (membershipLoading || isWaitingForBuildingId || isLoadingRequests) {
         return (
@@ -317,6 +333,33 @@ export default function RequestsBase({ requests: propRequests, limit }) {
                 </div>
             </div>
 
+            {/* Error Display */}
+            {shouldShowError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-start">
+                            <FileText className="w-5 h-5 text-red-500 mt-0.5 ml-2" />
+                            <div>
+                                <h3 className="text-sm font-medium text-red-900">خطا در بارگذاری درخواست‌ها</h3>
+                                <p className="text-sm text-red-700 mt-1">
+                                    {error === 'Not Found' || error?.includes('Not Found') 
+                                        ? 'درخواستی یافت نشد. لطفاً دوباره تلاش کنید.' 
+                                        : error}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleRefresh}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                            تلاش مجدد
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Requests List */}
             {!buildingId ? (
                 <div className="text-center py-8">
@@ -324,7 +367,7 @@ export default function RequestsBase({ requests: propRequests, limit }) {
                     <h3 className="text-lg font-medium text-gray-900 mb-2">ساختمان انتخاب نشده</h3>
                     <p className="text-gray-600">لطفاً ابتدا یک ساختمان انتخاب کنید.</p>
                 </div>
-            ) : displayed.length === 0 ? (
+            ) : shouldShowError ? null : displayed.length === 0 ? (
                 <div className="text-center py-8">
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">هیچ درخواستی یافت نشد</h3>

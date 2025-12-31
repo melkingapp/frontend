@@ -6,10 +6,11 @@ export const fetchRequests = createAsyncThunk(
   "requests/fetchRequests",
   async (buildingId, { rejectWithValue }) => {
     try {
-      console.log("🔥 fetchRequests - Building ID:", buildingId);
+      console.log("🔥 fetchRequests - Building ID:", buildingId, "Type:", typeof buildingId);
       
-      // Only fetch if buildingId is provided
-      if (!buildingId) {
+      // Only fetch if buildingId is provided and is a valid number
+      if (!buildingId || typeof buildingId !== 'number' || isNaN(buildingId)) {
+        console.log("🔥 fetchRequests - Invalid buildingId, returning empty array");
         return [];
       }
       
@@ -18,7 +19,7 @@ export const fetchRequests = createAsyncThunk(
       return response.requests || [];
     } catch (error) {
       console.error("🔥 fetchRequests - Error:", error);
-      return rejectWithValue(error.response?.data?.error || error.message);
+      return rejectWithValue(error.response?.data?.error || error.message || error.statusText);
     }
   }
 );
