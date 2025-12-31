@@ -16,6 +16,8 @@ export const registerLetter = async (letterData) => {
             formData.append('role', letterData.role);
             formData.append('attachment', letterData.attachment);
             
+            // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
+            console.log("📋 Letter FormData Entries:", [...formData.entries()]);
             console.log("🔥 LettersService: FormData with attachment:", formData);
             
             try {

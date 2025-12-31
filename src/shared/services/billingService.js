@@ -94,7 +94,10 @@ export const registerExpense = async (expenseData) => {
         // بررسی اینکه آیا فایل واقعاً append شده است
         const formDataHasAttachment = formData.has('attachment');
         
-        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
+        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData با استفاده از entries()
+        console.log('📋 FormData Entries (تمام فیلدها):', [...formData.entries()]);
+        
+        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData به صورت قابل خواندن
         const formDataEntries = {};
         const formDataKeys = Array.from(formData.keys());
         for (const key of formDataKeys) {
@@ -147,9 +150,35 @@ export const registerExpense = async (expenseData) => {
         // بررسی اینکه آیا همه فیلدها معتبر هستند
         const requiredFields = ['building_id', 'expense_type', 'total_amount', 'unit_selection', 'distribution_method', 'role', 'bill_due'];
         const missingFields = requiredFields.filter(field => !formDataKeys.includes(field));
+        const emptyFields = formDataKeys.filter(key => {
+            const value = formData.get(key);
+            if (value instanceof File || value instanceof Blob) {
+                return value.size === 0;
+            }
+            return value === '' || value === null || value === undefined;
+        });
+        
         if (missingFields.length > 0) {
-            console.warn('⚠️ Missing required fields in FormData:', missingFields);
+            console.error('❌ Missing required fields in FormData:', missingFields);
+            throw new Error(`فیلدهای الزامی پر نشده‌اند: ${missingFields.join(', ')}`);
         }
+        
+        if (emptyFields.length > 0) {
+            console.warn('⚠️ Empty fields in FormData:', emptyFields);
+        }
+        
+        // بررسی مقادیر فیلدهای الزامی
+        const fieldValidation = {};
+        requiredFields.forEach(field => {
+            const value = formData.get(field);
+            fieldValidation[field] = {
+                exists: formDataKeys.includes(field),
+                value: value instanceof File ? `[File: ${value.name}]` : value,
+                isEmpty: value === '' || value === null || value === undefined || 
+                        (value instanceof File && value.size === 0)
+            };
+        });
+        console.log('✅ Required fields validation:', fieldValidation);
         
         // اگر فایل وجود دارد اما append نشده، خطا بده
         if (hasFile && !formDataHasAttachment) {
@@ -241,7 +270,7 @@ export const registerExpense = async (expenseData) => {
     }
 };
 
-// Register new charge
+        // Register new charge
 export const registerCharge = async (chargeData) => {
     try {
         // اگر فایل داریم، باید از FormData استفاده کنیم
@@ -260,6 +289,23 @@ export const registerCharge = async (chargeData) => {
                     formData.append(key, chargeData[key]);
                 }
             }
+        }
+        
+        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
+        console.log('📋 Charge FormData Entries:', [...formData.entries()]);
+        
+        // بررسی فیلدهای خالی
+        const formDataKeys = Array.from(formData.keys());
+        const emptyFields = formDataKeys.filter(key => {
+            const value = formData.get(key);
+            if (value instanceof File || value instanceof Blob) {
+                return value.size === 0;
+            }
+            return value === '' || value === null || value === undefined;
+        });
+        
+        if (emptyFields.length > 0) {
+            console.warn('⚠️ Empty fields in Charge FormData:', emptyFields);
         }
         
         // بذار axios خودش Content-Type رو با boundary مناسب set کنه
@@ -324,19 +370,18 @@ export const updateExpense = async (expenseData) => {
             }
         }
         
-        // لاگ برای دیباگ (فقط در حالت development)
-        if (process.env.NODE_ENV === 'development') {
-            console.log('📤 Update Expense FormData contents:', {
-                hasFile: hasFile,
-                keys: Array.from(formData.keys()),
-                attachment: expenseData.attachment ? {
-                    name: expenseData.attachment.name,
-                    size: expenseData.attachment.size,
-                    type: expenseData.attachment.type,
-                    isFile: expenseData.attachment instanceof File
-                } : null
-            });
-        }
+        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
+        console.log('📋 Update Expense FormData Entries:', [...formData.entries()]);
+        console.log('📤 Update Expense FormData contents:', {
+            hasFile: hasFile,
+            keys: Array.from(formData.keys()),
+            attachment: expenseData.attachment ? {
+                name: expenseData.attachment.name,
+                size: expenseData.attachment.size,
+                type: expenseData.attachment.type,
+                isFile: expenseData.attachment instanceof File
+            } : null
+        });
         
         const response = await put('/billing/update-expense/', formData);
         return response;
@@ -817,6 +862,23 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
                 const fileName = file.name || (file.type ? `attachment.${file.type.split('/')[1]}` : 'attachment');
                 formData.append('attachment', file, fileName);
             }
+        }
+        
+        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
+        console.log('📋 Extra Payment Request FormData Entries:', [...formData.entries()]);
+        
+        // بررسی فیلدهای خالی
+        const formDataKeys = Array.from(formData.keys());
+        const emptyFields = formDataKeys.filter(key => {
+            const value = formData.get(key);
+            if (value instanceof File || value instanceof Blob) {
+                return value.size === 0;
+            }
+            return value === '' || value === null || value === undefined;
+        });
+        
+        if (emptyFields.length > 0) {
+            console.warn('⚠️ Empty fields in Extra Payment Request FormData:', emptyFields);
         }
         
         const response = await post('/billing/extra-payment-request/', formData);

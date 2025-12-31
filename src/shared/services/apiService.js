@@ -91,20 +91,43 @@ client.interceptors.request.use(
             // حذف Content-Type برای اجازه دادن به axios برای تنظیم خودکار boundary
             delete config.headers['Content-Type'];
             
-            // لاگ برای دیباگ
-            if (process.env.NODE_ENV === 'development') {
-                const formDataKeys = Array.from(config.data.keys());
-                const hasFile = formDataKeys.some(key => {
-                    const value = config.data.get(key);
-                    return value instanceof File || value instanceof Blob;
-                });
-                console.log('📋 FormData request:', {
-                    url: config.url,
-                    method: config.method,
-                    keys: formDataKeys,
-                    hasFile: hasFile,
-                    contentType: config.headers['Content-Type'] || 'multipart/form-data (auto)'
-                });
+            // لاگ برای دیباگ - بررسی هدرها و FormData
+            const formDataKeys = Array.from(config.data.keys());
+            const hasFile = formDataKeys.some(key => {
+                const value = config.data.get(key);
+                return value instanceof File || value instanceof Blob;
+            });
+            
+            // بررسی Authorization token
+            const authToken = config.headers.Authorization;
+            const hasAuthToken = !!authToken && authToken.startsWith('Bearer ');
+            
+            console.log('📋 FormData Request Details:', {
+                url: config.url,
+                method: config.method,
+                keys: formDataKeys,
+                hasFile: hasFile,
+                headers: {
+                    'Content-Type': config.headers['Content-Type'] || 'multipart/form-data (auto-set by axios)',
+                    'Authorization': hasAuthToken ? `Bearer ${authToken.substring(7, 20)}...` : '❌ MISSING',
+                    'Has-Auth-Token': hasAuthToken ? '✅ Yes' : '❌ No'
+                },
+                formDataEntries: [...config.data.entries()].map(([key, value]) => [
+                    key,
+                    value instanceof File || value instanceof Blob 
+                        ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
+                        : value
+                ])
+            });
+            
+            // هشدار در صورت نبودن token
+            if (!hasAuthToken) {
+                console.error('❌ WARNING: Authorization token is missing!');
+            }
+            
+            // هشدار در صورت تنظیم دستی Content-Type
+            if (config.headers['Content-Type'] && config.headers['Content-Type'].includes('application/json')) {
+                console.error('❌ WARNING: Content-Type is set to application/json for FormData! This will cause issues.');
             }
         }
         return config;

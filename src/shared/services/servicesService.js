@@ -53,6 +53,8 @@ export const createService = async (buildingId, serviceData) => {
             formData.append('contact', serviceData.contact || '');
             formData.append('attachment', serviceData.attachment);
             
+            // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
+            console.log("📋 Service FormData Entries:", [...formData.entries()]);
             console.log("🔥 ServicesService: FormData with attachment:", formData);
             
             try {
