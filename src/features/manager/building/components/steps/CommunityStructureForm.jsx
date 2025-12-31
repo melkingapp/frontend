@@ -133,7 +133,7 @@ export default function CommunityStructureForm({ formData, setFormData }) {
                 if (currentBuildings.length < buildingsCount) {
                     const newBuildings = [...currentBuildings];
                     for (let i = currentBuildings.length; i < buildingsCount; i++) {
-                        newBuildings.push({ name: "" });
+                        newBuildings.push({ name: "", unit_count: "" });
                     }
                     blocks[blockIndex].buildings = newBuildings;
                 } else if (currentBuildings.length > buildingsCount) {
@@ -488,7 +488,7 @@ export default function CommunityStructureForm({ formData, setFormData }) {
 
                                     {/* For each building in block */}
                                     {(block.buildings || []).map((building, buildingIndex) => (
-                                        <div key={buildingIndex} className="bg-white p-2 rounded border border-gray-200">
+                                        <div key={buildingIndex} className="bg-white p-2 rounded border border-gray-200 space-y-2">
                                             <InputField
                                                 label={`نام ساختمان ${buildingIndex + 1}`}
                                                 placeholder={`مثلاً ساختمان ${buildingIndex + 1}`}
@@ -496,6 +496,22 @@ export default function CommunityStructureForm({ formData, setFormData }) {
                                                 onChange={(e) => {
                                                     const blocks = [...(formData.community_blocks || [])];
                                                     blocks[blockIndex].buildings[buildingIndex].name = e.target.value;
+                                                    setFormData({
+                                                        ...formData,
+                                                        community_blocks: blocks,
+                                                    });
+                                                }}
+                                                required
+                                            />
+                                            <InputField
+                                                label={`تعداد واحد ساختمان ${buildingIndex + 1}`}
+                                                type="number"
+                                                placeholder="مثلاً 10"
+                                                min="1"
+                                                value={building.unit_count || ""}
+                                                onChange={(e) => {
+                                                    const blocks = [...(formData.community_blocks || [])];
+                                                    blocks[blockIndex].buildings[buildingIndex].unit_count = e.target.value;
                                                     setFormData({
                                                         ...formData,
                                                         community_blocks: blocks,
