@@ -91,6 +91,11 @@ const validateCommunityStructure = (formData) => {
                     if (!building.name || !building.name.trim()) {
                         return false;
                     }
+                    // unit_count is required for each building
+                    const unitCount = parseInt(building.unit_count) || 0;
+                    if (unitCount <= 0) {
+                        return false;
+                    }
                 }
             }
         }
@@ -131,6 +136,11 @@ const validateCommunityStructure = (formData) => {
                     if (!building.name || !building.name.trim()) {
                         return false;
                     }
+                    // unit_count is required for each building
+                    const unitCount = parseInt(building.unit_count) || 0;
+                    if (unitCount <= 0) {
+                        return false;
+                    }
                 }
             }
         } else {
@@ -148,6 +158,11 @@ const validateCommunityStructure = (formData) => {
             // Validate each building
             for (const building of buildings) {
                 if (!building.name || !building.name.trim()) {
+                    return false;
+                }
+                // unit_count is required for each building
+                const unitCount = parseInt(building.unit_count) || 0;
+                if (unitCount <= 0) {
                     return false;
                 }
             }

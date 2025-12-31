@@ -160,7 +160,7 @@ export default function CommunityStructureForm({ formData, setFormData }) {
             if (currentBuildings.length < buildingsCount) {
                 const newBuildings = [...currentBuildings];
                 for (let i = currentBuildings.length; i < buildingsCount; i++) {
-                    newBuildings.push({ name: "" });
+                    newBuildings.push({ name: "", unit_count: "" });
                 }
                 complexes[complexIndex].buildings = newBuildings;
             } else if (currentBuildings.length > buildingsCount) {
@@ -387,7 +387,7 @@ export default function CommunityStructureForm({ formData, setFormData }) {
 
                                     {/* For each building in complex */}
                                     {(complex.buildings || []).map((building, buildingIndex) => (
-                                        <div key={buildingIndex} className="bg-white p-2 rounded border border-gray-200">
+                                        <div key={buildingIndex} className="bg-white p-2 rounded border border-gray-200 space-y-2">
                                             <InputField
                                                 label={`نام ساختمان ${buildingIndex + 1}`}
                                                 placeholder={`مثلاً ساختمان ${buildingIndex + 1}`}
@@ -395,6 +395,22 @@ export default function CommunityStructureForm({ formData, setFormData }) {
                                                 onChange={(e) => {
                                                     const complexes = [...(formData.community_complexes || [])];
                                                     complexes[complexIndex].buildings[buildingIndex].name = e.target.value;
+                                                    setFormData({
+                                                        ...formData,
+                                                        community_complexes: complexes,
+                                                    });
+                                                }}
+                                                required
+                                            />
+                                            <InputField
+                                                label={`تعداد واحد ساختمان ${buildingIndex + 1}`}
+                                                type="number"
+                                                placeholder="مثلاً 10"
+                                                min="1"
+                                                value={building.unit_count || ""}
+                                                onChange={(e) => {
+                                                    const complexes = [...(formData.community_complexes || [])];
+                                                    complexes[complexIndex].buildings[buildingIndex].unit_count = e.target.value;
                                                     setFormData({
                                                         ...formData,
                                                         community_complexes: complexes,
@@ -541,7 +557,7 @@ export default function CommunityStructureForm({ formData, setFormData }) {
                                     
                                     if (currentBuildings.length < count) {
                                         for (let i = currentBuildings.length; i < count; i++) {
-                                            newBuildings.push({ name: "" });
+                                            newBuildings.push({ name: "", unit_count: "" });
                                         }
                                     } else if (currentBuildings.length > count) {
                                         newBuildings = newBuildings.slice(0, count);
@@ -558,7 +574,7 @@ export default function CommunityStructureForm({ formData, setFormData }) {
 
                             {/* For each direct building */}
                             {(formData.community_direct_buildings || []).map((building, buildingIndex) => (
-                                <div key={buildingIndex} className="bg-gray-50 p-2 rounded border border-gray-200">
+                                <div key={buildingIndex} className="bg-gray-50 p-2 rounded border border-gray-200 space-y-2">
                                     <InputField
                                         label={`نام ساختمان ${buildingIndex + 1}`}
                                         placeholder={`مثلاً ساختمان ${buildingIndex + 1}`}
@@ -566,6 +582,22 @@ export default function CommunityStructureForm({ formData, setFormData }) {
                                         onChange={(e) => {
                                             const buildings = [...(formData.community_direct_buildings || [])];
                                             buildings[buildingIndex].name = e.target.value;
+                                            setFormData({
+                                                ...formData,
+                                                community_direct_buildings: buildings,
+                                            });
+                                        }}
+                                        required
+                                    />
+                                    <InputField
+                                        label={`تعداد واحد ساختمان ${buildingIndex + 1}`}
+                                        type="number"
+                                        placeholder="مثلاً 10"
+                                        min="1"
+                                        value={building.unit_count || ""}
+                                        onChange={(e) => {
+                                            const buildings = [...(formData.community_direct_buildings || [])];
+                                            buildings[buildingIndex].unit_count = e.target.value;
                                             setFormData({
                                                 ...formData,
                                                 community_direct_buildings: buildings,
