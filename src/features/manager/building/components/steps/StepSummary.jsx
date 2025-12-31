@@ -169,11 +169,17 @@ export default function StepSummary({ formData, prev }) {
             }
             
             // Add hierarchical structure fields based on property_type
+<<<<<<< Updated upstream
             // IMPORTANT: These fields must be added to cleanData so backend can detect hierarchical structure
             if (formData.property_type === 'community') {
                 // Always include community_has_complex if it exists (even if false) so backend can detect hierarchical structure
                 if (formData.community_has_complex !== null && formData.community_has_complex !== undefined) {
                     cleanData.community_has_complex = Boolean(formData.community_has_complex);
+=======
+            if (formData.property_type === 'community') {
+                if (formData.community_has_complex !== null && formData.community_has_complex !== undefined) {
+                    cleanData.community_has_complex = formData.community_has_complex;
+>>>>>>> Stashed changes
                     
                     if (formData.community_has_complex) {
                         // Community has complexes
@@ -206,9 +212,14 @@ export default function StepSummary({ formData, prev }) {
                     }
                 }
             } else if (formData.property_type === 'complex') {
+<<<<<<< Updated upstream
                 // Always include complex_has_blocks if it exists (even if false) so backend can detect hierarchical structure
                 if (formData.complex_has_blocks !== null && formData.complex_has_blocks !== undefined) {
                     cleanData.complex_has_blocks = Boolean(formData.complex_has_blocks);
+=======
+                if (formData.complex_has_blocks !== null && formData.complex_has_blocks !== undefined) {
+                    cleanData.complex_has_blocks = formData.complex_has_blocks;
+>>>>>>> Stashed changes
                     
                     if (formData.complex_has_blocks) {
                         // Complex has blocks
@@ -229,8 +240,12 @@ export default function StepSummary({ formData, prev }) {
                 if (formData.block_buildings && formData.block_buildings.length > 0) {
                     cleanData.block_buildings = formData.block_buildings;
                 }
+<<<<<<< Updated upstream
                 // Always include block_buildings_count if it exists so backend can detect hierarchical structure
                 if (formData.block_buildings_count !== null && formData.block_buildings_count !== undefined) {
+=======
+                if (formData.block_buildings_count) {
+>>>>>>> Stashed changes
                     cleanData.block_buildings_count = formData.block_buildings_count;
                 }
             }
