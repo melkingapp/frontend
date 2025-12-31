@@ -10,12 +10,14 @@ import {
   Phone,
   MapPin,
   Users,
-  Calendar
+  Calendar,
+  Edit
 } from 'lucide-react';
 import { 
   fetchMembershipRequests, 
   approveMembershipRequestByOwner, 
   rejectMembershipRequest,
+  editMembershipRequest,
   selectMembershipRequests,
   selectMembershipLoading,
   selectMembershipError,
@@ -58,7 +60,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const RequestCard = ({ request, onApprove, onReject, onViewDetails, approveLoading, rejectLoading }) => {
+const RequestCard = ({ request, onApprove, onReject, onViewDetails, onEdit, approveLoading, rejectLoading }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-4">
@@ -110,6 +112,12 @@ const RequestCard = ({ request, onApprove, onReject, onViewDetails, approveLoadi
           >
             <XCircle size={16} />
             {rejectLoading ? 'در حال رد...' : 'رد'}
+          </button>
+          <button
+            onClick={() => onEdit(request)}
+            className="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <Edit size={16} />
           </button>
           <button
             onClick={() => onViewDetails(request)}
@@ -247,6 +255,149 @@ const RequestDetailsModal = ({ request, isOpen, onClose }) => {
   );
 };
 
+const EditRequestModal = ({ request, isOpen, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    full_name: request?.full_name || '',
+    phone_number: request?.phone_number || '',
+    unit_number: request?.unit_number || '',
+    floor: request?.floor || '',
+    area: request?.area || '',
+    resident_count: request?.resident_count || 1,
+    has_parking: request?.has_parking || false,
+    parking_count: request?.parking_count || 0,
+  });
+
+  if (!isOpen || !request) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(request.request_id, formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">ویرایش درخواست عضویت</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XCircle size={24} />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">نام و نام خانوادگی</label>
+                <input
+                  type="text"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">شماره تماس</label>
+                <input
+                  type="text"
+                  value={formData.phone_number}
+                  onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">شماره واحد</label>
+                <input
+                  type="text"
+                  value={formData.unit_number}
+                  onChange={(e) => setFormData({ ...formData, unit_number: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">طبقه</label>
+                <input
+                  type="number"
+                  value={formData.floor}
+                  onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">متراژ (متر مربع)</label>
+                <input
+                  type="number"
+                  value={formData.area}
+                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">تعداد نفر</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.resident_count}
+                  onChange={(e) => setFormData({ ...formData, resident_count: parseInt(e.target.value) || 1 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.has_parking}
+                    onChange={(e) => setFormData({ ...formData, has_parking: e.target.checked })}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">پارکینگ دارد</span>
+                </label>
+              </div>
+              {formData.has_parking && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">تعداد پارکینگ</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.parking_count}
+                    onChange={(e) => setFormData({ ...formData, parking_count: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                ذخیره تغییرات
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                انصراف
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function OwnerMembershipApproval() {
   const dispatch = useDispatch();
   const requests = useSelector(selectMembershipRequests);
@@ -258,6 +409,8 @@ export default function OwnerMembershipApproval() {
 
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [requestToEdit, setRequestToEdit] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
@@ -266,10 +419,23 @@ export default function OwnerMembershipApproval() {
   }, [dispatch, statusFilter]);
 
   const handleApprove = async (requestId) => {
-    if (window.confirm('آیا از تأیید این درخواست عضویت اطمینان دارید؟ این درخواست برای تأیید نهایی به مدیر ارسال خواهد شد.')) {
+    const request = requests.find(r => r.request_id === requestId);
+    const isEdited = request?.has_been_edited;
+    
+    const confirmMessage = isEdited 
+      ? 'آیا از تأیید این درخواست عضویت اطمینان دارید؟ این درخواست ویرایش شده و برای تأیید نهایی به مدیر ارسال خواهد شد.'
+      : 'آیا از تأیید این درخواست عضویت اطمینان دارید؟';
+    
+    if (window.confirm(confirmMessage)) {
       try {
-        await dispatch(approveMembershipRequestByOwner(requestId)).unwrap();
-        toast.success('درخواست عضویت تأیید شد و برای تأیید نهایی به مدیر ارسال شد');
+        const result = await dispatch(approveMembershipRequestByOwner(requestId)).unwrap();
+        
+        if (result?.auto_approved) {
+          toast.success('درخواست عضویت تأیید شد و عضو ساختمان شدید');
+        } else {
+          toast.success('درخواست عضویت تأیید شد و برای تأیید نهایی به مدیر ارسال شد');
+        }
+        
         // بروزرسانی لیست
         dispatch(fetchMembershipRequests({ status: statusFilter === 'all' ? null : statusFilter }));
       } catch (error) {
@@ -302,6 +468,30 @@ export default function OwnerMembershipApproval() {
   const handleCloseDetails = () => {
     setIsDetailsOpen(false);
     setSelectedRequest(null);
+  };
+
+  const handleEdit = (request) => {
+    setRequestToEdit(request);
+    setIsEditOpen(true);
+  };
+
+  const handleCloseEdit = () => {
+    setIsEditOpen(false);
+    setRequestToEdit(null);
+  };
+
+  const handleSaveEdit = async (requestId, formData) => {
+    try {
+      await dispatch(editMembershipRequest({ requestId, requestData: formData })).unwrap();
+      toast.success('درخواست عضویت با موفقیت ویرایش شد');
+      setIsEditOpen(false);
+      setRequestToEdit(null);
+      // بروزرسانی لیست
+      dispatch(fetchMembershipRequests({ status: statusFilter === 'all' ? null : statusFilter }));
+    } catch (error) {
+      console.error('Error editing request:', error);
+      toast.error('خطا در ویرایش درخواست: ' + error);
+    }
   };
 
   // فیلتر درخواست‌ها بر اساس ساختمان‌های مالک
@@ -423,6 +613,7 @@ export default function OwnerMembershipApproval() {
                 onApprove={handleApprove}
                 onReject={handleReject}
                 onViewDetails={handleViewDetails}
+                onEdit={handleEdit}
                 approveLoading={approveLoading}
                 rejectLoading={rejectLoading}
               />
@@ -436,6 +627,14 @@ export default function OwnerMembershipApproval() {
         request={selectedRequest}
         isOpen={isDetailsOpen}
         onClose={handleCloseDetails}
+      />
+
+      {/* Edit Modal */}
+      <EditRequestModal
+        request={requestToEdit}
+        isOpen={isEditOpen}
+        onClose={handleCloseEdit}
+        onSave={handleSaveEdit}
       />
     </div>
   );
