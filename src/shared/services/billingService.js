@@ -785,6 +785,19 @@ export const toggleDebtCreditVisibility = async (buildingId, showToResidents) =>
 // Extra Payment Request Functions
 export const createExtraPaymentRequest = async (buildingId, data) => {
     try {
+        console.log('🔵 [createExtraPaymentRequest] Input data:', {
+            buildingId,
+            buildingIdType: typeof buildingId,
+            data: {
+                ...data,
+                attachment: data.attachment ? {
+                    name: data.attachment.name,
+                    size: data.attachment.size,
+                    type: data.attachment.type
+                } : null
+            }
+        });
+        
         const formData = new FormData();
         
         // تبدیل buildingId به number برای اطمینان
@@ -793,24 +806,66 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
             throw new Error('building_id باید یک عدد معتبر باشد');
         }
         
+        // بررسی و تبدیل amount
+        let amountValue = data.amount;
+        if (amountValue === undefined || amountValue === null) {
+            throw new Error('مبلغ الزامی است');
+        }
+        
+        // اگر number است، به string تبدیل می‌کنیم
+        if (typeof amountValue === 'number') {
+            if (isNaN(amountValue) || !isFinite(amountValue)) {
+                throw new Error('مبلغ نامعتبر است');
+            }
+            amountValue = amountValue.toString();
+        } else if (typeof amountValue === 'string') {
+            // اگر string است، بررسی می‌کنیم که خالی نباشد
+            amountValue = amountValue.trim();
+            if (amountValue === '') {
+                throw new Error('مبلغ الزامی است');
+            }
+            // حذف کاماها و تبدیل به number و سپس string
+            const cleanedAmount = amountValue.replace(/,/g, '');
+            const parsedAmount = parseFloat(cleanedAmount);
+            if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
+                throw new Error('مبلغ نامعتبر است');
+            }
+            amountValue = parsedAmount.toString();
+        } else {
+            // برای سایر انواع، به string تبدیل می‌کنیم
+            amountValue = String(amountValue);
+        }
+        
         // افزودن فیلدهای الزامی
-        formData.append('building_id', buildingIdNum);
-        formData.append('title', data.title);
-        formData.append('amount', data.amount);
+        formData.append('building_id', buildingIdNum.toString());
+        formData.append('title', String(data.title || '').trim());
+        formData.append('amount', amountValue);
+        
+        console.log('🔵 [createExtraPaymentRequest] FormData values before optional fields:', {
+            building_id: buildingIdNum,
+            title: data.title,
+            amount: amountValue
+        });
         
         // فیلدهای اختیاری
-        if (data.unit_id) {
-            formData.append('unit_id', data.unit_id);
+        if (data.unit_id !== undefined && data.unit_id !== null && data.unit_id !== '') {
+            const unitIdNum = typeof data.unit_id === 'number' ? data.unit_id : parseInt(data.unit_id);
+            if (!isNaN(unitIdNum)) {
+                formData.append('unit_id', unitIdNum.toString());
+            }
         }
-        if (data.description) {
-            formData.append('description', data.description);
+        if (data.description && data.description.trim() !== '') {
+            formData.append('description', String(data.description).trim());
         }
-        if (data.payment_date) {
-            formData.append('payment_date', data.payment_date);
+        if (data.payment_date && data.payment_date.trim() !== '') {
+            formData.append('payment_date', String(data.payment_date).trim());
         }
         // اگر user_id ارائه شده (برای مدیران)، آن را اضافه می‌کنیم
-        if (data.user_id) {
-            formData.append('user_id', data.user_id);
+        if (data.user_id !== undefined && data.user_id !== null && data.user_id !== '') {
+            const userIdNum = typeof data.user_id === 'number' ? data.user_id : parseInt(data.user_id);
+            if (!isNaN(userIdNum)) {
+                formData.append('user_id', userIdNum.toString());
+            }
         }
         
         // مدیریت فایل attachment - منطق یکسان با registerExpense
@@ -867,8 +922,38 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
         // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
         console.log('📋 Extra Payment Request FormData Entries:', [...formData.entries()]);
         
-        // بررسی فیلدهای خالی
+        // بررسی دقیق تمام فیلدها
         const formDataKeys = Array.from(formData.keys());
+        const formDataDetails = {};
+        formDataKeys.forEach(key => {
+            const value = formData.get(key);
+            if (value instanceof File || value instanceof Blob) {
+                formDataDetails[key] = {
+                    type: 'File',
+                    name: value.name,
+                    size: value.size,
+                    mimeType: value.type
+                };
+            } else {
+                formDataDetails[key] = {
+                    type: typeof value,
+                    value: value,
+                    isEmpty: value === '' || value === null || value === undefined
+                };
+            }
+        });
+        
+        console.log('📋 Extra Payment Request FormData Details:', formDataDetails);
+        
+        // بررسی فیلدهای الزامی
+        const requiredFields = ['building_id', 'title', 'amount'];
+        const missingFields = requiredFields.filter(field => !formDataKeys.includes(field));
+        if (missingFields.length > 0) {
+            console.error('❌ Missing required fields:', missingFields);
+            throw new Error(`فیلدهای الزامی پر نشده‌اند: ${missingFields.join(', ')}`);
+        }
+        
+        // بررسی فیلدهای خالی
         const emptyFields = formDataKeys.filter(key => {
             const value = formData.get(key);
             if (value instanceof File || value instanceof Blob) {
@@ -880,6 +965,29 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
         if (emptyFields.length > 0) {
             console.warn('⚠️ Empty fields in Extra Payment Request FormData:', emptyFields);
         }
+        
+        // بررسی مقادیر فیلدهای الزامی
+        const buildingIdValue = formData.get('building_id');
+        const titleValue = formData.get('title');
+        const amountValueFromForm = formData.get('amount');
+        
+        console.log('✅ Required fields validation:', {
+            building_id: {
+                value: buildingIdValue,
+                type: typeof buildingIdValue,
+                isValid: buildingIdValue && !isNaN(parseInt(buildingIdValue))
+            },
+            title: {
+                value: titleValue,
+                type: typeof titleValue,
+                isValid: titleValue && String(titleValue).trim() !== ''
+            },
+            amount: {
+                value: amountValueFromForm,
+                type: typeof amountValueFromForm,
+                isValid: amountValueFromForm && !isNaN(parseFloat(amountValueFromForm))
+            }
+        });
         
         const response = await post('/billing/extra-payment-request/', formData);
         return response;

@@ -245,13 +245,40 @@ export default function ExtraPaymentRequestForm({ isOpen, onClose, onSuccess }) 
         }
 
         try {
+            // Parse amount با بررسی خطا
+            let parsedAmount = formData.amount;
+            if (typeof parsedAmount === 'string') {
+                const cleanedAmount = parsedAmount.replace(/,/g, "").trim();
+                if (cleanedAmount === '') {
+                    toast.error("لطفاً مبلغ را وارد کنید");
+                    return;
+                }
+                parsedAmount = parseFloat(cleanedAmount);
+                if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
+                    toast.error("مبلغ وارد شده نامعتبر است");
+                    return;
+                }
+            }
+            
             const submitData = {
                 title: formData.title.trim(),
-                amount: parseFloat(formData.amount.replace(/,/g, "")),
+                amount: parsedAmount, // حالا یک number معتبر است
                 payment_date: formData.payment_date || undefined,
                 description: formData.description.trim() || undefined,
                 attachment: formData.attachment || undefined
             };
+
+            console.log('🔵 [ExtraPaymentRequestForm] Submitting data:', {
+                buildingId,
+                submitData: {
+                    ...submitData,
+                    attachment: submitData.attachment ? {
+                        name: submitData.attachment.name,
+                        size: submitData.attachment.size,
+                        type: submitData.attachment.type
+                    } : null
+                }
+            });
 
             // اگر کاربر مدیر است، باید user_id را ارسال کنیم
             if (user?.role === 'manager' && user?.id) {
