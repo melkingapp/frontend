@@ -6,7 +6,19 @@
  * @returns {string} Base URL for API requests
  */
 export const getApiBaseUrl = () => {
-  return import.meta.env.VITE_API_BASE_URL || 'https://melkingapp.ir/api/v1';
+  // در development، اولویت با localhost است
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // اگر در development هستیم و متغیر محیطی تنظیم نشده، از localhost استفاده کن
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8000/api/v1';
+  }
+  
+  // در production از URL پیش‌فرض استفاده کن
+  return 'https://melkingapp.ir/api/v1';
 };
 
 /**

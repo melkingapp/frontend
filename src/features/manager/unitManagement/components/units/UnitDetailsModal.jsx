@@ -6,7 +6,7 @@ import UnitTransactionItem from "./modalItem/UnitTransactionItem";
 import EditableCard from "../../../../../shared/components/shared/display/EditableCard";
 import moment from "moment";
 import { useDispatch, useSelector } from "react-redux";
-import { updateUnit, deleteUnit } from "../../slices/unitsSlice";
+import { updateUnit, deleteUnit, fetchUnits } from "../../slices/unitsSlice";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
 import { getUnitFinancialTransactions } from "../../../../../shared/services/transactionsService";
 import { getPersianType } from "../../../../../shared/utils/typeUtils";
@@ -184,19 +184,29 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
     const handleDeleteUnit = async () => {
         if (!unit || !selectedBuilding) return;
         
+        const buildingId = selectedBuilding.building_id || selectedBuilding.id;
+        const unitId = unit.units_id || unit.id;
+        
         try {
-            console.log("🔥 Deleting unit:", unit.units_id || unit.id);
+            console.log("🔥 Deleting unit:", unitId);
             await dispatch(deleteUnit({
-                buildingId: selectedBuilding.building_id || selectedBuilding.id,
-                unitId: unit.units_id || unit.id
+                buildingId: buildingId,
+                unitId: unitId
             })).unwrap();
             
             console.log("✅ Unit deleted successfully");
             toast.success('واحد با موفقیت حذف شد');
+            
+            // Refresh the units list after deletion
+            if (buildingId) {
+                await dispatch(fetchUnits(buildingId));
+            }
+            
             onClose(); // بستن مدال
         } catch (error) {
             console.error("❌ Error deleting unit:", error);
-            toast.error('خطا در حذف واحد: ' + error);
+            const errorMessage = typeof error === 'string' ? error : error?.message || 'خطا در حذف واحد';
+            toast.error('خطا در حذف واحد: ' + errorMessage);
         }
     };
 

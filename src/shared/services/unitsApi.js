@@ -106,9 +106,11 @@ class UnitsApiService {
       };
     } catch (error) {
       console.error('Error deleting unit:', error);
+      // error.data is set by api.js when throwing errors
+      const errorMessage = error.data?.error || error.data?.detail || error.data?.message || error.message || 'خطا در حذف واحد';
       return {
         success: false,
-        error: error.response?.data?.error || error.message || 'خطا در حذف واحد'
+        error: errorMessage
       };
     }
   }

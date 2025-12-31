@@ -60,10 +60,13 @@ export const deleteUnit = createAsyncThunk(
   "units/deleteUnit",
   async ({ buildingId, unitId }, { rejectWithValue }) => {
     try {
-      await unitsApi.deleteUnit(buildingId, unitId);
+      const response = await unitsApi.deleteUnit(buildingId, unitId);
+      if (response.success === false) {
+        return rejectWithValue(response.error || 'خطا در حذف واحد');
+      }
       return unitId;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || error.message);
+      return rejectWithValue(error.response?.data?.error || error.message || 'خطا در حذف واحد');
     }
   }
 );
@@ -177,8 +180,12 @@ const unitsSlice = createSlice({
       })
       .addCase(deleteUnit.fulfilled, (state, action) => {
         state.deleteLoading = false;
-        state.units = state.units.filter(unit => unit.units_id !== action.payload);
-        if (state.selectedUnit && state.selectedUnit.units_id === action.payload) {
+        // Filter out the deleted unit by both units_id and id to handle different ID formats
+        state.units = state.units.filter(unit => 
+          unit.units_id !== action.payload && unit.id !== action.payload
+        );
+        if (state.selectedUnit && 
+            (state.selectedUnit.units_id === action.payload || state.selectedUnit.id === action.payload)) {
           state.selectedUnit = null;
         }
       })

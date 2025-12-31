@@ -15,9 +15,10 @@ export default function StepFund({ formData, setFormData, next, prev }) {
             (formData.sheba_part5 || "") +
             (formData.sheba_part6 || "");
 
+        // Only set fund_sheba_number if it's a valid sheba (more than just "IR")
         setFormData(prev => ({
             ...prev,
-            fund_sheba_number: fullSheba,
+            fund_sheba_number: fullSheba.length > 2 ? fullSheba : "",
         }));
 
         next();
@@ -54,7 +55,7 @@ export default function StepFund({ formData, setFormData, next, prev }) {
 
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            شماره شبا صندوق
+                            شماره شبا صندوق <span className="text-gray-400 text-xs">(اختیاری)</span>
                         </label>
                         <ShebaInputGroup formData={formData} setFormData={setFormData} />
                     </div>

@@ -28,10 +28,15 @@ export default function StepSummary({ formData, prev }) {
                 return;
             }
             
-            if (!formData.unit_count || parseInt(formData.unit_count) <= 0) {
-                toast.error("تعداد واحدها الزامی است و باید عدد مثبت باشد");
-                setIsLoading(false);
-                return;
+            // For hierarchical structures, unit_count validation is not needed
+            const isHierarchical = ['community', 'complex', 'block'].includes(formData.property_type);
+            
+            if (!isHierarchical) {
+                if (!formData.unit_count || parseInt(formData.unit_count) <= 0) {
+                    toast.error("تعداد واحدها الزامی است و باید عدد مثبت باشد");
+                    setIsLoading(false);
+                    return;
+                }
             }
             
             if (!formData.fund_balance || parseFloat(formData.fund_balance) < 0) {
@@ -40,27 +45,63 @@ export default function StepSummary({ formData, prev }) {
                 return;
             }
             
-            if (!formData.fund_sheba_number || !formData.fund_sheba_number.trim()) {
-                toast.error("شماره شبا صندوق الزامی است");
-                setIsLoading(false);
-                return;
-            }
-            
             // Clean form data for API
             // Ensure is_owner_resident is a boolean
             const is_owner_resident = Boolean(formData.is_owner_resident);
             
-            // Handle blocks_count: required for complex/community, must be integer
+            // Check if this is a hierarchical structure (must be checked before blocks_count logic)
+            const hasHierarchicalData = 
+                (formData.property_type === 'community' && formData.community_has_complex !== null && formData.community_has_complex !== undefined) ||
+                (formData.property_type === 'complex' && formData.complex_has_blocks !== null && formData.complex_has_blocks !== undefined) ||
+                (formData.property_type === 'block' && formData.block_buildings_count);
+            
+            // Handle blocks_count: calculate from hierarchical structure or use provided value
             let blocks_count = null;
             if (formData.property_type === 'complex' || formData.property_type === 'community') {
-                // برای complex/community، blocks_count اجباری است و باید عدد باشد
-                const blocksCountValue = parseInt(formData.blocks_count);
-                if (isNaN(blocksCountValue) || blocksCountValue <= 0) {
-                    toast.error("تعداد بلوک‌ها برای مجتمع/شهرک الزامی است و باید عدد مثبت باشد");
-                    setIsLoading(false);
-                    return;
+                if (hasHierarchicalData) {
+                    // Calculate blocks_count from hierarchical structure for backward compatibility
+                    if (formData.property_type === 'community') {
+                        if (formData.community_has_complex) {
+                            // Count all blocks across all complexes
+                            const complexes = formData.community_complexes || [];
+                            blocks_count = complexes.reduce((total, complex) => {
+                                if (complex.has_blocks) {
+                                    return total + (complex.blocks?.length || 0);
+                                }
+                                return total;
+                            }, 0);
+                        } else if (formData.community_has_blocks) {
+                            // Direct blocks in community
+                            blocks_count = formData.community_blocks?.length || 0;
+                        } else {
+                            // No blocks, just direct buildings
+                            blocks_count = 0;
+                        }
+                    } else if (formData.property_type === 'complex') {
+                        if (formData.complex_has_blocks) {
+                            blocks_count = formData.complex_blocks?.length || 0;
+                        } else {
+                            blocks_count = 0;
+                        }
+                    }
+                    // Ensure at least 1 if there are blocks in the structure
+                    if (blocks_count === 0 && (
+                        (formData.community_complexes?.some(c => c.has_blocks && c.blocks?.length > 0)) ||
+                        (formData.community_blocks?.length > 0) ||
+                        (formData.complex_blocks?.length > 0)
+                    )) {
+                        blocks_count = 1;
+                    }
+                } else {
+                    // Non-hierarchical: require blocks_count from form
+                    const blocksCountValue = parseInt(formData.blocks_count);
+                    if (isNaN(blocksCountValue) || blocksCountValue <= 0) {
+                        toast.error("تعداد بلوک‌ها برای مجتمع/شهرک الزامی است و باید عدد مثبت باشد");
+                        setIsLoading(false);
+                        return;
+                    }
+                    blocks_count = blocksCountValue;
                 }
-                blocks_count = blocksCountValue;
             }
             
             // Handle resident_floor: required when is_owner_resident is true, must be integer or null
@@ -87,32 +128,111 @@ export default function StepSummary({ formData, prev }) {
             // Django REST framework will convert it to Decimal properly
             const fund_balance = fund_balance_value;
             
-            // Ensure unit_count is a valid positive integer
-            const unit_count = parseInt(formData.unit_count);
-            if (isNaN(unit_count) || unit_count <= 0) {
-                toast.error("تعداد واحدها باید عدد مثبت باشد");
-                setIsLoading(false);
-                return;
+            // For hierarchical structures, unit_count will be calculated automatically
+            // For simple buildings, unit_count is required
+            let unit_count = 0;
+            
+            if (!isHierarchical) {
+                // For simple buildings, unit_count is required
+                unit_count = parseInt(formData.unit_count);
+                if (isNaN(unit_count) || unit_count <= 0) {
+                    toast.error("تعداد واحدها باید عدد مثبت باشد");
+                    setIsLoading(false);
+                    return;
+                }
             }
             
             const cleanData = {
                 title: formData.title.trim(),
                 usage_type: formData.usage_type,
                 property_type: formData.property_type,
-                unit_count: unit_count,
+                unit_count: isHierarchical ? 0 : unit_count, // Will be calculated for hierarchical structures
                 is_owner_resident: is_owner_resident,
                 fund_balance: fund_balance,
-                fund_sheba_number: formData.fund_sheba_number.trim(),
             };
+            
+            // Only include fund_sheba_number if it exists and is not empty
+            if (formData.fund_sheba_number && formData.fund_sheba_number.trim()) {
+                cleanData.fund_sheba_number = formData.fund_sheba_number.trim();
+            }
             
             // Only include resident_floor if is_owner_resident is true
             if (is_owner_resident) {
                 cleanData.resident_floor = resident_floor;
             }
             
-            // Only include blocks_count if it's not null (for complex/community)
-            if (blocks_count !== null) {
+            // Include blocks_count if it's not null
+            // For hierarchical structures, this is calculated from the structure
+            // For non-hierarchical, it comes from the form
+            if (blocks_count !== null && blocks_count !== undefined) {
                 cleanData.blocks_count = blocks_count;
+            }
+            
+            // Add hierarchical structure fields based on property_type
+            // IMPORTANT: These fields must be added to cleanData so backend can detect hierarchical structure
+            if (formData.property_type === 'community') {
+                // Always include community_has_complex if it exists (even if false) so backend can detect hierarchical structure
+                if (formData.community_has_complex !== null && formData.community_has_complex !== undefined) {
+                    cleanData.community_has_complex = Boolean(formData.community_has_complex);
+                    
+                    if (formData.community_has_complex) {
+                        // Community has complexes
+                        if (formData.community_complexes && formData.community_complexes.length > 0) {
+                            cleanData.community_complexes = formData.community_complexes;
+                        }
+                        if (formData.community_total_buildings) {
+                            cleanData.community_total_buildings = formData.community_total_buildings;
+                        }
+                    } else {
+                        // Community doesn't have complexes
+                        if (formData.community_has_blocks !== null && formData.community_has_blocks !== undefined) {
+                            cleanData.community_has_blocks = formData.community_has_blocks;
+                            
+                            if (formData.community_has_blocks) {
+                                // Community has direct blocks
+                                if (formData.community_blocks && formData.community_blocks.length > 0) {
+                                    cleanData.community_blocks = formData.community_blocks;
+                                }
+                            } else {
+                                // Community has direct buildings
+                                if (formData.community_direct_buildings && formData.community_direct_buildings.length > 0) {
+                                    cleanData.community_direct_buildings = formData.community_direct_buildings;
+                                }
+                                if (formData.community_direct_buildings_count) {
+                                    cleanData.community_direct_buildings_count = formData.community_direct_buildings_count;
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (formData.property_type === 'complex') {
+                // Always include complex_has_blocks if it exists (even if false) so backend can detect hierarchical structure
+                if (formData.complex_has_blocks !== null && formData.complex_has_blocks !== undefined) {
+                    cleanData.complex_has_blocks = Boolean(formData.complex_has_blocks);
+                    
+                    if (formData.complex_has_blocks) {
+                        // Complex has blocks
+                        if (formData.complex_blocks && formData.complex_blocks.length > 0) {
+                            cleanData.complex_blocks = formData.complex_blocks;
+                        }
+                    } else {
+                        // Complex has direct buildings
+                        if (formData.complex_direct_buildings && formData.complex_direct_buildings.length > 0) {
+                            cleanData.complex_direct_buildings = formData.complex_direct_buildings;
+                        }
+                        if (formData.complex_direct_buildings_count) {
+                            cleanData.complex_direct_buildings_count = formData.complex_direct_buildings_count;
+                        }
+                    }
+                }
+            } else if (formData.property_type === 'block') {
+                if (formData.block_buildings && formData.block_buildings.length > 0) {
+                    cleanData.block_buildings = formData.block_buildings;
+                }
+                // Always include block_buildings_count if it exists so backend can detect hierarchical structure
+                if (formData.block_buildings_count !== null && formData.block_buildings_count !== undefined) {
+                    cleanData.block_buildings_count = formData.block_buildings_count;
+                }
             }
             
             // لاگ کامل برای دیباگ
@@ -230,18 +350,187 @@ export default function StepSummary({ formData, prev }) {
         },
     };
 
+    // Helper function to render hierarchical structure
+    const renderHierarchicalStructure = () => {
+        if (formData.property_type === 'community') {
+            if (formData.community_has_complex === true) {
+                // Community with complexes
+                const complexes = formData.community_complexes || [];
+                return (
+                    <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-700">ساختار شهرک:</h3>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                            <div className="text-sm text-gray-600">شهرک شامل {complexes.length} مجتمع</div>
+                            {complexes.map((complex, idx) => (
+                                <div key={idx} className="bg-white border border-gray-200 rounded p-3 space-y-2">
+                                    <div className="font-medium text-gray-800">مجتمع {idx + 1}: {complex.name}</div>
+                                    {complex.has_blocks === true ? (
+                                        <div className="mr-4 space-y-2">
+                                            <div className="text-sm text-gray-600">شامل {complex.blocks?.length || 0} بلوک</div>
+                                            {(complex.blocks || []).map((block, blockIdx) => (
+                                                <div key={blockIdx} className="mr-4 bg-gray-50 border border-gray-200 rounded p-2">
+                                                    <div className="text-sm font-medium text-gray-700">بلوک {blockIdx + 1}: {block.name}</div>
+                                                    <div className="text-xs text-gray-600 mt-1">
+                                                        {block.buildings?.length || 0} ساختمان
+                                                        {block.buildings && block.buildings.length > 0 && (
+                                                            <div className="mr-2 mt-1">
+                                                                {block.buildings.map((b, bIdx) => (
+                                                                    <div key={bIdx} className="text-xs text-gray-500">
+                                                                        - {b.name} ({b.unit_count} واحد)
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="mr-4">
+                                            <div className="text-sm text-gray-600">شامل {complex.buildings?.length || 0} ساختمان مستقیم</div>
+                                            {(complex.buildings || []).map((b, bIdx) => (
+                                                <div key={bIdx} className="text-xs text-gray-500 mr-2">
+                                                    - {b.name} ({b.unit_count} واحد)
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            } else if (formData.community_has_blocks === true) {
+                // Community with direct blocks
+                const blocks = formData.community_blocks || [];
+                return (
+                    <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-700">ساختار شهرک:</h3>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                            <div className="text-sm text-gray-600">شهرک شامل {blocks.length} بلوک مستقیم</div>
+                            {blocks.map((block, idx) => (
+                                <div key={idx} className="bg-white border border-gray-200 rounded p-3">
+                                    <div className="font-medium text-gray-800">بلوک {idx + 1}: {block.name}</div>
+                                    <div className="text-sm text-gray-600 mt-1">
+                                        {block.buildings?.length || 0} ساختمان
+                                        {block.buildings && block.buildings.length > 0 && (
+                                            <div className="mr-2 mt-1">
+                                                {block.buildings.map((b, bIdx) => (
+                                                    <div key={bIdx} className="text-xs text-gray-500">
+                                                        - {b.name} ({b.unit_count} واحد)
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            } else {
+                // Community with direct buildings
+                const buildings = formData.community_direct_buildings || [];
+                return (
+                    <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-700">ساختار شهرک:</h3>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="text-sm text-gray-600">شهرک شامل {buildings.length} ساختمان مستقیم</div>
+                            <div className="mt-2 space-y-1">
+                                {buildings.map((b, idx) => (
+                                    <div key={idx} className="text-sm text-gray-700">
+                                        - {b.name} ({b.unit_count} واحد)
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+        } else if (formData.property_type === 'complex') {
+            if (formData.complex_has_blocks === true) {
+                // Complex with blocks
+                const blocks = formData.complex_blocks || [];
+                return (
+                    <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-700">ساختار مجتمع:</h3>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                            <div className="text-sm text-gray-600">مجتمع شامل {blocks.length} بلوک</div>
+                            {blocks.map((block, idx) => (
+                                <div key={idx} className="bg-white border border-gray-200 rounded p-3">
+                                    <div className="font-medium text-gray-800">بلوک {idx + 1}: {block.name}</div>
+                                    <div className="text-sm text-gray-600 mt-1">
+                                        {block.buildings?.length || 0} ساختمان
+                                        {block.buildings && block.buildings.length > 0 && (
+                                            <div className="mr-2 mt-1">
+                                                {block.buildings.map((b, bIdx) => (
+                                                    <div key={bIdx} className="text-xs text-gray-500">
+                                                        - {b.name} ({b.unit_count} واحد)
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            } else {
+                // Complex with direct buildings
+                const buildings = formData.complex_direct_buildings || [];
+                return (
+                    <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-700">ساختار مجتمع:</h3>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div className="text-sm text-gray-600">مجتمع شامل {buildings.length} ساختمان مستقیم</div>
+                            <div className="mt-2 space-y-1">
+                                {buildings.map((b, idx) => (
+                                    <div key={idx} className="text-sm text-gray-700">
+                                        - {b.name} ({b.unit_count} واحد)
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+        } else if (formData.property_type === 'block') {
+            // Block with buildings
+            const buildings = formData.block_buildings || [];
+            return (
+                <div className="space-y-4">
+                    <h3 className="font-semibold text-gray-700">ساختار بلوک:</h3>
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <div className="text-sm text-gray-600">بلوک شامل {buildings.length} ساختمان</div>
+                        <div className="mt-2 space-y-1">
+                            {buildings.map((b, idx) => (
+                                <div key={idx} className="text-sm text-gray-700">
+                                    - {b.name} ({b.unit_count} واحد)
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+
     const entries = [
         { label: "عنوان ساختمان", value: formData.title },
         { label: "نام مدیر", value: formData.name || "-" },
         { label: "نوع کاربری", value: labelsMap.usage_type[formData.usage_type] || formData.usage_type },
         { label: "نوع ملک", value: labelsMap.property_type[formData.property_type] || formData.property_type },
-        { label: "تعداد واحد", value: formData.unit_count },
+        ...(formData.property_type !== 'community' && formData.property_type !== 'complex' && formData.property_type !== 'block'
+            ? [{ label: "تعداد واحد", value: formData.unit_count }]
+            : []),
         { label: "مدیر ساکن است؟", value: formData.is_owner_resident ? "بله" : "خیر" },
-        { label: "طبقه محل سکونت مدیر", value: formData.resident_floor },
+        ...(formData.is_owner_resident ? [{ label: "طبقه محل سکونت مدیر", value: formData.resident_floor || formData.manager_floor || "-" }] : []),
         { label: "موجودی اولیه صندوق", value: formatNumber(formData.fund_balance) },
-        { label: "شماره شبا صندوق", value: formData.fund_sheba_number },
+        { label: "شماره شبا صندوق", value: formData.fund_sheba_number || "-" },
         ...(["complex", "community"].includes(formData.property_type)
-            ? [{ label: "تعداد بلوک‌ها", value: formData.blocks_count }]
+            ? [{ label: "تعداد بلوک‌ها", value: formData.blocks_count || "-" }]
             : []),
     ];
 
@@ -260,6 +549,9 @@ export default function StepSummary({ formData, prev }) {
                     labelClass="text-gray-500 text-sm"
                     valueClass="text-gray-800 font-medium text-base mt-1"
                 />
+
+                {/* Hierarchical Structure Display */}
+                {renderHierarchicalStructure()}
 
                 <div className="flex justify-between pt-4 border-t border-gray-100">
                     <Button onClick={prev} color="whiteBlue" size="medium" className="w-1/2">
