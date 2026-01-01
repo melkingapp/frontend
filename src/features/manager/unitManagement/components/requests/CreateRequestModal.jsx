@@ -161,6 +161,16 @@ export default function CreateRequestModal({ isOpen, onClose, buildingId, onSucc
             label: `واحد ${unit.unit_number || 'نامشخص'} - طبقه ${unit.floor || 'نامشخص'}`
         }));
     }, [userUnits]);
+    
+    // Debug logging (only once when modal opens and units are loaded)
+    useEffect(() => {
+        if (isOpen && units.length > 0 && userUnits.length >= 0) {
+            console.log('🔍 CreateRequestModal - Units loaded:', {
+                totalUnits: units.length,
+                userUnitsCount: userUnits.length,
+            });
+        }
+    }, [isOpen, units.length, userUnits.length]); // Only log when these change
 
     return (
         <Transition show={isOpen} as={Fragment}>

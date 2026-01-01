@@ -308,10 +308,16 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         console.log("🔍 unitData.building_code:", unitData.building_code);
       }
 
+      // ذخیره داده‌های اولیه برای مقایسه بعداً (حتی اگر کاربر قبلاً join کرده باشد)
+      // این برای تشخیص تغییرات در فرم ضروری است
+      setOriginalUnitData({...unitData});
+      
       // اگر کاربر قبلاً join کرده (از طریق MembershipRequest یا BuildingUser)، فرم رو پر نکن
+      // اما originalUnitData را ذخیره کن تا بتوانیم تغییرات را تشخیص دهیم
       if (hasApprovedRequest || hasApprovedBuilding) {
         if (import.meta.env.DEV) {
           console.log("❌ Skipping pre-fill: user already has approved request/building for this building");
+          console.log("✅ But saving originalUnitData for comparison:", unitData);
         }
         return;
       }
@@ -322,13 +328,17 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         console.log("🔍 unitData.owner_type:", unitData.owner_type);
       }
 
-      // ذخیره داده‌های اولیه برای مقایسه بعداً
-      setOriginalUnitData({...unitData});
       setIsFromManagerUnit(true); // نشان می‌دهد که داده‌ها از واحد مدیر پر شده
 
-      const isOwnerWithLandlord = unitData.role === 'owner' && unitData.owner_type === 'landlord';
-      const isResidentRole = unitData.role === 'resident';
-      const isTenantMatch = unitData.match_type === 'tenant';
+      const isOwnerWithLandlord = (unitData.role === 'owner' || unitData.role === 'tenant') && unitData.owner_type === 'landlord';
+      const isResidentRole = unitData.role === 'resident' || unitData.role === 'tenant';
+      const isTenantMatch = unitData.match_type === 'tenant' || unitData.role === 'tenant';
+      
+      // اگر owner_type وجود دارد (resident یا landlord)، role باید 'owner' باشد
+      const hasOwnerType = unitData.owner_type && (unitData.owner_type === 'resident' || unitData.owner_type === 'landlord');
+      // تبدیل role از مدل Unit (owner/tenant) به MembershipRequest (owner/resident)
+      const unitRole = unitData.role === 'tenant' ? 'resident' : (unitData.role === 'owner' ? 'owner' : unitData.role);
+      const determinedRole = isTenantMatch ? 'resident' : (hasOwnerType ? 'owner' : (unitRole || ""));
 
       setForm(prevForm => ({
         ...prevForm,
@@ -341,7 +351,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         area: unitData.area || "",
         resident_count: unitData.resident_count || 1,
         // برای مستاجر، نقش را به 'resident' تغییر می‌دهیم
-        role: isTenantMatch ? 'resident' : (unitData.role || ""),
+        // اگر owner_type وجود دارد، role باید 'owner' باشد
+        role: determinedRole,
         // owner_type فقط برای مالک (نه مستاجر)
         // اگر owner_type وجود داره (نه null و نه undefined و نه string خالی)، ازش استفاده کن
         owner_type: isTenantMatch ? "" : (unitData.owner_type && unitData.owner_type.trim() ? unitData.owner_type : ""),
@@ -356,6 +367,18 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       }));
     }
   }, [unitData, membershipRequests, approvedBuildings]);
+
+  // اگر owner_type وجود دارد اما role خالی است یا 'owner' نیست، role را به 'owner' تنظیم کن
+  useEffect(() => {
+    if (form.owner_type && (form.owner_type === 'resident' || form.owner_type === 'landlord')) {
+      if (!form.role || form.role !== 'owner') {
+        setForm(prev => ({
+          ...prev,
+          role: 'owner'
+        }));
+      }
+    }
+  }, [form.owner_type, form.role]);
 
   const roleOptions = [
     { value: 'resident', label: 'ساکن' },
@@ -408,10 +431,22 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         }
       }
 
-      // If owner_type changes from 'landlord' to something else, clear tenant info
-      if (name === 'owner_type' && processedValue !== 'landlord') {
-        updatedForm.tenant_full_name = "";
-        updatedForm.tenant_phone_number = "";
+      // If owner_type changes
+      if (name === 'owner_type') {
+        // اگر owner_type "resident" یا "landlord" است، role باید 'owner' باشد
+        if (processedValue === 'resident' || processedValue === 'landlord') {
+          updatedForm.role = 'owner';
+        } else if (!processedValue || processedValue === '') {
+          // اگر owner_type خالی شد و role 'owner' است، role را خالی کن
+          if (updatedForm.role === 'owner') {
+            updatedForm.role = "";
+          }
+        }
+        // If owner_type changes from 'landlord' to something else, clear tenant info
+        if (processedValue !== 'landlord') {
+          updatedForm.tenant_full_name = "";
+          updatedForm.tenant_phone_number = "";
+        }
       }
 
       return updatedForm;
@@ -686,7 +721,28 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
               owner_phone_number: null,
             };
       // بررسی اینکه آیا داده‌ها تغییر کرده یا نه
-      const hasBeenEdited = isFromManagerUnit ? compareFormWithOriginalData(form, originalUnitData) : false;
+      // اگر رزیدنت است و unitData یا originalUnitData وجود دارد، باید بررسی کنیم که آیا داده‌ها تغییر کرده یا نه
+      // این برای جلوگیری از auto-approve وقتی رزیدنت اطلاعات را تغییر می‌دهد
+      let hasBeenEdited = false;
+      const dataToCompare = originalUnitData || unitData;
+      
+      if (user?.role === 'resident' && dataToCompare) {
+        // اگر رزیدنت است و داده‌ای برای مقایسه وجود دارد، بررسی کن که آیا داده‌ها تغییر کرده یا نه
+        hasBeenEdited = compareFormWithOriginalData(form, dataToCompare);
+        if (import.meta.env.DEV) {
+          console.log("🔍 Checking if data has been edited:", {
+            hasBeenEdited,
+            formArea: form.area,
+            originalArea: dataToCompare.area,
+            formFloor: form.floor,
+            originalFloor: dataToCompare.floor,
+            formUnitNumber: form.unit_number,
+            originalUnitNumber: dataToCompare.unit_number
+          });
+        }
+      } else if (isFromManagerUnit && originalUnitData) {
+        hasBeenEdited = compareFormWithOriginalData(form, originalUnitData);
+      }
 
       const submitData = {
         ...form,
@@ -698,6 +754,16 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         // اضافه کردن فلگ ویرایش
         has_been_edited: hasBeenEdited,
       };
+      
+      if (import.meta.env.DEV) {
+        console.log("📤 Submitting membership request:", {
+          has_been_edited: hasBeenEdited,
+          formArea: form.area,
+          originalArea: dataToCompare?.area,
+          userRole: user?.role,
+          submitData: submitData
+        });
+      }
       
       const result = await dispatch(createMembershipRequest(submitData)).unwrap();
       if (import.meta.env.DEV) {
