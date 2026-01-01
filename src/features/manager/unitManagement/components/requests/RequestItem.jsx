@@ -31,10 +31,16 @@ export default function RequestItem({ request }) {
             return;
         }
         
+        const requestId = request.request_id || request.id;
+        if (!requestId) {
+            toast.error("شناسه درخواست یافت نشد");
+            return;
+        }
+        
         try {
             await dispatch(updateRequestStatus({
                 buildingId,
-                requestId: request.id,
+                requestId: requestId,
                 statusData: { status: 'approved' }
             })).unwrap();
             toast.success("درخواست با موفقیت پذیرفته شد!");
@@ -49,10 +55,16 @@ export default function RequestItem({ request }) {
             return;
         }
         
+        const requestId = request.request_id || request.id;
+        if (!requestId) {
+            toast.error("شناسه درخواست یافت نشد");
+            return;
+        }
+        
         try {
             await dispatch(updateRequestStatus({
                 buildingId,
-                requestId: request.id,
+                requestId: requestId,
                 statusData: { status: 'cancelled' }
             })).unwrap();
             toast.error("درخواست رد شد!");

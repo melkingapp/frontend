@@ -121,11 +121,16 @@ const requestsSlice = createSlice({
       })
       .addCase(updateRequestStatus.fulfilled, (state, action) => {
         state.updateLoading = false;
-        const index = state.requests.findIndex(request => request.id === action.payload.id);
+        const payloadId = action.payload.request_id || action.payload.id;
+        const index = state.requests.findIndex(request => 
+          (request.request_id && request.request_id === payloadId) ||
+          (request.id && request.id === payloadId)
+        );
         if (index !== -1) {
           state.requests[index] = action.payload;
         }
-        if (state.selectedRequest && state.selectedRequest.id === action.payload.id) {
+        const selectedId = state.selectedRequest?.request_id || state.selectedRequest?.id;
+        if (state.selectedRequest && selectedId === payloadId) {
           state.selectedRequest = action.payload;
         }
       })

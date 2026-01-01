@@ -81,7 +81,7 @@ export default function RequestBase({ limit, buildingId = null }) {
             ) : (
                 <div className="space-y-4">
                     {displayedRequests.map((request) => (
-                        <RequestItem key={request.id} request={request} />
+                        <RequestItem key={request.request_id || request.id} request={request} />
                     ))}
                 </div>
             )}

@@ -49,9 +49,12 @@ export const updateUnit = createAsyncThunk(
   async ({ buildingId, unitId, unitData }, { rejectWithValue }) => {
     try {
       const response = await unitsApi.updateUnit(buildingId, unitId, unitData);
+      if (response.success === false) {
+        return rejectWithValue(response.error || 'خطا در به‌روزرسانی واحد');
+      }
       return response.unit;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || error.message);
+      return rejectWithValue(error.response?.data?.error || error.message || 'خطا در به‌روزرسانی واحد');
     }
   }
 );

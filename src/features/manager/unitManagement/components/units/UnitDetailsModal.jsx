@@ -153,8 +153,13 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
             
             setEditingOwner(false);
             console.log("✅ Owner data saved successfully");
+            // Refresh units list after successful update
+            await dispatch(fetchUnits(selectedBuilding.building_id || selectedBuilding.id));
         } catch (error) {
             console.error("❌ Error saving owner data:", error);
+            const errorMessage = typeof error === 'string' ? error : error?.message || 'خطا در به‌روزرسانی اطلاعات مالک';
+            toast.error(errorMessage);
+            throw error;
         }
     };
 
@@ -176,8 +181,13 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
             
             setEditingTenant(false);
             console.log("✅ Tenant data saved successfully");
+            // Refresh units list after successful update
+            await dispatch(fetchUnits(selectedBuilding.building_id || selectedBuilding.id));
         } catch (error) {
             console.error("❌ Error saving tenant data:", error);
+            const errorMessage = typeof error === 'string' ? error : error?.message || 'خطا در به‌روزرسانی اطلاعات مستاجر';
+            toast.error(errorMessage);
+            throw error;
         }
     };
 
