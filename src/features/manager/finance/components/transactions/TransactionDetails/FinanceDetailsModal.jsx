@@ -80,7 +80,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
       dispatch(fetchTransactionDetails(transaction.id));
     }
     // Only depend on transaction.id to avoid infinite loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [transaction?.id, dispatch]);
   
   // Debug: Log unit details - MUST be before early return
