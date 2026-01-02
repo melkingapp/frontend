@@ -11,6 +11,7 @@ import Step1ChargeTypeSelection from "../components/steps/Step1ChargeTypeSelecti
 import Step2ChargeDetails from "../components/steps/Step2ChargeDetails";
 import Step3AutoSchedule from "../components/steps/Step3AutoSchedule";
 import Step4Confirmation from "../components/steps/Step4Confirmation";
+import ChargeSchedulesList from "../components/ChargeSchedulesList";
 
 export default function AnnounceCharge() {
   // Number formatting hooks
@@ -94,6 +95,13 @@ export default function AnnounceCharge() {
         <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1 sm:mb-2">اعلام شارژ</h1>
         <p className="text-sm sm:text-base text-gray-600">اعلام و اطلاع‌رسانی شارژ به ساکنان ساختمان</p>
       </div>
+
+      {/* Charge Schedules List */}
+      {building?.building_id && (
+        <div className="mb-4 sm:mb-6">
+          <ChargeSchedulesList buildingId={building.building_id} />
+        </div>
+      )}
 
       {/* Stepper */}
       <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 md:p-6 shadow-sm mb-4 sm:mb-6">

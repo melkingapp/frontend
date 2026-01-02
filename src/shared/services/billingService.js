@@ -1138,8 +1138,9 @@ export const getChargeSchedules = async (buildingId = null, isActive = null) => 
         if (buildingId) params.append('building_id', buildingId);
         if (isActive !== null) params.append('is_active', isActive);
         
-        const queryString = params.toString() ? `?${params.toString()}` : '';
-        const response = await get(`/billing/schedules/${queryString}`);
+        const queryString = params.toString();
+        const endpoint = queryString ? `/billing/schedules/?${queryString}` : '/billing/schedules/';
+        const response = await get(endpoint);
         return response;
     } catch (error) {
         console.error('Get charge schedules error:', error);
