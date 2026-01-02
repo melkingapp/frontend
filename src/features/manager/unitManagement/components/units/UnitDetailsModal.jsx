@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { X, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import UnitRequestItem from "./modalItem/UnitRequestItem";
@@ -10,6 +10,8 @@ import { updateUnit, deleteUnit, fetchUnits } from "../../slices/unitsSlice";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
 import { getUnitFinancialTransactions } from "../../../../../shared/services/transactionsService";
 import { getPersianType } from "../../../../../shared/utils/typeUtils";
+
+const EMPTY_ARRAY = [];
 
 export default function UnitDetailsModal({ unit, isOpen, onClose }) {
     const dispatch = useDispatch();
@@ -112,23 +114,25 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
         }
     };
 
-    if (!isOpen || !unit) return null;
-
     const handleShowMoreTx = () => setVisibleTxCount((prev) => Math.min(prev + 4, maxTxVisible));
     const handleShowLessTx = () => setVisibleTxCount(initialTxCount);
     
     // Use financial transactions if available, otherwise fall back to unit.transactions
     const transactionsToUse = financialTransactions.length > 0 
         ? financialTransactions 
-        : (unit.transactions || []);
+        : (unit ? unit.transactions || EMPTY_ARRAY : EMPTY_ARRAY);
     
-    const sortedTx = transactionsToUse
-        ? [...transactionsToUse].sort((a, b) => {
-            const dateA = (a.date || a.issue_date) ? moment(a.date || a.issue_date).valueOf() : 0;
-            const dateB = (b.date || b.issue_date) ? moment(b.date || b.issue_date).valueOf() : 0;
-            return dateB - dateA;
-        })
-        : [];
+    const sortedTx = useMemo(() => {
+        return transactionsToUse
+            ? [...transactionsToUse].sort((a, b) => {
+                const dateA = (a.date || a.issue_date) ? moment(a.date || a.issue_date).valueOf() : 0;
+                const dateB = (b.date || b.issue_date) ? moment(b.date || b.issue_date).valueOf() : 0;
+                return dateB - dateA;
+            })
+            : [];
+    }, [transactionsToUse]);
+
+    if (!isOpen || !unit) return null;
 
     // در فرمت جدید API، فقط فاکتورها (invoices) برگردانده می‌شوند
     const expenseTransactions = sortedTx;
