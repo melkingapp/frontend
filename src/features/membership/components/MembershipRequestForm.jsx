@@ -2,7 +2,7 @@ import { useState, Fragment, useEffect, useRef, useCallback, useMemo } from "rea
 import { Dialog, Transition } from "@headlessui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { createMembershipRequest, fetchUnitByPhone, clearUnitData, selectUnitData, selectUnitLoading, fetchMembershipRequests, rejectSuggestedMembershipRequest } from "../membershipSlice";
+import { createMembershipRequest, fetchUnitByPhone, clearUnitData, selectUnitData, selectUnitLoading, fetchMembershipRequests, rejectRequest } from "../membershipSlice";
 import { fetchApprovedBuildings } from "../../resident/building/residentBuildingSlice";
 import { X, Building, User, Home, Car, Users, XCircle } from "lucide-react";
 
@@ -685,9 +685,10 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     if (!unitData?.request_id) return;
 
     try {
-      await dispatch(rejectSuggestedMembershipRequest({
+      await dispatch(rejectRequest({
         requestId: unitData.request_id,
-        rejectionReason: rejectionReason.trim()
+        rejectionReason: rejectionReason.trim(),
+        isSuggested: true
       })).unwrap();
 
       toast.success('درخواست عضویت رد شد');

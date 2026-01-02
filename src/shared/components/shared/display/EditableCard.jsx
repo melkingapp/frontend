@@ -31,34 +31,60 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
 
             {isEditing ? (
                 <div className="space-y-3">
-                    {fields.map((f) => (
-                        f.options ? (
-                            <div key={f.key}>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {f.label}
-                                </label>
-                                <SelectField
-                                    name={f.key}
-                                    value={data[f.key] || ''}
-                                    onChange={(value) => setData({ ...data, [f.key]: value })}
-                                    options={f.options}
-                                />
-                            </div>
-                        ) : (
+                    {fields.map((f) => {
+                        // Skip hidden fields (when condition is false)
+                        if (f.condition === false) return null;
+                        
+                        if (f.type === "checkbox") {
+                            return (
+                                <div key={f.key} className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id={f.key}
+                                        checked={data[f.key] || false}
+                                        onChange={(e) => setData({ ...data, [f.key]: e.target.checked })}
+                                        className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor={f.key} className="text-sm font-medium text-gray-700">
+                                        {f.label}
+                                    </label>
+                                </div>
+                            );
+                        }
+                        
+                        if (f.options) {
+                            return (
+                                <div key={f.key}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        {f.label}
+                                    </label>
+                                    <SelectField
+                                        name={f.key}
+                                        value={data[f.key] || ''}
+                                        onChange={(e) => setData({ ...data, [f.key]: e.target.value })}
+                                        options={f.options}
+                                        disabled={f.disabled}
+                                    />
+                                </div>
+                            );
+                        }
+                        
+                        return (
                             <div key={f.key}>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     {f.label}
                                 </label>
                                 <input
                                     type={f.type || "text"}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${f.disabled ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
                                     value={data[f.key] || ''}
                                     onChange={(e) => setData({ ...data, [f.key]: e.target.value })}
                                     placeholder={f.label}
+                                    disabled={f.disabled}
                                 />
                             </div>
-                        )
-                    ))}
+                        );
+                    })}
                     <div className="flex gap-2 mt-4">
                         <button
                             onClick={handleSave}
@@ -80,15 +106,24 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
             ) : (
                 <div className="space-y-2">
                     {fields.map((f) => {
+                        // Skip hidden fields (when condition is false)
+                        if (f.condition === false) return null;
+                        
                         const value = data[f.key];
-                        const displayValue = f.options 
-                            ? f.options.find(opt => opt.value === value)?.label || value
-                            : value;
+                        let displayValue;
+                        
+                        if (f.type === "checkbox") {
+                            displayValue = value ? "بله" : "خیر";
+                        } else if (f.options) {
+                            displayValue = f.options.find(opt => opt.value === value)?.label || value;
+                        } else {
+                            displayValue = value;
+                        }
                         
                         return (
                             <div key={f.key} className="flex justify-between items-center py-1">
                                 <span className="text-sm font-medium text-gray-600">{f.label}:</span>
-                                <span className="text-sm text-gray-800">{displayValue || "—"}</span>
+                                <span className="text-sm text-gray-800">{displayValue !== null && displayValue !== undefined && displayValue !== '' ? displayValue : "—"}</span>
                             </div>
                         );
                     })}

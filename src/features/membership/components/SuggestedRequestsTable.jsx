@@ -13,14 +13,14 @@ import {
   Info
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { 
+import {
   selectUnitData,
   selectUnitsData,
   selectUnitLoading,
   selectMembershipRequests,
   fetchUnitByPhone,
   createMembershipRequest,
-  rejectSuggestedMembershipRequest,
+  rejectRequest,
   fetchMembershipRequests,
   clearUnitData
 } from '../membershipSlice';
@@ -247,9 +247,10 @@ export default function SuggestedRequestsTable() {
     
     setProcessingId(requestToReject.request_id);
     try {
-      await dispatch(rejectSuggestedMembershipRequest({
+      await dispatch(rejectRequest({
         requestId: requestToReject.request_id,
-        rejectionReason: reason
+        rejectionReason: reason,
+        isSuggested: true
       })).unwrap();
 
       toast.success('درخواست عضویت رد شد');
@@ -267,7 +268,6 @@ export default function SuggestedRequestsTable() {
       setProcessingId(null);
     }
   };
-
   const handleFormClose = () => {
     setShowEditForm(false);
     setSelectedRequest(null);

@@ -51,13 +51,17 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
     useEffect(() => {
         if (unit) {
             setOwnerData({
+                unit_number: unit.unit_number || '',
+                floor: unit.floor !== null && unit.floor !== undefined ? unit.floor : '',
                 name: unit.full_name || unit.owner_name || '',
                 phone: unit.phone_number || '',
-                area: unit.area || '',
+                area: unit.area !== null && unit.area !== undefined ? unit.area : '',
                 role: unit.role || '',
                 owner_type: unit.owner_type || '',
-                resident_count: unit.resident_count || 1,
+                resident_count: unit.resident_count !== null && unit.resident_count !== undefined ? unit.resident_count : 1,
                 rental_status: unit.rental_status || 'available',
+                has_parking: unit.has_parking || false,
+                parking_count: unit.parking_count || 0,
             });
             setTenantData({
                 name: unit.tenant_full_name || unit.resident_name || '',
@@ -130,25 +134,97 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
     const expenseTransactions = sortedTx;
     const txToShow = expenseTransactions.slice(0, visibleTxCount);
 
+    const handleOwnerDataChange = (newData) => {
+        let updatedData = { ...newData };
+        
+        // اگر role به tenant تغییر کرد، owner_type و rental_status را پاک کن
+        if (newData.role === 'tenant' && ownerData.role === 'owner') {
+            updatedData.owner_type = '';
+            updatedData.rental_status = 'available';
+            // پاک کردن اطلاعات مستاجر
+            setTenantData({
+                name: '',
+                phone: '',
+            });
+        }
+        
+        // اگر role به owner تغییر کرد و owner_type تنظیم نشده، پیش‌فرض بگذار
+        if (newData.role === 'owner' && ownerData.role !== 'owner' && !newData.owner_type) {
+            updatedData.owner_type = 'resident';
+        }
+        
+        // اگر owner_type به empty تغییر کرد، tenant fields را پاک کن و resident_count را 0 کن
+        if (newData.owner_type === 'empty' && ownerData.owner_type !== 'empty') {
+            updatedData.resident_count = 0;
+            // پاک کردن اطلاعات مستاجر
+            setTenantData({
+                name: '',
+                phone: '',
+            });
+        }
+        
+        // اگر owner_type از empty به چیز دیگری تغییر کرد و resident_count 0 است، به 1 تغییر بده
+        if (ownerData.owner_type === 'empty' && newData.owner_type !== 'empty' && (!newData.resident_count || newData.resident_count === 0)) {
+            updatedData.resident_count = 1;
+        }
+        
+        // اگر landlord به چیز دیگری تغییر کرد، tenant fields را پاک کن
+        if (ownerData.owner_type === 'landlord' && newData.owner_type !== 'landlord') {
+            setTenantData({
+                name: '',
+                phone: '',
+            });
+        }
+        
+        setOwnerData(updatedData);
+    };
+
     const handleSaveOwner = async () => {
         if (!unit || !selectedBuilding) return;
         
         try {
             console.log("🔥 Saving owner data:", ownerData);
+            
+            // اگر owner_type به empty تغییر کرد، tenant fields را پاک کن
+            const shouldClearTenant = ownerData.owner_type === 'empty';
+            
+            const updateData = {
+                unit_number: ownerData.unit_number,
+                floor: ownerData.floor ? parseInt(ownerData.floor, 10) : undefined,
+                full_name: ownerData.name,
+                phone_number: ownerData.phone,
+                area: ownerData.area ? parseFloat(ownerData.area) : undefined,
+                resident_count: ownerData.role === 'owner' && ownerData.owner_type === 'empty' 
+                    ? 0 
+                    : (ownerData.resident_count ? parseInt(ownerData.resident_count, 10) : undefined),
+                role: ownerData.role,
+                has_parking: ownerData.has_parking,
+                parking_count: ownerData.has_parking ? (ownerData.parking_count ? parseInt(ownerData.parking_count, 10) : 0) : 0,
+                // فیلدهای قدیمی برای سازگاری
+                owner_name: ownerData.name,
+            };
+            
+            // فقط وقتی role === "owner" باشد، owner_type و rental_status را ارسال کن
+            if (ownerData.role === 'owner') {
+                updateData.owner_type = ownerData.owner_type || '';
+                updateData.rental_status = ownerData.rental_status || 'available';
+            } else {
+                // اگر role === "tenant" است، owner_type و rental_status را پاک کن
+                updateData.owner_type = '';
+                updateData.rental_status = 'available';
+            }
+            
+            // اگر واحد خالی است یا landlord نیست، اطلاعات مستاجر را پاک کن
+            if (shouldClearTenant || ownerData.owner_type !== 'landlord') {
+                updateData.tenant_full_name = '';
+                updateData.tenant_phone_number = '';
+                updateData.resident_name = '';
+            }
+            
             await dispatch(updateUnit({
                 buildingId: selectedBuilding.building_id || selectedBuilding.id,
                 unitId: unit.units_id || unit.id,
-                unitData: {
-                    full_name: ownerData.name,
-                    phone_number: ownerData.phone,
-                    area: ownerData.area,
-                    resident_count: ownerData.resident_count,
-                    role: ownerData.role,
-                    owner_type: ownerData.owner_type,
-                    rental_status: ownerData.rental_status,
-                    // فیلدهای قدیمی برای سازگاری
-                    owner_name: ownerData.name,
-                }
+                unitData: updateData
             })).unwrap();
             
             setEditingOwner(false);
@@ -249,18 +325,29 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                 <div className="overflow-y-auto custom-scroll max-h-[70vh] pr-2">
                     {/* Owner Card */}
                     <EditableCard
-                        title={`مالک ${ownerData.role === 'owner' ? (ownerData.owner_type === 'landlord' ? '(دارای مستاجر)' : ownerData.owner_type === 'empty' ? '(خالی)' : '(مقیم)') : ''}`}
+                        title={ownerData.role === 'owner' 
+                            ? `مالک ${ownerData.owner_type === 'landlord' ? '(دارای مستاجر)' : ownerData.owner_type === 'empty' ? '(خالی)' : '(مقیم)'}`
+                            : ownerData.role === 'tenant' 
+                                ? 'مستاجر' 
+                                : 'اطلاعات واحد'}
                         data={ownerData}
-                        setData={setOwnerData}
+                        setData={handleOwnerDataChange}
                         isEditing={editingOwner}
                         setIsEditing={setEditingOwner}
                         onSave={handleSaveOwner}
                         loading={updateLoading}
                         fields={[
+                            { key: "unit_number", label: "شماره واحد" },
+                            { key: "floor", label: "طبقه", type: "number" },
                             { key: "name", label: "نام و نام خانوادگی" },
                             { key: "phone", label: "شماره تماس" },
                             { key: "area", label: "مساحت (متر مربع)" },
-                            { key: "resident_count", label: "تعداد نفر", type: "number" },
+                            { 
+                                key: "resident_count", 
+                                label: "تعداد نفر", 
+                                type: "number",
+                                disabled: ownerData.role === 'owner' && ownerData.owner_type === 'empty'
+                            },
                             { 
                                 key: "role", 
                                 label: "نقش",
@@ -269,7 +356,8 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                                     { value: "tenant", label: "مستاجر" }
                                 ]
                             },
-                            { 
+                            // نمایش owner_type فقط وقتی role === "owner"
+                            ...(ownerData.role === "owner" ? [{
                                 key: "owner_type", 
                                 label: "نوع مالک",
                                 options: [
@@ -277,8 +365,9 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                                     { value: "resident", label: "مالک مقیم" },
                                     { value: "landlord", label: "دارای مستاجر" }
                                 ]
-                            },
-                            { 
+                            }] : []),
+                            // نمایش rental_status فقط وقتی role === "owner"
+                            ...(ownerData.role === "owner" ? [{
                                 key: "rental_status", 
                                 label: "وضعیت اجاره",
                                 options: [
@@ -287,13 +376,24 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                                     { value: "rented", label: "اجاره داده شده" },
                                     { value: "occupied", label: "اشغال شده" }
                                 ]
-                            }
+                            }] : []),
+                            // پارکینگ
+                            {
+                                key: "has_parking",
+                                label: "پارکینگ دارد",
+                                type: "checkbox"
+                            },
+                            ...(ownerData.has_parking ? [{
+                                key: "parking_count",
+                                label: "تعداد پارکینگ",
+                                type: "number"
+                            }] : [])
                         ]}
                         colorClass="bg-gradient-to-r from-emerald-50 to-emerald-100"
                     />
 
-                    {/* Tenant Card */}
-                    {(unit.tenant_full_name || unit.resident_name) && (
+                    {/* Tenant Card - فقط وقتی role === "owner" && owner_type === "landlord" */}
+                    {ownerData.role === "owner" && ownerData.owner_type === "landlord" && (
                         <EditableCard
                             title="مستاجر"
                             data={tenantData}
