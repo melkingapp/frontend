@@ -398,7 +398,7 @@ export default function FinanceTransactions() {
     if (!showDebtCredit) {
       buildingUnitsLoadedRef.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [buildingUnits.length, showDebtCredit, building?.building_id]);
 
   const handleUnitSelect = (e) => {

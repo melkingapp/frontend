@@ -18,7 +18,6 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
     });
 
     const handleFormSubmit = (data) => {
-        console.log('Form submitted with phone:', data.phone);
         setPhone(data.phone);
         onSubmit(data.phone); // پاس دادن شماره به والد
     };
