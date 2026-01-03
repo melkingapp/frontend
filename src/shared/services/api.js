@@ -31,7 +31,6 @@ class ApiService {
         if (data.refresh) {
           localStorage.setItem('refresh_token', data.refresh);
         }
-        console.log('Token refreshed successfully');
         return true;
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -39,7 +38,6 @@ class ApiService {
         
         // Only redirect to login if it's a real authentication failure
         if (response.status === 401 || response.status === 403) {
-          console.log('Authentication failed, redirecting to login...');
           this.clearAuthData();
           window.location.href = '/login';
         }
@@ -88,7 +86,6 @@ class ApiService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('auth');
-    console.log('Authentication data cleared');
   }
 
   // Clear all app data from localStorage
@@ -121,8 +118,6 @@ class ApiService {
     keysToRemove.forEach(key => {
       localStorage.removeItem(key);
     });
-    
-    console.log('🧹 All app data cleared from localStorage');
   }
 
   // Make API request
@@ -203,7 +198,6 @@ class ApiService {
             }
             
             // If refresh failed or invalid token type, clear auth and redirect
-            console.log('🚨 401 Unauthorized - clearing auth data and redirecting to login...');
             this.clearAuthData();
             window.dispatchEvent(new CustomEvent('api-unauthorized', {
               detail: { status: 401, url: url, error: errorMessage }

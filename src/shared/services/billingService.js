@@ -93,59 +93,7 @@ export const registerExpense = async (expenseData) => {
         
         // بررسی اینکه آیا فایل واقعاً append شده است
         const formDataHasAttachment = formData.has('attachment');
-        
-        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData با استفاده از entries()
-        console.log('📋 FormData Entries (تمام فیلدها):', [...formData.entries()]);
-        
-        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData به صورت قابل خواندن
-        const formDataEntries = {};
         const formDataKeys = Array.from(formData.keys());
-        for (const key of formDataKeys) {
-            const value = formData.get(key);
-            if (value instanceof File || value instanceof Blob) {
-                formDataEntries[key] = {
-                    type: 'File',
-                    name: value.name,
-                    size: value.size,
-                    mimeType: value.type
-                };
-            } else {
-                formDataEntries[key] = value;
-            }
-        }
-        
-        // محاسبه اندازه تقریبی FormData
-        let estimatedSize = 0;
-        for (const key of formDataKeys) {
-            const value = formData.get(key);
-            if (value instanceof File || value instanceof Blob) {
-                estimatedSize += value.size;
-            } else if (typeof value === 'string') {
-                estimatedSize += new Blob([value]).size;
-            }
-        }
-        
-        console.log('📤 FormData contents:', {
-            hasFile: hasFile,
-            formDataHasAttachment: formDataHasAttachment,
-            keys: formDataKeys,
-            entries: formDataEntries,
-            estimatedSize: `${(estimatedSize / 1024 / 1024).toFixed(2)} MB`,
-            attachment: expenseData.attachment ? {
-                name: expenseData.attachment.name,
-                size: expenseData.attachment.size,
-                type: expenseData.attachment.type,
-                isFile: expenseData.attachment instanceof File
-            } : null,
-            // نمایش تمام فیلدهای expenseData برای مقایسه
-            expenseDataKeys: Object.keys(expenseData),
-            expenseDataValues: Object.fromEntries(
-                Object.entries(expenseData).map(([k, v]) => [
-                    k, 
-                    v instanceof File ? { type: 'File', name: v.name, size: v.size } : v
-                ])
-            )
-        });
         
         // بررسی اینکه آیا همه فیلدها معتبر هستند
         const requiredFields = ['building_id', 'expense_type', 'total_amount', 'unit_selection', 'distribution_method', 'role', 'bill_due'];
@@ -166,19 +114,6 @@ export const registerExpense = async (expenseData) => {
         if (emptyFields.length > 0) {
             console.warn('⚠️ Empty fields in FormData:', emptyFields);
         }
-        
-        // بررسی مقادیر فیلدهای الزامی
-        const fieldValidation = {};
-        requiredFields.forEach(field => {
-            const value = formData.get(field);
-            fieldValidation[field] = {
-                exists: formDataKeys.includes(field),
-                value: value instanceof File ? `[File: ${value.name}]` : value,
-                isEmpty: value === '' || value === null || value === undefined || 
-                        (value instanceof File && value.size === 0)
-            };
-        });
-        console.log('✅ Required fields validation:', fieldValidation);
         
         // اگر فایل وجود دارد اما append نشده، خطا بده
         if (hasFile && !formDataHasAttachment) {
@@ -291,9 +226,6 @@ export const registerCharge = async (chargeData) => {
             }
         }
         
-        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
-        console.log('📋 Charge FormData Entries:', [...formData.entries()]);
-        
         // بررسی فیلدهای خالی
         const formDataKeys = Array.from(formData.keys());
         const emptyFields = formDataKeys.filter(key => {
@@ -369,19 +301,6 @@ export const updateExpense = async (expenseData) => {
                 }
             }
         }
-        
-        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
-        console.log('📋 Update Expense FormData Entries:', [...formData.entries()]);
-        console.log('📤 Update Expense FormData contents:', {
-            hasFile: hasFile,
-            keys: Array.from(formData.keys()),
-            attachment: expenseData.attachment ? {
-                name: expenseData.attachment.name,
-                size: expenseData.attachment.size,
-                type: expenseData.attachment.type,
-                isFile: expenseData.attachment instanceof File
-            } : null
-        });
         
         const response = await put('/billing/update-expense/', formData);
         return response;
@@ -785,19 +704,6 @@ export const toggleDebtCreditVisibility = async (buildingId, showToResidents) =>
 // Extra Payment Request Functions
 export const createExtraPaymentRequest = async (buildingId, data) => {
     try {
-        console.log('🔵 [createExtraPaymentRequest] Input data:', {
-            buildingId,
-            buildingIdType: typeof buildingId,
-            data: {
-                ...data,
-                attachment: data.attachment ? {
-                    name: data.attachment.name,
-                    size: data.attachment.size,
-                    type: data.attachment.type
-                } : null
-            }
-        });
-        
         const formData = new FormData();
         
         // تبدیل buildingId به number برای اطمینان
@@ -840,12 +746,6 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
         formData.append('building_id', buildingIdNum.toString());
         formData.append('title', String(data.title || '').trim());
         formData.append('amount', amountValue);
-        
-        console.log('🔵 [createExtraPaymentRequest] FormData values before optional fields:', {
-            building_id: buildingIdNum,
-            title: data.title,
-            amount: amountValue
-        });
         
         // فیلدهای اختیاری
         if (data.unit_id !== undefined && data.unit_id !== null && data.unit_id !== '') {
@@ -919,31 +819,8 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
             }
         }
         
-        // لاگ برای دیباگ - نمایش تمام فیلدهای FormData
-        console.log('📋 Extra Payment Request FormData Entries:', [...formData.entries()]);
-        
         // بررسی دقیق تمام فیلدها
         const formDataKeys = Array.from(formData.keys());
-        const formDataDetails = {};
-        formDataKeys.forEach(key => {
-            const value = formData.get(key);
-            if (value instanceof File || value instanceof Blob) {
-                formDataDetails[key] = {
-                    type: 'File',
-                    name: value.name,
-                    size: value.size,
-                    mimeType: value.type
-                };
-            } else {
-                formDataDetails[key] = {
-                    type: typeof value,
-                    value: value,
-                    isEmpty: value === '' || value === null || value === undefined
-                };
-            }
-        });
-        
-        console.log('📋 Extra Payment Request FormData Details:', formDataDetails);
         
         // بررسی فیلدهای الزامی
         const requiredFields = ['building_id', 'title', 'amount'];
@@ -965,29 +842,6 @@ export const createExtraPaymentRequest = async (buildingId, data) => {
         if (emptyFields.length > 0) {
             console.warn('⚠️ Empty fields in Extra Payment Request FormData:', emptyFields);
         }
-        
-        // بررسی مقادیر فیلدهای الزامی
-        const buildingIdValue = formData.get('building_id');
-        const titleValue = formData.get('title');
-        const amountValueFromForm = formData.get('amount');
-        
-        console.log('✅ Required fields validation:', {
-            building_id: {
-                value: buildingIdValue,
-                type: typeof buildingIdValue,
-                isValid: buildingIdValue && !isNaN(parseInt(buildingIdValue))
-            },
-            title: {
-                value: titleValue,
-                type: typeof titleValue,
-                isValid: titleValue && String(titleValue).trim() !== ''
-            },
-            amount: {
-                value: amountValueFromForm,
-                type: typeof amountValueFromForm,
-                isValid: amountValueFromForm && !isNaN(parseFloat(amountValueFromForm))
-            }
-        });
         
         const response = await post('/billing/extra-payment-request/', formData);
         return response;
