@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Calendar, Clock, Power, PowerOff, Trash2, Play, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getChargeSchedules, toggleChargeSchedule, deleteChargeSchedule, executeChargeSchedule } from "../../../../shared/services/billingService";
 import moment from "moment-jalaali";
 
-export default function ChargeSchedulesList({ buildingId }) {
+// Load Persian locale
+moment.loadPersian({ dialect: "persian-modern" });
+
+const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId }, ref) {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,6 +35,11 @@ export default function ChargeSchedulesList({ buildingId }) {
       setLoading(false);
     }
   };
+
+  // Expose fetchSchedules to parent component via ref
+  useImperativeHandle(ref, () => ({
+    refresh: fetchSchedules
+  }));
 
   const handleToggle = async (scheduleId, currentStatus) => {
     setActionLoading({ ...actionLoading, [scheduleId]: 'toggle' });
@@ -81,7 +89,22 @@ export default function ChargeSchedulesList({ buildingId }) {
 
   const formatDate = (dateString) => {
     if (!dateString) return "---";
-    return moment(dateString).format("jYYYY/jMM/jDD");
+    try {
+      // Parse as Gregorian date (YYYY-MM-DD) and convert to Jalaali
+      const date = moment(dateString, 'YYYY-MM-DD');
+      if (date.isValid()) {
+        return date.format("jYYYY/jMM/jDD");
+      }
+      // If not valid, try parsing as Jalaali
+      const jalaaliDate = moment(dateString, 'jYYYY/jMM/jDD');
+      if (jalaaliDate.isValid()) {
+        return jalaaliDate.format("jYYYY/jMM/jDD");
+      }
+      return dateString;
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return dateString;
+    }
   };
 
   const getStatusBadge = (schedule) => {
@@ -207,6 +230,11 @@ export default function ChargeSchedulesList({ buildingId }) {
                         <span>پایان: {formatDate(schedule.end_date)}</span>
                       </div>
                     )}
+                    {announcement.total_calculated_amount && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">مبلغ: {new Intl.NumberFormat('fa-IR').format(announcement.total_calculated_amount)} تومان</span>
+                      </div>
+                    )}
                     {schedule.last_executed && (
                       <div className="flex items-center gap-1">
                         <span className="text-xs">آخرین اجرا: {formatDate(schedule.last_executed)}</span>
@@ -285,5 +313,8 @@ export default function ChargeSchedulesList({ buildingId }) {
       </div>
     </div>
   );
-}
+});
+
+export default ChargeSchedulesList;
+
 

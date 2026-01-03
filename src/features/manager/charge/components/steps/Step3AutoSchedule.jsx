@@ -1,5 +1,6 @@
 import { Calendar } from "lucide-react";
 import PersianDatePicker from "../../../../../shared/components/shared/inputs/PersianDatePicker";
+import moment from "moment-jalaali";
 
 /**
  * Step 3: Auto Schedule Configuration
@@ -111,7 +112,13 @@ export default function Step3AutoSchedule({
                 </label>
                 <PersianDatePicker
                   value={autoSchedule.endDate}
-                  onChange={(date) => handleAutoScheduleChange('endDate', date)}
+                  onChange={(date) => {
+                    // date is now already a string in YYYY/MM/DD format (Jalaali)
+                    // thanks to the handleChange in PersianDatePicker
+                    if (date && typeof date === 'string') {
+                      handleAutoScheduleChange('endDate', date);
+                    }
+                  }}
                   placeholder="انتخاب تاریخ پایان"
                   className={`w-full ${
                     validationErrors.endDate ? 'border-red-500 bg-red-50' : ''

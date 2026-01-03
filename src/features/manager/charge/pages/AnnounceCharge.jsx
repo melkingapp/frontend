@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useRef } from "react";
 import { Plus } from "lucide-react";
 import FloatingActionButton from "../../../../shared/components/shared/feedback/FloatingActionButton";
 import { useNumberFormat } from "../../../../shared/hooks/useNumberFormat";
@@ -14,6 +14,7 @@ import Step4Confirmation from "../components/steps/Step4Confirmation";
 import ChargeSchedulesList from "../components/ChargeSchedulesList";
 
 export default function AnnounceCharge() {
+  const refreshSchedulesRef = useRef(null);
   // Number formatting hooks
   const amountInput = useNumberFormat('');
   const baseAmountInput = useNumberFormat('');
@@ -87,6 +88,12 @@ export default function AnnounceCharge() {
     building,
     resetForm,
     setIsSubmitting,
+    onChargeCreated: () => {
+      // Refresh schedules list after charge creation
+      if (refreshSchedulesRef.current) {
+        refreshSchedulesRef.current.refresh();
+      }
+    },
   });
 
   return (
@@ -99,7 +106,10 @@ export default function AnnounceCharge() {
       {/* Charge Schedules List */}
       {building?.building_id && (
         <div className="mb-4 sm:mb-6">
-          <ChargeSchedulesList buildingId={building.building_id} />
+          <ChargeSchedulesList 
+            buildingId={building.building_id} 
+            ref={refreshSchedulesRef}
+          />
         </div>
       )}
 

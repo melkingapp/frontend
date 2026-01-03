@@ -1,10 +1,14 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
+import moment from "moment-jalaali";
 import { validateStep } from "../utils/chargeValidation";
 import { prepareChargeAllocations } from "../utils/chargeAllocation";
 import { steps, STORAGE_KEY } from "../constants/chargeTypes";
 import { DEFAULT_FORMULA_PARAMS } from "../constants/defaultValues";
 import { announceCharge, createChargeFormula } from "../../../../shared/services/billingService";
+
+// Load Persian locale
+moment.loadPersian({ dialect: "persian-modern" });
 
 /**
  * Custom hook for charge form handlers
@@ -26,6 +30,7 @@ export const useChargeFormHandlers = ({
   building,
   resetForm,
   setIsSubmitting,
+  onChargeCreated,
 }) => {
   const {
     amountInput,
@@ -460,20 +465,76 @@ export const useChargeFormHandlers = ({
         apiData.custom_amounts = customAmountsForApi;
       }
 
-      // TODO: Enable auto_schedule when backend date format is fully aligned
-      // Currently disabled to avoid fromisoformat errors in backend.
-      // if (formData.autoSchedule?.enabled && formData.autoSchedule?.endDate) {
-      //   apiData.auto_schedule = {
-      //     enabled: true,
-      //     day_of_month: parseInt(formData.autoSchedule.dayOfMonth) || 1,
-      //     end_date: formData.autoSchedule.endDate, // must be YYYY-MM-DD
-      //   };
-      // }
+      // Add auto_schedule if enabled
+      if (formData.autoSchedule?.enabled && formData.autoSchedule?.endDate) {
+        // Convert endDate to YYYY-MM-DD format
+        let endDate = formData.autoSchedule.endDate;
+        
+        // endDate should now be a string in format YYYY/MM/DD (Jalaali) from Step3AutoSchedule
+        if (typeof endDate === 'string' && endDate.trim()) {
+          try {
+            // Convert Persian digits to English digits
+            const persianToEnglish = (str) => {
+              if (!str) return str;
+              const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+              const englishDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+              let result = String(str);
+              persianDigits.forEach((persian, index) => {
+                result = result.replace(new RegExp(persian, 'g'), englishDigits[index]);
+              });
+              return result;
+            };
+            
+            const englishDate = persianToEnglish(endDate);
+            console.log('Converting endDate from Jalaali to Gregorian:', endDate, '->', englishDate);
+            
+            // Convert from Jalaali format (YYYY/MM/DD) to Gregorian (YYYY-MM-DD)
+            // Parse as Jalaali date first using strict parsing
+            const jalaaliDate = moment(englishDate, 'jYYYY/jMM/jDD', true); // strict mode
+            
+            if (jalaaliDate.isValid()) {
+              // Convert to Gregorian format
+              const gregorianDate = jalaaliDate.format('YYYY-MM-DD');
+              
+              console.log('Converted date:', gregorianDate, 'from Jalaali:', englishDate);
+              
+              // Validate the converted date (should be in format YYYY-MM-DD and year should be reasonable)
+              const year = parseInt(gregorianDate.split('-')[0]);
+              if (gregorianDate && gregorianDate !== 'Invalid date' && !gregorianDate.includes('Invalid') && 
+                  gregorianDate.match(/^\d{4}-\d{2}-\d{2}$/) && year >= 2000 && year <= 2100) {
+                apiData.auto_schedule = {
+                  enabled: true,
+                  day_of_month: parseInt(formData.autoSchedule.dayOfMonth) || 1,
+                  end_date: gregorianDate, // must be YYYY-MM-DD
+                };
+                console.log('auto_schedule data:', apiData.auto_schedule);
+              } else {
+                console.error('Invalid converted endDate:', gregorianDate, 'year:', year, 'from:', endDate);
+                toast.error('خطا در تبدیل تاریخ پایان. لطفاً تاریخ را دوباره انتخاب کنید.');
+              }
+            } else {
+              console.error('Invalid endDate format:', endDate, 'english:', englishDate, 'isValid:', jalaaliDate.isValid());
+              toast.error('فرمت تاریخ پایان نامعتبر است. لطفاً تاریخ را دوباره انتخاب کنید.');
+            }
+          } catch (error) {
+            console.error('Error converting endDate:', error, endDate);
+            toast.error('خطا در تبدیل تاریخ پایان: ' + error.message);
+          }
+        } else {
+          console.error('endDate is not a valid string:', endDate, typeof endDate);
+          toast.error('تاریخ پایان باید انتخاب شود');
+        }
+      }
 
       // Call API
       const response = await announceCharge(apiData);
 
       toast.success(response.message || 'اعلام شارژ با موفقیت ثبت شد');
+
+      // Refresh schedules list after charge creation (in case auto_schedule was enabled)
+      if (onChargeCreated) {
+        onChargeCreated();
+      }
 
       localStorage.removeItem(STORAGE_KEY);
       resetForm();

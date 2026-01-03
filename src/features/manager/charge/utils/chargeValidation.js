@@ -1,5 +1,20 @@
 import moment from "moment-jalaali";
 
+// Load Persian locale
+moment.loadPersian({ dialect: "persian-modern" });
+
+// Helper function to convert Persian digits to English
+const persianToEnglish = (str) => {
+  if (!str) return str;
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const englishDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  let result = String(str);
+  persianDigits.forEach((persian, index) => {
+    result = result.replace(new RegExp(persian, 'g'), englishDigits[index]);
+  });
+  return result;
+};
+
 /**
  * Validate a specific step of the charge announcement form
  * @param {number} step - Step number (1-4)
@@ -139,10 +154,22 @@ export const validateStep = (step, formData, numberFormatHooks = {}) => {
       if (!autoSchedule.endDate || autoSchedule.endDate === '') {
         errors.endDate = 'تاریخ پایان الزامی است';
       } else {
-        const endDate = moment(autoSchedule.endDate);
-        const today = moment();
-        if (endDate.isBefore(today, 'day')) {
-          errors.endDate = 'تاریخ پایان باید در آینده باشد';
+        try {
+          // Convert Persian digits to English
+          const englishDate = persianToEnglish(autoSchedule.endDate);
+          
+          // Parse as Jalaali date (format: YYYY/MM/DD)
+          const endDate = moment(englishDate, 'jYYYY/jMM/jDD', true); // strict mode
+          const today = moment(); // Today in Jalaali calendar
+          
+          if (!endDate.isValid()) {
+            errors.endDate = 'فرمت تاریخ پایان نامعتبر است';
+          } else if (endDate.isBefore(today, 'day')) {
+            errors.endDate = 'تاریخ پایان باید در آینده باشد';
+          }
+        } catch (error) {
+          console.error('Error validating endDate:', error);
+          errors.endDate = 'خطا در بررسی تاریخ پایان';
         }
       }
     }

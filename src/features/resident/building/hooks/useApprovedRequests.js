@@ -6,11 +6,17 @@ export function useApprovedRequests() {
   const requests = useSelector(selectMembershipRequests);
 
   const approvedRequests = useMemo(() => {
-    return requests.filter(req =>
-      req.status === 'approved' ||
-      req.status === 'owner_approved' ||
-      req.status === 'manager_approved'
-    );
+    return requests.filter(req => {
+      // فقط درخواست‌های تایید شده را برگردان
+      const isApproved = req.status === 'approved' ||
+        req.status === 'owner_approved' ||
+        req.status === 'manager_approved';
+      
+      // درخواست‌های رد شده را حذف کن
+      const isRejected = req.status === 'rejected';
+      
+      return isApproved && !isRejected;
+    });
   }, [requests]);
 
   return approvedRequests;

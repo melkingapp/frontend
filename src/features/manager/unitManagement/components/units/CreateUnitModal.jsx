@@ -97,6 +97,8 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
         return {
           ...prev,
           [name]: value,
+          full_name: '',
+          phone_number: '',
           tenant_full_name: '',
           tenant_phone_number: '',
           resident_count: 0,
@@ -122,9 +124,12 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
     
     const isEmptyOwner = form.role === 'owner' && form.owner_type === 'empty';
 
-    // Required fields (name/phone always required)
-    if (!form.full_name.trim()) newErrors.full_name = 'نام و نام خانوادگی الزامی است';
-    if (!form.phone_number.trim()) newErrors.phone_number = 'شماره تماس الزامی است';
+    // Required fields (name/phone always required unless empty owner)
+    if (!isEmptyOwner) {
+      if (!form.full_name.trim()) newErrors.full_name = 'نام و نام خانوادگی الزامی است';
+      if (!form.phone_number.trim()) newErrors.phone_number = 'شماره تماس الزامی است';
+    }
+    
     if (!form.unit_number.trim()) newErrors.unit_number = 'شماره واحد الزامی است';
     if (!form.floor) newErrors.floor = 'شماره طبقه الزامی است';
     if (!form.role) newErrors.role = 'نقش الزامی است';
@@ -133,8 +138,8 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
     // The count limit is checked in backend based on the total number of units created,
     // not based on the unit number value itself
     
-    // Phone number validation
-    if (form.phone_number && !/^09\d{9}$/.test(form.phone_number)) {
+    // Phone number validation (only if not an empty owner)
+    if (!isEmptyOwner && form.phone_number && !/^09\d{9}$/.test(form.phone_number)) {
       newErrors.phone_number = 'شماره تماس باید با 09 شروع شود و 11 رقم باشد';
     }
     
@@ -284,7 +289,8 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                   value={form.full_name} 
                   onChange={handleChange} 
                   error={errors.full_name}
-                  required 
+                  required={!(form.role === 'owner' && form.owner_type === 'empty')}
+                  disabled={form.role === 'owner' && form.owner_type === 'empty'}
                 />
 
                 <FormField 
@@ -294,7 +300,8 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                   value={form.phone_number} 
                   onChange={handleChange} 
                   error={errors.phone_number}
-                  required 
+                  required={!(form.role === 'owner' && form.owner_type === 'empty')}
+                  disabled={form.role === 'owner' && form.owner_type === 'empty'}
                 />
 
                 <div className="grid grid-cols-2 gap-4">
