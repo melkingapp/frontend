@@ -2,6 +2,8 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { ArrowLeftCircle } from "lucide-react";
+import InputField from "../../../shared/components/shared/inputs/InputField";
+import Button from "../../../shared/components/shared/feedback/Button";
 
 const phoneSchema = yup.object().shape({
     phone: yup
@@ -10,7 +12,7 @@ const phoneSchema = yup.object().shape({
         .matches(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
 });
 
-export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role }) {
+export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role, loading = false }) {
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: { phone },
         resolver: yupResolver(phoneSchema),
@@ -18,9 +20,8 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
     });
 
     const handleFormSubmit = (data) => {
-        console.log('Form submitted with phone:', data.phone);
         setPhone(data.phone);
-        onSubmit(data.phone); // پاس دادن شماره به والد
+        onSubmit(data.phone);
     };
 
     return (
@@ -33,29 +34,32 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
                     <p className="text-sm text-gray-500">لطفاً شماره موبایل خود را وارد کنید:</p>
                 </div>
 
-                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">شماره موبایل</label>
-                    <input
+                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+                    <InputField
+                        label="شماره موبایل"
+                        placeholder="مثلاً 09121234567"
                         type="tel"
                         {...register("phone")}
-                        placeholder="مثلاً 09121234567"
-                        className={`w-full border rounded-xl px-4 py-2 text-sm shadow-sm focus:outline-none transition 
-                            ${errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:border-melkingGold focus:ring-2 focus:ring-melkingGold"}`}
+                        error={errors.phone?.message}
+                        required
+                        dir="ltr"
                     />
-                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
 
-                    <div className="space-y-3 pt-4 flex flex-col">
-                        <button
+                    <div className="space-y-3 flex flex-col items-center">
+                        <Button
                             type="submit"
-                            className="w-full bg-melkingGold text-melkingVeryDark py-3 rounded-xl font-bold text-base hover:bg-[#c6a952] transition"
+                            color="gold"
+                            size="large"
+                            loading={loading}
+                            className="w-full !max-w-none"
                         >
                             دریافت کد تأیید
-                        </button>
+                        </Button>
 
                         <button
                             type="button"
                             onClick={onBack}
-                            className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-melkingVeryDark transition mx-auto"
+                            className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-melkingVeryDark transition"
                         >
                             <ArrowLeftCircle size={16} />
                             بازگشت به انتخاب نقش
