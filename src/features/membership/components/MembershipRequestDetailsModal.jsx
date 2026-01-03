@@ -259,7 +259,15 @@ export default function MembershipRequestDetailsModal({ request, isOpen, onClose
                         <InfoCard
                           icon={User}
                           title="نوع مالک"
-                          value={request.owner_type === 'resident' ? 'مالک مقیم' : 'دارای مستاجر'}
+                          value={
+                            request.owner_type === 'resident' 
+                              ? 'مالک مقیم' 
+                              : request.owner_type === 'landlord' 
+                              ? 'دارای مستاجر' 
+                              : request.owner_type === 'empty'
+                              ? 'واحد خالی'
+                              : request.owner_type
+                          }
                           color="orange"
                         />
                       )}

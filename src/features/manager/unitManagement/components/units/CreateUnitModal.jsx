@@ -92,13 +92,12 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
   const handleSelectChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => {
-      // When selecting empty unit, clear person-related fields and set resident_count to 0
+      // When selecting empty unit, only clear tenant fields and set resident_count to 0
+      // Owner information (full_name, phone_number) should remain
       if (name === 'owner_type' && value === 'empty') {
         return {
           ...prev,
           [name]: value,
-          full_name: '',
-          phone_number: '',
           tenant_full_name: '',
           tenant_phone_number: '',
           resident_count: 0,
@@ -296,7 +295,6 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                   onChange={handleChange} 
                   error={errors.full_name}
                   required={!(form.role === 'owner' && form.owner_type === 'empty')}
-                  disabled={form.role === 'owner' && form.owner_type === 'empty'}
                 />
 
                 <FormField 
@@ -307,7 +305,6 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                   onChange={handleChange} 
                   error={errors.phone_number}
                   required={!(form.role === 'owner' && form.owner_type === 'empty')}
-                  disabled={form.role === 'owner' && form.owner_type === 'empty'}
                 />
 
                 <div className="grid grid-cols-2 gap-4">

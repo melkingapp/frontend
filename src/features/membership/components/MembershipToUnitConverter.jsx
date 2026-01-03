@@ -229,7 +229,15 @@ export default function MembershipToUnitConverter({
                           <InfoCard
                             icon={User}
                             title="نوع مالک"
-                            value={membershipRequest.owner_type === 'resident' ? 'مالک مقیم' : 'دارای مستاجر'}
+                            value={
+                              membershipRequest.owner_type === 'resident' 
+                                ? 'مالک مقیم' 
+                                : membershipRequest.owner_type === 'landlord' 
+                                ? 'دارای مستاجر' 
+                                : membershipRequest.owner_type === 'empty'
+                                ? 'واحد خالی'
+                                : membershipRequest.owner_type
+                            }
                             color="pink"
                           />
                         )}

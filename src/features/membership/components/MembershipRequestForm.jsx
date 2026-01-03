@@ -21,8 +21,10 @@ const getPersianOwnerType = (ownerType) => {
   const ownerTypeMap = {
     'resident': 'مالک مقیم',
     'landlord': 'دارای مستاجر',
+    'empty': 'واحد خالی',
     'مالک مقیم': 'مالک مقیم',
-    'دارای مستاجر': 'دارای مستاجر'
+    'دارای مستاجر': 'دارای مستاجر',
+    'واحد خالی': 'واحد خالی'
   };
   return ownerTypeMap[ownerType] || ownerType;
 };
@@ -334,8 +336,8 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       const isResidentRole = unitData.role === 'resident' || unitData.role === 'tenant';
       const isTenantMatch = unitData.match_type === 'tenant' || unitData.role === 'tenant';
       
-      // اگر owner_type وجود دارد (resident یا landlord)، role باید 'owner' باشد
-      const hasOwnerType = unitData.owner_type && (unitData.owner_type === 'resident' || unitData.owner_type === 'landlord');
+      // اگر owner_type وجود دارد (resident یا landlord یا empty)، role باید 'owner' باشد
+      const hasOwnerType = unitData.owner_type && (unitData.owner_type === 'resident' || unitData.owner_type === 'landlord' || unitData.owner_type === 'empty');
       // تبدیل role از مدل Unit (owner/tenant) به MembershipRequest (owner/resident)
       const unitRole = unitData.role === 'tenant' ? 'resident' : (unitData.role === 'owner' ? 'owner' : unitData.role);
       const determinedRole = isTenantMatch ? 'resident' : (hasOwnerType ? 'owner' : (unitRole || ""));
@@ -370,7 +372,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
 
   // اگر owner_type وجود دارد اما role خالی است یا 'owner' نیست، role را به 'owner' تنظیم کن
   useEffect(() => {
-    if (form.owner_type && (form.owner_type === 'resident' || form.owner_type === 'landlord')) {
+    if (form.owner_type && (form.owner_type === 'resident' || form.owner_type === 'landlord' || form.owner_type === 'empty')) {
       if (!form.role || form.role !== 'owner') {
         setForm(prev => ({
           ...prev,
@@ -386,6 +388,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   ];
 
   const ownerTypeOptions = [
+    { value: 'empty', label: 'واحد خالی' },
     { value: 'resident', label: 'مالک مقیم' },
     { value: 'landlord', label: 'دارای مستاجر' },
   ];
@@ -433,14 +436,20 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
 
       // If owner_type changes
       if (name === 'owner_type') {
-        // اگر owner_type "resident" یا "landlord" است، role باید 'owner' باشد
-        if (processedValue === 'resident' || processedValue === 'landlord') {
+        // اگر owner_type "resident" یا "landlord" یا "empty" است، role باید 'owner' باشد
+        if (processedValue === 'resident' || processedValue === 'landlord' || processedValue === 'empty') {
           updatedForm.role = 'owner';
         } else if (!processedValue || processedValue === '') {
           // اگر owner_type خالی شد و role 'owner' است، role را خالی کن
           if (updatedForm.role === 'owner') {
             updatedForm.role = "";
           }
+        }
+        // If owner_type changes to 'empty', set resident_count to 0 and clear tenant info
+        if (processedValue === 'empty') {
+          updatedForm.resident_count = 0;
+          updatedForm.tenant_full_name = "";
+          updatedForm.tenant_phone_number = "";
         }
         // If owner_type changes from 'landlord' to something else, clear tenant info
         if (processedValue !== 'landlord') {
@@ -473,6 +482,13 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     // Role-specific validations
     if (form.role === 'owner' && !form.owner_type) {
       newErrors.owner_type = 'نوع مالک برای نقش مالک الزامی است';
+    }
+    
+    // اگر owner_type 'empty' است، resident_count باید 0 باشد
+    if (form.role === 'owner' && form.owner_type === 'empty') {
+      if (form.resident_count !== 0 && form.resident_count !== '0') {
+        newErrors.resident_count = 'برای واحد خالی تعداد نفر باید ۰ باشد';
+      }
     }
     if (form.role === 'resident') {
       if (!form.owner_full_name || !form.owner_full_name.trim()) {
@@ -582,7 +598,9 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       const unitNumber = (unitData.unit_number || form.unit_number || '').trim();
       const floorValue = toNumber(unitData.floor || form.floor, true);
       const areaValue = toNumber(unitData.area || form.area, true);
-      const residentCountValue = toNumber(unitData.resident_count || form.resident_count, true) || 1;
+      // اگر owner_type 'empty' است، resident_count باید 0 باشد
+      const isEmptyOwner = normalizedRole === 'owner' && normalizedOwnerType === 'empty';
+      const residentCountValue = isEmptyOwner ? 0 : (toNumber(unitData.resident_count || form.resident_count, true) || 1);
       let ownerFullName = null;
       let ownerPhoneNumber = null;
       
@@ -1009,8 +1027,9 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                         placeholder="تعداد نفر"
                         value={form.resident_count}
                         onChange={handleChange}
-                        min="1"
-                        required
+                        min={form.role === 'owner' && form.owner_type === 'empty' ? "0" : "1"}
+                        required={!(form.role === 'owner' && form.owner_type === 'empty')}
+                        disabled={form.role === 'owner' && form.owner_type === 'empty'}
                         icon={Users}
                       />
                     </div>
