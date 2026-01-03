@@ -61,6 +61,57 @@ class UnitsApiService {
     }
   }
 
+  // Helper function to extract error message from validation errors
+  _extractErrorMessage(errorData) {
+    if (typeof errorData === 'string') {
+      return errorData;
+    }
+    
+    if (typeof errorData === 'object' && errorData !== null) {
+      // Handle Django REST Framework validation errors
+      // Format: { field_name: ['error message'] } or { field_name: 'error message' }
+      const errorMessages = [];
+      
+      for (const [field, message] of Object.entries(errorData)) {
+        if (Array.isArray(message)) {
+          errorMessages.push(...message.map(msg => `${this._getFieldLabel(field)}: ${msg}`));
+        } else if (typeof message === 'string') {
+          errorMessages.push(`${this._getFieldLabel(field)}: ${message}`);
+        } else if (typeof message === 'object') {
+          // Nested errors
+          errorMessages.push(...Object.values(message).flat().map(msg => `${this._getFieldLabel(field)}: ${msg}`));
+        }
+      }
+      
+      if (errorMessages.length > 0) {
+        return errorMessages.join('\n');
+      }
+      
+      // Fallback: try to get 'error' key
+      if (errorData.error) {
+        return typeof errorData.error === 'string' ? errorData.error : JSON.stringify(errorData.error);
+      }
+    }
+    
+    return 'خطا در ایجاد واحد';
+  }
+
+  // Helper to get Persian field labels
+  _getFieldLabel(field) {
+    const labels = {
+      unit_number: 'شماره واحد',
+      full_name: 'نام و نام خانوادگی',
+      phone_number: 'شماره تماس',
+      tenant_full_name: 'نام مستاجر',
+      tenant_phone_number: 'شماره تماس مستاجر',
+      floor: 'طبقه',
+      area: 'متراژ',
+      role: 'نقش',
+      owner_type: 'نوع مالک',
+    };
+    return labels[field] || field;
+  }
+
   // Create a new unit
   async createUnit(buildingId, unitData) {
     try {
@@ -71,12 +122,11 @@ class UnitsApiService {
       };
     } catch (error) {
       console.error('Error creating unit:', error);
-      // Extract error message from error.data (from api.js) or error.message
-      const errorMessage = error.data?.error || error.message || 'خطا در ایجاد واحد';
-      return {
-        success: false,
-        error: errorMessage
-      };
+      // Extract error message - handle both string and object validation errors
+      const errorData = error.data?.error || error.data;
+      const errorMessage = this._extractErrorMessage(errorData) || error.message || 'خطا در ایجاد واحد';
+      
+      throw new Error(errorMessage);
     }
   }
 

@@ -39,7 +39,9 @@ export const createUnit = createAsyncThunk(
       }
       return response.unit;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || error.message || 'خطا در ایجاد واحد');
+      // Handle both Error objects and response objects
+      const errorMessage = error.message || error.response?.data?.error || error.data?.error || 'خطا در ایجاد واحد';
+      return rejectWithValue(errorMessage);
     }
   }
 );

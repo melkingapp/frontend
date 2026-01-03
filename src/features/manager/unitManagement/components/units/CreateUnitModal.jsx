@@ -273,9 +273,15 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                 {/* Display API error */}
                 {error && (
                   <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <p className="text-red-700 text-sm font-medium">{error}</p>
+                    <div className="flex items-start gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        {typeof error === 'string' ? (
+                          <p className="text-red-700 text-sm font-medium whitespace-pre-line">{error}</p>
+                        ) : (
+                          <p className="text-red-700 text-sm font-medium">خطا در ایجاد واحد</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ export default function StepSummary({ formData, prev }) {
     const [isSuccessOpen, setIsSuccessOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useDispatch();
+    const userPhone = useSelector((state) => state.auth.user?.phone_number || state.auth.user?.phone || state.auth.user?.username || '');
 
     const handleSubmit = async () => {
         console.log("فرم ارسال شد:", formData);
@@ -262,12 +263,18 @@ export default function StepSummary({ formData, prev }) {
                         return;
                     }
 
+                    // Get manager phone number from Redux state
+                    if (!userPhone) {
+                        toast.error("شماره تماس مدیر یافت نشد. لطفاً دوباره وارد شوید.");
+                        return;
+                    }
+
                     const unitData = {
                         unit_number: managerUnitNumber,
                         floor: parseInt(formData.manager_floor) || parseInt(formData.resident_floor) || 1,
                         area: formData.manager_area ? parseFloat(formData.manager_area) : null,
                         full_name: formData.name || '',
-                        phone_number: '', // شماره تماس مدیر از اطلاعات کاربر گرفته می‌شود
+                        phone_number: userPhone, // شماره تماس مدیر از اطلاعات کاربر گرفته می‌شود
                         role: formData.manager_role || 'owner',
                         owner_type: formData.manager_owner_type || '',
                         tenant_full_name: formData.manager_tenant_full_name || '',
