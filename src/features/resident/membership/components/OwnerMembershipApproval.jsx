@@ -224,6 +224,58 @@ const RequestDetailsModal = ({ request, isOpen, onClose }) => {
               </div>
             </div>
 
+            {/* نقش و نوع مالک */}
+            {(request.role || request.owner_type) && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">نقش و نوع مالک</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {request.role && (
+                    <div>
+                      <label className="text-sm text-gray-600">نقش</label>
+                      <p className="text-gray-900 font-medium">
+                        {request.role === 'resident' ? 'ساکن' : 'مالک'}
+                      </p>
+                    </div>
+                  )}
+                  {request.owner_type && (
+                    <div>
+                      <label className="text-sm text-gray-600">نوع مالک</label>
+                      <p className="text-gray-900 font-medium">
+                        {request.owner_type === 'resident' 
+                          ? 'مالک مقیم' 
+                          : request.owner_type === 'landlord' 
+                          ? 'دارای مستاجر' 
+                          : request.owner_type === 'empty'
+                          ? 'واحد خالی'
+                          : request.owner_type}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* اطلاعات مستاجر */}
+            {request.owner_type === 'landlord' && 
+             request.tenant_full_name && 
+             request.tenant_full_name.trim() !== '' && 
+             request.tenant_phone_number && 
+             request.tenant_phone_number.trim() !== '' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">وضعیت مستاجر</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-600">نام و نام خانوادگی مستاجر</label>
+                    <p className="text-gray-900 font-medium">{request.tenant_full_name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600">شماره تماس مستاجر</label>
+                    <p className="text-gray-900 font-medium">{request.tenant_phone_number}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* وضعیت درخواست */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">وضعیت درخواست</h3>

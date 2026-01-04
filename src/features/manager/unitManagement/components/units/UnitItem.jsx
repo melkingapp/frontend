@@ -18,9 +18,21 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
     const totalDebt = unit.total_debt ?? 0;
     const totalCredit = unit.total_credit ?? 0;
     
+    // برای واحدهای tenant، مالک از owner_full_name یا owner می‌آید
+    const ownerFullName = unit.owner_full_name || "";
+    
+    // اگر owner_full_name خالی است و owner object وجود دارد، از آن استفاده کن
+    const ownerFromObject = unit.owner ? (unit.owner.first_name && unit.owner.last_name ? `${unit.owner.first_name} ${unit.owner.last_name}` : unit.owner.full_name || "") : "";
+    
     // سازگاری با فیلدهای قدیمی
-    const ownerName = unit.owner_name || fullName;
-    const residentName = unit.resident_name || tenantFullName;
+    // برای واحدهای tenant: ownerName باید از owner_full_name باشد، residentName از full_name
+    // برای واحدهای owner: ownerName از full_name، residentName از tenant_full_name
+    const ownerName = role === "tenant" 
+        ? (ownerFullName || ownerFromObject || unit.owner_name || `مالک واحد ${unit.unit_number || ""}`.trim()) 
+        : (unit.owner_name || fullName);
+    const residentName = role === "tenant"
+        ? (fullName || unit.resident_name || "")
+        : (unit.resident_name || tenantFullName);
     
     // تعیین نوع واحد بر اساس نقش
     const unitType = useMemo(() => {
@@ -96,18 +108,25 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
                 <div className="border-t border-gray-100 my-2" />
 
                 {/* ردیف دوم: مالک / ساکن */}
+                {/* برای واحدهای tenant: ابتدا مالک را نمایش بده، سپس مستاجر را در باکس جداگانه */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
                         {/* آواتار */}
                         <div className="w-14 h-14 shrink-0 rounded-full bg-gray-100 text-gray-700 grid place-items-center font-bold text-lg">
-                            {(fullName || ownerName || residentName)?.[0] || "?"}
+                            {role === "tenant" 
+                                ? (ownerName?.[0] || "?")
+                                : ((fullName || ownerName || residentName)?.[0] || "?")
+                            }
                         </div>
                         {/* نام + نقش */}
                         <div className="flex flex-col">
                             <span className={`font-semibold text-gray-900 ${
                                 unitType === "empty" ? "text-base" : "text-lg"
                             }`}>
-                                {fullName || ownerName || residentName || "واحد خالی"}
+                                {role === "tenant"
+                                    ? (ownerName || "مالک نامشخص")
+                                    : (fullName || ownerName || residentName || "واحد خالی")
+                                }
                             </span>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                                 <span
@@ -120,13 +139,13 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
                                      ownerName ? "مالک" : 
                                      residentName ? "ساکن" : "خالی"}
                                 </span>
-                                {ownerName && (
+                                {(ownerName || role === "tenant") && (
                                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${ownerConfirmed ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200'}`}>
                                     {ownerConfirmed ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
                                     مالک {ownerConfirmed ? 'تأیید شده' : 'تأیید نشده'}
                                   </span>
                                 )}
-                                {tenantFullName && (
+                                {(tenantFullName || (role === "tenant" && fullName)) && (
                                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${tenantConfirmed ? 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' : 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200'}`}>
                                     {tenantConfirmed ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
                                     مستأجر {tenantConfirmed ? 'تأیید شده' : 'تأیید نشده'}
@@ -164,17 +183,18 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
                     </div>
                 </div>
 
-                {/* اگر مالک دارای مستاجر است، اطلاعات مستاجر را نمایش بده */}
-                {(role === "owner" && tenantFullName) || (ownerName && residentName && ownerName !== residentName) ? (
+                {/* نمایش مستاجر: برای واحدهای owner که مستاجر دارند و برای واحدهای tenant */}
+                {((role === "owner" && tenantFullName) || (ownerName && residentName && ownerName !== residentName)) || 
+                 (role === "tenant" && fullName) ? (
                     <div className="mt-3 p-3 bg-sky-50 rounded-xl shadow-sm border border-sky-200">
                         <div className="flex items-center gap-3">
                             {/* آواتار مستاجر */}
                             <div className="w-12 h-12 shrink-0 rounded-full bg-sky-100 text-sky-700 grid place-items-center font-bold text-lg">
-                                {(tenantFullName || residentName)?.[0] || "?"}
+                                {(role === "tenant" ? fullName : (tenantFullName || residentName))?.[0] || "?"}
                             </div>
                             <div className="flex flex-col space-y-2">
                                 <span className="text-sm font-semibold text-gray-900">
-                                    {tenantFullName || residentName}
+                                    {role === "tenant" ? fullName : (tenantFullName || residentName)}
                                 </span>
                             </div>
                             {/* برچسب مشخص‌کننده */}

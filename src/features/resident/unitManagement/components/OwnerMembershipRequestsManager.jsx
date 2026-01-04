@@ -566,6 +566,43 @@ export default function OwnerMembershipRequestsManager() {
                   <p className="text-sm text-gray-900">{selectedRequest.resident_count}</p>
                 </div>
               </div>
+
+              {/* نقش و نوع مالک */}
+              {selectedRequest.owner_type && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">نوع مالک</label>
+                  <p className="text-sm text-gray-900">
+                    {selectedRequest.owner_type === 'resident' 
+                      ? 'مالک مقیم' 
+                      : selectedRequest.owner_type === 'landlord' 
+                      ? 'دارای مستاجر' 
+                      : selectedRequest.owner_type === 'empty'
+                      ? 'واحد خالی'
+                      : selectedRequest.owner_type}
+                  </p>
+                </div>
+              )}
+
+              {/* اطلاعات مستاجر */}
+              {selectedRequest.owner_type === 'landlord' && 
+               selectedRequest.tenant_full_name && 
+               selectedRequest.tenant_full_name.trim() !== '' && 
+               selectedRequest.tenant_phone_number && 
+               selectedRequest.tenant_phone_number.trim() !== '' && (
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">وضعیت مستاجر</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">نام و نام خانوادگی مستاجر</label>
+                      <p className="text-sm text-gray-900">{selectedRequest.tenant_full_name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">شماره تماس مستاجر</label>
+                      <p className="text-sm text-gray-900">{selectedRequest.tenant_phone_number}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {selectedRequest.has_parking && (
                 <div>
