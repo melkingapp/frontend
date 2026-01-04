@@ -275,7 +275,11 @@ export default function MembershipRequestDetailsModal({ request, isOpen, onClose
                   </div>
 
                   {/* اطلاعات مستاجر */}
-                  {request.owner_type === 'landlord' && (
+                  {request.owner_type === 'landlord' && 
+                   request.tenant_full_name && 
+                   request.tenant_full_name.trim() !== '' && 
+                   request.tenant_phone_number && 
+                   request.tenant_phone_number.trim() !== '' && (
                     <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-200">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="p-1.5 bg-indigo-100 rounded-lg">
@@ -284,35 +288,20 @@ export default function MembershipRequestDetailsModal({ request, isOpen, onClose
                         <h4 className="text-base font-bold text-gray-800">وضعیت مستاجر</h4>
                       </div>
                       
-                      {request.tenant_full_name && request.tenant_phone_number ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <InfoCard
-                            icon={User}
-                            title="نام و نام خانوادگی مستاجر"
-                            value={request.tenant_full_name}
-                            color="blue"
-                          />
-                          <InfoCard
-                            icon={Phone}
-                            title="شماره تماس مستاجر"
-                            value={request.tenant_phone_number}
-                            color="blue"
-                          />
-                        </div>
-                      ) : (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                          <div className="flex items-center gap-2">
-                            <Clock size={20} className="text-yellow-600" />
-                            <div>
-                              <h5 className="font-semibold text-yellow-800">منتظر مستاجر</h5>
-                              <p className="text-sm text-yellow-700">
-                                این واحد برای اجاره آماده است اما هنوز مستاجر مشخصی ندارد. 
-                                بعد از تایید درخواست، واحد در حالت "منتظر مستاجر" قرار می‌گیرد.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <InfoCard
+                          icon={User}
+                          title="نام و نام خانوادگی مستاجر"
+                          value={request.tenant_full_name}
+                          color="blue"
+                        />
+                        <InfoCard
+                          icon={Phone}
+                          title="شماره تماس مستاجر"
+                          value={request.tenant_phone_number}
+                          color="blue"
+                        />
+                      </div>
                     </div>
                   )}
 
