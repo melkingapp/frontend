@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getResidentRequests, getApprovedBuildings, getBuildingDetails } from '../../../shared/services/residentRequestsService';
 import { getApiBaseUrl } from '../../../shared/utils/apiConfig';
+import { sanitizeBuildingData, sanitizeRequestData } from '../../../shared/utils/security';
 
 // Token refresh helper
 const handleTokenRefresh = async (dispatch) => {
@@ -127,7 +128,8 @@ const residentBuildingSlice = createSlice({
             state.selectedBuilding = action.payload;
             // Save to localStorage
             try {
-                localStorage.setItem('selectedResidentBuilding', JSON.stringify(action.payload));
+                const sanitizedBuilding = sanitizeBuildingData(action.payload);
+                localStorage.setItem('selectedResidentBuilding', JSON.stringify(sanitizedBuilding));
             } catch (error) {
                 console.error('Failed to save selected building to localStorage:', error);
             }
@@ -154,7 +156,9 @@ const residentBuildingSlice = createSlice({
                 state.requests = action.payload.requests || [];
                 // Save requests to localStorage
                 try {
-                    localStorage.setItem('residentRequests', JSON.stringify(action.payload.requests || []));
+                    const requestsToSave = action.payload.requests || [];
+                    const sanitizedRequests = requestsToSave.map(req => sanitizeRequestData(req));
+                    localStorage.setItem('residentRequests', JSON.stringify(sanitizedRequests));
                 } catch (error) {
                     console.error('Failed to save requests to localStorage:', error);
                 }
@@ -192,7 +196,8 @@ const residentBuildingSlice = createSlice({
                 
                 // Save buildings to localStorage
                 try {
-                    localStorage.setItem('residentBuildings', JSON.stringify(state.approvedBuildings));
+                    const sanitizedBuildings = state.approvedBuildings.map(b => sanitizeBuildingData(b));
+                    localStorage.setItem('residentBuildings', JSON.stringify(sanitizedBuildings));
                 } catch (error) {
                     console.error('Failed to save buildings to localStorage:', error);
                 }
@@ -243,7 +248,8 @@ const residentBuildingSlice = createSlice({
                 
                 // Save updated state to localStorage
                 try {
-                    localStorage.setItem('residentBuildings', JSON.stringify(newBuildings));
+                    const sanitizedBuildings = newBuildings.map(b => sanitizeBuildingData(b));
+                    localStorage.setItem('residentBuildings', JSON.stringify(sanitizedBuildings));
                 } catch (error) {
                     console.error('Failed to save buildings to localStorage:', error);
                 }
