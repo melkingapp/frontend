@@ -63,13 +63,22 @@ export default function SurveyModal({ survey, onClose, currentUser = "کاربر
         console.log("🔥 SurveyModal useEffect - final options array:", options);
         console.log("🔥 SurveyModal useEffect - final options length:", options.length);
         
-        const votedIds = options
-            .filter((opt) => opt.voters?.includes(currentUser))
-            .map((opt) => opt.id);
+        // Use user_voted_option_ids from API if available (more reliable than name matching)
+        let votedIds = [];
+        if (survey.user_voted_option_ids && Array.isArray(survey.user_voted_option_ids)) {
+            votedIds = survey.user_voted_option_ids;
+        } else {
+            // Fallback to name matching for backward compatibility
+            votedIds = options
+                .filter((opt) => opt.voters?.includes(currentUser))
+                .map((opt) => opt.id);
+        }
+        
         setSelectedOptions(votedIds);
         setOptionsData(options.map(opt => ({ ...opt })));
         
         console.log("🔥 SurveyModal useEffect - optionsData set to:", options.map(opt => ({ ...opt })));
+        console.log("🔥 SurveyModal useEffect - votedIds:", votedIds);
     }, [survey, currentUser]);
 
     if (!survey) return null;

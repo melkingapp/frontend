@@ -89,10 +89,10 @@ export const updateExpense = createAsyncThunk(
 
 export const deleteExpense = createAsyncThunk(
     "finance/deleteExpense",
-    async (expenseId, { rejectWithValue }) => {
+    async ({ expenseId, confirm = false }, { rejectWithValue }) => {
         try {
             const { deleteExpense } = await import("../../../../../shared/services/billingService");
-            const response = await deleteExpense(expenseId);
+            const response = await deleteExpense(expenseId, confirm);
             return { ...response, expenseId };
         } catch (error) {
             return rejectWithValue(error.message);

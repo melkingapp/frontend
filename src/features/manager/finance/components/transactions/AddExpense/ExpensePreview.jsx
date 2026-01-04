@@ -49,7 +49,7 @@ export default function ExpensePreview({ previewData, onConfirm, onBack, isLoadi
                 </div>
                 <div className="flex justify-between">
                     <span className="text-gray-600">روش پرداخت:</span>
-                    <span className="font-semibold">{form.paymentMethod === "direct" ? "مستقیم" : "از شارژ"}</span>
+                    <span className="font-semibold">{form.paymentMethod === "direct" ? "مستقیم" : "موجودی صندوق"}</span>
                 </div>
                 {form.description && (
                     <div className="pt-2 border-t">

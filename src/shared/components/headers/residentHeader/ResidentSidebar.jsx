@@ -5,15 +5,11 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
-    selectSelectedResidentBuilding,
-    selectApprovedBuildings,
     setSelectedBuilding,
     fetchResidentRequests,
     fetchApprovedBuildingsDetails,
-    refreshApprovedBuildings,
-    maintainApprovedBuildings,
 } from "../../../../features/resident/building/residentBuildingSlice";
-import { selectMembershipRequests, fetchMembershipRequests } from "../../../../features/membership/membershipSlice";
+import { useResidentUnitData } from "../../../../features/resident/building/hooks/useResidentUnitData";
 import MelkingLogo from "../../../../assets/logo/Melking-fa.svg";
 
 export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar }) {
@@ -24,10 +20,9 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     const dispatch = useDispatch();
 
-    const selectedBuilding = useSelector(selectSelectedResidentBuilding);
+    // Use hook for resident unit data (prevents duplicate fetches)
+    const { selectedBuilding, approvedBuildings, membershipRequests } = useResidentUnitData();
     const requests = useSelector(selectResidentRequests);
-    const approvedBuildings = useSelector(selectApprovedBuildings);
-    const membershipRequests = useSelector(selectMembershipRequests);
     const { user } = useSelector(state => state.auth);
 
     // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
@@ -58,27 +53,15 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
 
     useEffect(() => {
-        // Only fetch if we don't have requests in Redux store
+        // Only fetch resident requests if we don't have them in Redux store
+        // membershipRequests and approvedBuildings are now handled by useResidentUnitData hook
         if (requests.length === 0) {
             dispatch(fetchResidentRequests());
         }
-        
-        // Fetch membership requests for unit selection
-        if (membershipRequests.length === 0) {
-            dispatch(fetchMembershipRequests());
-        }
-        
-        // Fetch approved buildings directly from BuildingUser table
-        if (approvedBuildings.length === 0) {
-            dispatch(refreshApprovedBuildings()).catch(() => {
-                console.log('🔄 API failed, using maintain action...');
-                dispatch(maintainApprovedBuildings());
-            });
-        }
-    }, [dispatch, requests.length, approvedBuildings.length]);
+    }, [dispatch, requests.length]);
 
-    // Get approved units from membership requests
-    // اگر کاربر هم مالک و هم ساکن است، فقط نقش مالک را نشان بده
+    // Get approved units from hook (already calculated in useResidentUnitData)
+    // We need to recalculate here to match the exact format expected by the sidebar
     const approvedUnits = (() => {
         const approvedRequests = membershipRequests.filter(req => 
             req.status === 'approved' || 

@@ -84,6 +84,8 @@ export default function SurveyItem({ survey, onSelect, selectedBuilding: propSel
                 // Keep original survey IDs
                 id: survey.id || survey.survey_id,
                 survey_id: survey.survey_id || survey.id,
+                // Keep user_voted_option_ids from API for accurate vote detection
+                user_voted_option_ids: detailedSurvey.survey.user_voted_option_ids || [],
             };
 
             console.log("🔥 Transformed survey:", transformedSurvey);

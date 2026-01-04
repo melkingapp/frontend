@@ -63,6 +63,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
   const [localAwaitingApproval, setLocalAwaitingApproval] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteWarning, setDeleteWarning] = useState(null);
   const dispatch = useDispatch();
   const { transactionDetails, loading } = useSelector(state => state.finance);
   const membershipRequests = useReduxSelector(selectMembershipRequests);
@@ -268,7 +269,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
           transaction.payment_method === "direct"
             ? "مستقیم"
             : transaction.payment_method === "from_fund"
-            ? "از شارژ"
+            ? "موجودی صندوق"
             : transaction.payment_method === "online"
             ? "آنلاین"
             : "—",
@@ -317,9 +318,29 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await dispatch(deleteExpense(transaction.id)).unwrap();
+      
+      // اگر warning وجود دارد، با confirm=true صدا بزن
+      const confirm = !!deleteWarning;
+      const response = await dispatch(deleteExpense({ expenseId: transaction.id, confirm })).unwrap();
+      
+      // بررسی warning
+      if (response.warning && !confirm) {
+        // نمایش warning و منتظر تایید کاربر بمان
+        setDeleteWarning(response);
+        setIsDeleting(false);
+        return;
+      }
+      
+      // اگر warning نبود یا confirm بود، هزینه حذف شد
       toast.success('هزینه با موفقیت حذف شد');
+      
+      if (response.refunded_units && response.refunded_units.length > 0) {
+        const unitNumbers = response.refunded_units.map(u => u.unit_number).join('، ');
+        toast.success(`مبلغ به موجودی صندوق و بستانکاری واحدهای ${unitNumbers} برگردانده شد`);
+      }
+      
       setShowDeleteConfirm(false);
+      setDeleteWarning(null);
       onClose();
     } catch (error) {
       console.error('Error deleting expense:', error);
@@ -754,12 +775,21 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
       {/* مدال تایید حذف */}
       <DeleteConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteWarning(null);
+        }}
         onConfirm={handleDelete}
-        title="تایید حذف هزینه"
-        message="آیا از حذف این هزینه اطمینان دارید؟"
+        title={deleteWarning ? "هشدار: واحدهایی پرداخت کرده‌اند" : "تایید حذف هزینه"}
+        message={deleteWarning ? deleteWarning.message : "آیا از حذف این هزینه اطمینان دارید؟"}
         itemName={transaction ? getPersianType(transaction.bill_type || transaction.title) : ""}
-        itemDetails={transaction ? `مبلغ: ${transaction.amount?.toLocaleString()} تومان` : ""}
+        itemDetails={
+          deleteWarning
+            ? `واحدهای پرداخت‌کننده:\n${deleteWarning.paid_units.map(u => `واحد ${u.unit_number}: ${u.paid_amount.toLocaleString()} تومان`).join('\n')}\n\nمجموع مبلغ پرداخت شده: ${deleteWarning.total_paid_amount.toLocaleString()} تومان\n\nبا حذف این هزینه، مبلغ به موجودی صندوق و بستانکاری واحدها برگردانده می‌شود.`
+            : transaction
+            ? `مبلغ: ${transaction.amount?.toLocaleString()} تومان`
+            : ""
+        }
         isLoading={isDeleting}
       />
 

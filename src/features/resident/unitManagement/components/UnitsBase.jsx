@@ -5,17 +5,21 @@ import { toast } from "sonner";
 import UnitItem from "../../../manager/unitManagement/components/units/UnitItem";
 import UnitDetailsModal from "../../../manager/unitManagement/components/units/UnitDetailsModal";
 import { fetchUnits } from "../../../manager/unitManagement/slices/unitsSlice";
-import { fetchMembershipRequests } from "../../../membership/membershipSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import { selectMembershipRequests } from "../../../membership/membershipSlice";
+import { useResidentUnitData } from "../../../resident/building/hooks/useResidentUnitData";
 
 export default function UnitsBase({ units: propUnits, limit }) {
     const dispatch = useDispatch();
-    const selectedBuilding = useSelector(selectSelectedBuilding);
+    const managerBuilding = useSelector(selectSelectedBuilding);
     const { units: reduxUnits, loading, error } = useSelector(state => state.units);
-    const membershipRequests = useSelector(selectMembershipRequests);
     const user = useSelector(state => state.auth.user);
     const [selectedUnit, setSelectedUnit] = useState(null);
+    
+    // Use hook for resident data (prevents duplicate fetches)
+    const { selectedBuilding: residentBuilding, membershipRequests } = useResidentUnitData();
+    
+    // Select building based on user role
+    const selectedBuilding = user?.role === 'resident' ? residentBuilding : managerBuilding;
 
     // Get approved membership requests for the current user
     const approvedRequests = membershipRequests.filter(req => 
@@ -55,12 +59,7 @@ export default function UnitsBase({ units: propUnits, limit }) {
     
     const displayed = limit ? sorted.slice(0, limit) : sorted;
 
-    // Fetch membership requests for current user (ensures membershipUnits has data)
-    useEffect(() => {
-        dispatch(fetchMembershipRequests());
-    }, [dispatch]);
-
-    // Fetch units only for managers
+    // Fetch units only for managers - reacts to building changes
     useEffect(() => {
         if (user?.role === 'manager' && (selectedBuilding?.building_id || selectedBuilding?.id)) {
             dispatch(fetchUnits(selectedBuilding.building_id || selectedBuilding.id));

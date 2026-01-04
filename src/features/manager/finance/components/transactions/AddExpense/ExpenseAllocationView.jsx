@@ -103,7 +103,7 @@ export default function ExpenseAllocationView({ allocationData, onUpdate, onClos
                 </div>
                 <div className="flex justify-between">
                     <span className="text-gray-600">روش پرداخت:</span>
-                    <span className="font-semibold">{payment_method === "direct" ? "مستقیم" : "از شارژ"}</span>
+                    <span className="font-semibold">{payment_method === "direct" ? "مستقیم" : "موجودی صندق"}</span>
                 </div>
             </div>
 

@@ -12,8 +12,8 @@ import {
   FileText
 } from "lucide-react";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import { selectSelectedResidentBuilding, selectApprovedBuildings, setSelectedBuilding as setSelectedResidentBuilding, refreshApprovedBuildings, fetchApprovedBuildingsDetails } from "../../building/residentBuildingSlice";
-import { selectMembershipRequests, fetchMembershipRequests } from "../../../membership/membershipSlice";
+import { setSelectedBuilding as setSelectedResidentBuilding, fetchApprovedBuildingsDetails } from "../../building/residentBuildingSlice";
+import { useResidentUnitData } from "../../building/hooks/useResidentUnitData";
 import { BalanceSummary } from "../../../manager/finance/components/balance/BalanceSummary";
 import { BalanceTable } from "../../../manager/finance/components/balance/BalanceTable";
 import { BalanceFilters } from "../../../manager/finance/components/balance/BalanceFilters";
@@ -33,11 +33,9 @@ export default function BuildingBalance() {
   const isManager = user?.role === 'manager';
   const isResident = user?.role === 'resident';
   
-  // Use appropriate building selector based on user role
+  // Use hook for resident unit data (prevents duplicate fetches and reacts to changes)
+  const { selectedBuilding: residentBuilding, approvedBuildings, membershipRequests } = useResidentUnitData();
   const managerBuilding = useSelector(selectSelectedBuilding);
-  const residentBuilding = useSelector(selectSelectedResidentBuilding);
-  const approvedBuildings = useSelector(selectApprovedBuildings);
-  const membershipRequests = useSelector(selectMembershipRequests);
   
   // Select building based on role
   const building = isResident ? residentBuilding : managerBuilding;
@@ -64,22 +62,11 @@ export default function BuildingBalance() {
     details: null // جزئیات برای مدیر
   });
 
-  // For residents: fetch membership requests if not loaded
-  useEffect(() => {
-    if (isResident && membershipRequests.length === 0) {
-      dispatch(fetchMembershipRequests());
-    }
-  }, [isResident, membershipRequests.length, dispatch]);
-
-  // For residents: fetch approved buildings and auto-select if needed
+  // For residents: auto-select first building if none is selected
   useEffect(() => {
     if (isResident) {
-      // Refresh approved buildings if not loaded
-      if (approvedBuildings.length === 0) {
-        dispatch(refreshApprovedBuildings());
-      }
       // Auto-select first building if none is selected
-      else if (approvedBuildings.length > 0 && !building) {
+      if (approvedBuildings.length > 0 && !building) {
         const firstBuilding = approvedBuildings[0];
         // Make sure the building has a valid building_id
         if (firstBuilding.building_id && !isNaN(firstBuilding.building_id)) {
@@ -182,7 +169,7 @@ export default function BuildingBalance() {
     }
   }, [isResident, building, membershipRequests, dispatch]);
 
-  // Load balance data
+  // Load balance data - reacts to building changes (including when user changes unit in sidebar)
   useEffect(() => {
     if (building) {
       // For residents, wait for approvedBuildings to be loaded if needed

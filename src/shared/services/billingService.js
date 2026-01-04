@@ -395,10 +395,11 @@ export const updateExpense = async (expenseData) => {
 };
 
 // Delete expense
-export const deleteExpense = async (expenseId) => {
+export const deleteExpense = async (expenseId, confirm = false) => {
     try {
-        // ارسال shared_bill_id به عنوان query parameter
-        const response = await deleteRequest(`/billing/delete-expense/?shared_bill_id=${expenseId}`);
+        // ارسال shared_bill_id و confirm به عنوان query parameter
+        const confirmParam = confirm ? '&confirm=true' : '';
+        const response = await deleteRequest(`/billing/delete-expense/?shared_bill_id=${expenseId}${confirmParam}`);
         return response;
     } catch (error) {
         console.error('Delete expense error:', error);

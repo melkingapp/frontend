@@ -32,7 +32,7 @@ const distributionMethods = [
 
 const paymentMethods = [
     { value: "direct", label: "مستقیم" },
-    { value: "from_fund", label: "از شارژ" },
+    { value: "from_fund", label: "موجودی صندوق" },
 ];
 
 function validate(form, customUnitCosts, filteredUnits, target, selectedUnits) {

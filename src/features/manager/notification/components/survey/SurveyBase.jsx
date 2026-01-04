@@ -64,6 +64,7 @@ export default function SurveyBase({ limit }) {
                 title: surveyData.question,
                 description: surveyData.description || '',
                 survey_type: 'general',
+                target_audience: surveyData.target || 'both', // Map targetRole to target_audience
                 start_date: now.toISOString().slice(0, 19).replace('T', ' '),
                 end_date: endDate.toISOString().slice(0, 19).replace('T', ' '),
                 questions: [

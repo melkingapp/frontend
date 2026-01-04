@@ -2,13 +2,14 @@ import moment from "moment-jalaali";
 
 /**
  * Convert date string to Persian Jalali format
- * @param {string} dateString - Date string in various formats
+ * Backend sends datetime in Tehran timezone, so we just parse it normally
+ * @param {string} dateString - Date string in various formats (from backend in Tehran timezone)
  * @returns {string} - Formatted Persian date or fallback
  */
 export const formatJalaliDate = (dateString) => {
   if (!dateString) return "—";
   try {
-    // Try to parse as English date first (YYYY-MM-DD)
+    // Backend sends datetime in Tehran timezone, so parse normally
     const date = moment(dateString);
     if (date.isValid()) {
       return date.format("jYYYY/jMM/jDD");
@@ -26,12 +27,14 @@ export const formatJalaliDate = (dateString) => {
 
 /**
  * Format date with time for detailed views
- * @param {string} dateString - Date string
+ * Backend sends datetime in Tehran timezone, so we just parse it normally
+ * @param {string} dateString - Date string (from backend in Tehran timezone)
  * @returns {string} - Formatted Persian date with time
  */
 export const formatJalaliDateTime = (dateString) => {
   if (!dateString) return "—";
   try {
+    // Backend sends datetime in Tehran timezone, so parse normally
     const date = moment(dateString);
     if (date.isValid()) {
       return date.format("jYYYY/jMM/jDD - HH:mm");

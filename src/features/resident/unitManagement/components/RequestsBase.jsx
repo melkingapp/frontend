@@ -5,22 +5,21 @@ import { toast } from "sonner";
 import RequestItem from "../../../manager/unitManagement/components/requests/RequestItem";
 import { fetchRequests, clearError } from "../../../manager/unitManagement/slices/requestsSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import { selectSelectedResidentBuilding } from "../../building/residentBuildingSlice";
 import CreateRequestModal from "../../../manager/unitManagement/components/requests/CreateRequestModal";
-import { fetchMembershipRequests, selectMembershipRequests, selectMembershipLoading } from "../../../membership/membershipSlice";
+import { useResidentUnitData } from "../../building/hooks/useResidentUnitData";
 import { useApprovedBuildings, useAllApprovedUnits } from "../../building/hooks/useApprovedRequests";
 import { useBuildingAutoSelection } from "../../building/hooks/useBuildingSelection";
 
 export default function RequestsBase({ requests: propRequests, limit }) {
     const dispatch = useDispatch();
     const managerBuilding = useSelector(selectSelectedBuilding);
-    const residentBuilding = useSelector(selectSelectedResidentBuilding);
     const { requests: reduxRequests, loading, error } = useSelector(state => state.requests);
-    const membershipRequests = useSelector(selectMembershipRequests);
-    const membershipLoading = useSelector(selectMembershipLoading);
     const { user } = useSelector(state => state.auth);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    
+    // Use hook for resident unit data (prevents duplicate fetches and reacts to changes)
+    const { selectedBuilding: residentBuilding, membershipRequests, loading: membershipLoading } = useResidentUnitData();
     
     // Get approved buildings and units for resident
     const approvedBuildings = useApprovedBuildings();
@@ -239,12 +238,7 @@ export default function RequestsBase({ requests: propRequests, limit }) {
     
     const displayed = limit ? sorted.slice(0, limit) : sorted;
 
-    // Fetch membership requests to get approved buildings (only once)
-    useEffect(() => {
-        if (user?.role === 'resident') {
-            dispatch(fetchMembershipRequests());
-        }
-    }, [dispatch, user?.role]);
+    // Membership requests are now fetched by useResidentUnitData hook
 
     // Track last fetched buildingId to prevent duplicate requests (works with React Strict Mode)
     const lastFetchedBuildingId = useRef(null);

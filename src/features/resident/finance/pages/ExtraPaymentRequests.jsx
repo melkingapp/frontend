@@ -22,8 +22,8 @@ import { getFullMediaUrl } from "../../../../shared/utils/fileUrl";
 import { 
     fetchExtraPaymentRequests
 } from "../../../manager/finance/store/slices/extraPaymentSlice";
-import { selectSelectedResidentBuilding, selectApprovedBuildings } from "../../../resident/building/residentBuildingSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
+import { useResidentUnitData } from "../../../resident/building/hooks/useResidentUnitData";
 import { useAllApprovedUnits } from "../../../resident/building/hooks/useApprovedRequests";
 import { formatNumber } from "../../../../shared/utils/helper";
 import ExtraPaymentRequestForm from "../components/ExtraPaymentRequestForm";
@@ -33,9 +33,9 @@ moment.loadPersian({ dialect: "persian-modern" });
 export default function ExtraPaymentRequests() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const residentBuilding = useSelector(selectSelectedResidentBuilding);
+    // Use hook for resident unit data (prevents duplicate fetches and reacts to changes)
+    const { selectedBuilding: residentBuilding, approvedBuildings } = useResidentUnitData();
     const managerBuilding = useSelector(selectSelectedBuilding);
-    const approvedBuildings = useSelector(selectApprovedBuildings);
     const allApprovedUnits = useAllApprovedUnits();
     const { requests, loading, error } = useSelector((state) => state.extraPayment);
 
@@ -115,11 +115,12 @@ export default function ExtraPaymentRequests() {
         return null;
     }, [building]);
 
+    // React to building changes (including when user changes unit in sidebar)
     useEffect(() => {
         if (buildingId) {
             loadRequests();
         }
-    }, [buildingId, statusFilter]);
+    }, [buildingId, statusFilter]); // buildingId already reacts to building changes
 
     const loadRequests = () => {
         if (buildingId) {

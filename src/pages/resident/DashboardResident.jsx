@@ -5,7 +5,8 @@ import { Plus, Building2, Sparkles, ArrowLeft, Info, CheckCircle2 } from "lucide
 import MembershipRequestForm from "../../features/membership/components/MembershipRequestForm";
 import BuildingRequestStatus from "../../features/resident/building/components/BuildingRequestStatus";
 import Button from "../../shared/components/shared/feedback/Button";
-import { fetchMembershipRequests, fetchSuggestedRequests, selectMembershipRequests } from "../../features/membership/membershipSlice";
+import { fetchSuggestedRequests } from "../../features/membership/membershipSlice";
+import { useResidentUnitData } from "../../features/resident/building/hooks/useResidentUnitData";
 import SuggestedRequestsList from "../../features/membership/components/SuggestedRequestsList";
 import SuggestedRequestsTable from "../../features/membership/components/SuggestedRequestsTable";
 
@@ -42,16 +43,16 @@ export default function ResidentDashboard() {
   const dispatch = useDispatch();
   const [showSuggestedRequestsList, setShowSuggestedRequestsList] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const membershipRequests = useSelector(selectMembershipRequests);
+  // Use hook to get membership requests (prevents duplicate fetches)
+  const { membershipRequests } = useResidentUnitData();
   const approvedRequests = membershipRequests.filter(req => 
     req.status === 'approved' || 
     req.status === 'owner_approved' || 
     req.status === 'manager_approved'
   );
 
-  // Load data when component mounts
+  // Load suggested requests when component mounts
   useEffect(() => {
-    dispatch(fetchMembershipRequests());
     dispatch(fetchSuggestedRequests());
   }, [dispatch]);
   
