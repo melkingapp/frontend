@@ -3,6 +3,7 @@ import { Building, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCirc
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest } from "../membershipSlice";
+import { extractErrorMessage } from "../../../shared/utils/errorUtils";
 import moment from "moment-jalaali";
 
 moment.loadPersian({ dialect: "persian-modern" });
@@ -78,7 +79,13 @@ export default function ManagerMembershipApproval() {
         dispatch(fetchMembershipRequests({ status: 'owner_approved' }));
       } catch (error) {
         console.error('Error approving request:', error);
-        toast.error('خطا در تایید درخواست: ' + error);
+        
+        const errorMessage = extractErrorMessage(error);
+        
+        toast.error(errorMessage, {
+          duration: 6000,
+          description: 'لطفاً وضعیت درخواست را بررسی کنید.'
+        });
       }
     }
   };
@@ -93,7 +100,12 @@ export default function ManagerMembershipApproval() {
         dispatch(fetchMembershipRequests({ status: 'owner_approved' }));
       } catch (error) {
         console.error('Error rejecting request:', error);
-        toast.error('خطا در رد درخواست: ' + error);
+        
+        const errorMessage = extractErrorMessage(error);
+        
+        toast.error(errorMessage, {
+          duration: 5000
+        });
       }
     }
   };

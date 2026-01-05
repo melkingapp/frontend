@@ -383,7 +383,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
   }, [form.owner_type, form.role]);
 
   const roleOptions = [
-    { value: 'resident', label: 'ساکن' },
+    { value: 'resident', label: 'مستاجر' },
     { value: 'owner', label: 'مالک' },
   ];
 
@@ -490,12 +490,19 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         newErrors.resident_count = 'برای واحد خالی تعداد نفر باید ۰ باشد';
       }
     }
+    // Validation for owner fields when role is 'resident' - optional but if one is filled, both must be filled
     if (form.role === 'resident') {
-      if (!form.owner_full_name || !form.owner_full_name.trim()) {
-        newErrors.owner_full_name = 'نام مالک برای نقش ساکن الزامی است';
-      }
-      if (!form.owner_phone_number || !form.owner_phone_number.trim()) {
-        newErrors.owner_phone_number = 'شماره تماس مالک برای نقش ساکن الزامی است';
+      const ownerName = (form.owner_full_name || '').trim();
+      const ownerPhone = (form.owner_phone_number || '').trim();
+      
+      // اگر یکی از فیلدهای مالک پر شده باشد، هر دو باید پر شوند
+      if (ownerName || ownerPhone) {
+        if (!ownerName) {
+          newErrors.owner_full_name = 'نام مالک الزامی است';
+        }
+        if (!ownerPhone) {
+          newErrors.owner_phone_number = 'شماره تماس مالک الزامی است';
+        }
       }
     }
     
@@ -612,11 +619,16 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       if (!unitNumber) missingFields.push('شماره واحد');
       if (!floorValue) missingFields.push('شماره طبقه');
       if (!areaValue) missingFields.push('متراژ');
+      // Owner fields are optional for resident role
+      // Only validate if one is filled (both must be filled in that case)
       if (normalizedRole === 'resident') {
         ownerFullName = (unitData.owner_full_name || form.owner_full_name || '').trim();
         ownerPhoneNumber = (unitData.owner_phone_number || form.owner_phone_number || '').trim();
-        if (!ownerFullName) missingFields.push('نام مالک');
-        if (!ownerPhoneNumber) missingFields.push('شماره تماس مالک');
+        // اگر یکی از فیلدهای مالک پر شده باشد، هر دو باید پر شوند
+        if (ownerFullName || ownerPhoneNumber) {
+          if (!ownerFullName) missingFields.push('نام مالک');
+          if (!ownerPhoneNumber) missingFields.push('شماره تماس مالک');
+        }
       }
       
       if (missingFields.length > 0) {
@@ -729,11 +741,13 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     try {
       // Only include tenant info if owner_type is 'landlord'
       const isOwnerWithLandlord = form.role === 'owner' && form.owner_type === 'landlord';
+      // Owner info is optional for resident role
+      // If both are empty, send empty strings (or null) - backend will handle it
       const ownerInfo =
         form.role === 'resident'
           ? {
-              owner_full_name: (form.owner_full_name || '').trim(),
-              owner_phone_number: (form.owner_phone_number || '').trim(),
+              owner_full_name: (form.owner_full_name || '').trim() || null,
+              owner_phone_number: (form.owner_phone_number || '').trim() || null,
             }
           : {
               owner_full_name: null,
@@ -1116,24 +1130,29 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
                       </div>
                       <h4 className="font-bold text-lg text-gray-800">اطلاعات مالک</h4>
                     </div>
+                    <div className="mb-3 p-3 bg-blue-50 border-r-4 border-blue-400 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-semibold">نکته:</span> فیلدهای مالک اختیاری هستند. اگر اطلاعات مالک را وارد کنید، درخواست شما ابتدا باید توسط مالک و سپس توسط مدیر تایید شود. در غیر این صورت، فقط مدیر تایید می‌کند و یک مالک فرضی برای واحد شما ایجاد می‌شود.
+                      </p>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <FormField
                         label="نام و نام خانوادگی مالک"
                         name="owner_full_name"
-                        placeholder="نام و نام خانوادگی مالک"
+                        placeholder="نام و نام خانوادگی مالک (اختیاری)"
                         value={form.owner_full_name}
                         onChange={handleChange}
-                        required
+                        required={false}
                         icon={User}
                       />
                       <FormField
                         label="شماره تماس مالک"
                         name="owner_phone_number"
                         type="tel"
-                        placeholder="شماره تماس مالک"
+                        placeholder="شماره تماس مالک (اختیاری)"
                         value={form.owner_phone_number}
                         onChange={handleChange}
-                        required
+                        required={false}
                         disabled={isFromManagerUnit}
                         icon={User}
                       />

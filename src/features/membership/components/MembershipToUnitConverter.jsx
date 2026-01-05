@@ -5,6 +5,7 @@ import { createUnit } from "../../manager/unitManagement/slices/unitsSlice";
 import { approveMembershipRequestByManager } from "../membershipSlice";
 import { Dialog, Transition } from "@headlessui/react";
 import Button from "../../../shared/components/shared/feedback/Button";
+import { extractErrorMessage } from "../../../shared/utils/errorUtils";
 import { 
   Building, 
   User, 
@@ -71,7 +72,16 @@ export default function MembershipToUnitConverter({
 
     } catch (error) {
       console.error("❌ Error approving membership request:", error);
-      toast.error('خطا در تایید درخواست عضویت: ' + error);
+      
+      const errorMessage = extractErrorMessage(error);
+      
+      // نمایش پیام خطا با توضیحات مناسب
+      toast.error(errorMessage, {
+        duration: 6000,
+        description: membershipRequest?.requires_owner_approval 
+          ? 'این درخواست نیاز به تایید مالک دارد. لطفاً منتظر تایید مالک بمانید.'
+          : 'لطفاً وضعیت درخواست را بررسی کنید و دوباره تلاش کنید.'
+      });
     } finally {
       setIsConverting(false);
     }
@@ -270,6 +280,37 @@ export default function MembershipToUnitConverter({
                             title="شماره تماس مستاجر"
                             value={membershipRequest.tenant_phone_number}
                             color="pink"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* اطلاعات مالک (برای مستاجر) */}
+                    {membershipRequest.role === 'resident' && 
+                     membershipRequest.owner_full_name && 
+                     membershipRequest.owner_full_name.trim() !== '' && 
+                     membershipRequest.owner_phone_number && 
+                     membershipRequest.owner_phone_number.trim() !== '' && (
+                      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-4 border border-amber-200">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="p-2 bg-amber-100 rounded-lg">
+                            <User size={18} className="text-amber-600" />
+                          </div>
+                          <h4 className="font-bold text-gray-800 text-lg">اطلاعات مالک</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <InfoCard
+                            icon={User}
+                            title="نام و نام خانوادگی مالک"
+                            value={membershipRequest.owner_full_name}
+                            color="orange"
+                          />
+                          <InfoCard
+                            icon={User}
+                            title="شماره تماس مالک"
+                            value={membershipRequest.owner_phone_number}
+                            color="orange"
                           />
                         </div>
                       </div>

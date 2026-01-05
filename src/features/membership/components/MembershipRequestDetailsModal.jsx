@@ -252,7 +252,7 @@ export default function MembershipRequestDetailsModal({ request, isOpen, onClose
                       <InfoCard
                         icon={User}
                         title="نقش"
-                        value={request.role === 'resident' ? 'ساکن' : 'مالک'}
+                        value={request.role === 'resident' ? 'مستاجر' : 'مالک'}
                         color="orange"
                       />
                       {request.owner_type && (
@@ -274,7 +274,7 @@ export default function MembershipRequestDetailsModal({ request, isOpen, onClose
                     </div>
                   </div>
 
-                  {/* اطلاعات مستاجر */}
+                  {/* اطلاعات مستاجر (برای مالک دارای مستاجر) */}
                   {request.owner_type === 'landlord' && 
                    request.tenant_full_name && 
                    request.tenant_full_name.trim() !== '' && 
@@ -285,7 +285,7 @@ export default function MembershipRequestDetailsModal({ request, isOpen, onClose
                         <div className="p-1.5 bg-indigo-100 rounded-lg">
                           <User size={16} className="text-indigo-600" />
                         </div>
-                        <h4 className="text-base font-bold text-gray-800">وضعیت مستاجر</h4>
+                        <h4 className="text-base font-bold text-gray-800">اطلاعات مستاجر</h4>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -300,6 +300,37 @@ export default function MembershipRequestDetailsModal({ request, isOpen, onClose
                           title="شماره تماس مستاجر"
                           value={request.tenant_phone_number}
                           color="blue"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* اطلاعات مالک (برای مستاجر) */}
+                  {request.role === 'resident' && 
+                   request.owner_full_name && 
+                   request.owner_full_name.trim() !== '' && 
+                   request.owner_phone_number && 
+                   request.owner_phone_number.trim() !== '' && (
+                    <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-4 border border-amber-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="p-1.5 bg-amber-100 rounded-lg">
+                          <User size={16} className="text-amber-600" />
+                        </div>
+                        <h4 className="text-base font-bold text-gray-800">اطلاعات مالک</h4>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <InfoCard
+                          icon={User}
+                          title="نام و نام خانوادگی مالک"
+                          value={request.owner_full_name}
+                          color="orange"
+                        />
+                        <InfoCard
+                          icon={Phone}
+                          title="شماره تماس مالک"
+                          value={request.owner_phone_number}
+                          color="orange"
                         />
                       </div>
                     </div>
