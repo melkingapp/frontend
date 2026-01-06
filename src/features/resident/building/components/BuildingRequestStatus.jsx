@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Clock, CheckCircle, CheckCircle2, XCircle, Building2, Calendar, RefreshCw, Home, Users, Car } from "lucide-react";
+import { Clock, CheckCircle, CheckCircle2, XCircle, Building2, Calendar, RefreshCw, Home, Users, Car, DollarSign } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { 
@@ -378,6 +378,34 @@ export default function BuildingRequestStatus() {
                                 <span className="font-medium">نقش: <span className="text-gray-600">{request.role === 'resident' ? 'ساکن' : 'مالک'}</span></span>
                             </div>
                         </div>
+
+                        {/* وضعیت مالی واحد (فقط بدهکاری/بستانکاری) */}
+                        {(request.total_debt !== undefined || request.total_credit !== undefined) && (
+                            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <DollarSign size={18} className="text-blue-600" />
+                                    <h4 className="text-sm font-semibold text-gray-800">وضعیت مالی واحد</h4>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {(request.total_debt !== undefined && request.total_debt !== null) && (
+                                        <div className="bg-white/80 p-3 rounded-lg border border-red-100">
+                                            <div className="text-xs text-gray-500 mb-1">بدهکاری</div>
+                                            <div className="text-base font-bold text-red-600">
+                                                {Number(request.total_debt || 0).toLocaleString('fa-IR')} تومان
+                                            </div>
+                                        </div>
+                                    )}
+                                    {(request.total_credit !== undefined && request.total_credit !== null) && (
+                                        <div className="bg-white/80 p-3 rounded-lg border border-green-100">
+                                            <div className="text-xs text-gray-500 mb-1">بستانکاری</div>
+                                            <div className="text-base font-bold text-green-600">
+                                                {Number(request.total_credit || 0).toLocaleString('fa-IR')} تومان
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 pt-3 border-t border-gray-200">
                             <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">

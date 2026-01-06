@@ -10,7 +10,8 @@ import {
   Calendar,
   RefreshCw,
   AlertCircle,
-  Info
+  Info,
+  DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -197,6 +198,15 @@ export default function SuggestedRequestsTable() {
     setProcessingId(request.request_id);
     try {
       // ارسال درخواست تایید با همان داده‌ها
+      const normalizedRole = request.role === 'tenant' ? 'resident' : request.role;
+      // برای داده‌های قدیمی که owner_type خالی دارند ولی نقش owner است، به صورت پیش‌فرض 'empty' ارسال کن
+      const normalizedOwnerType =
+        normalizedRole === 'owner'
+          ? (request.owner_type && request.owner_type.trim()
+              ? request.owner_type
+              : 'empty')
+          : null;
+
       const payload = {
         building_code: request.building_code,
         full_name: request.full_name,
@@ -205,8 +215,8 @@ export default function SuggestedRequestsTable() {
         floor: request.floor,
         area: request.area,
         resident_count: request.resident_count || 1,
-        role: request.role === 'tenant' ? 'resident' : request.role,
-        owner_type: request.owner_type || null,
+        role: normalizedRole,
+        owner_type: normalizedOwnerType,
         owner_full_name: request.owner_full_name || null,
         owner_phone_number: request.owner_phone_number || null,
         tenant_full_name: request.tenant_full_name || null,
@@ -338,6 +348,9 @@ export default function SuggestedRequestsTable() {
                 <th className="px-5 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
                   تاریخ
                 </th>
+                <th className="px-5 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  وضعیت مالی
+                </th>
                 <th className="px-5 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                   عملیات
                 </th>
@@ -404,6 +417,31 @@ export default function SuggestedRequestsTable() {
                         <span className="text-sm text-gray-600">
                           {new Date(request.created_at).toLocaleDateString('fa-IR')}
                         </span>
+                      </div>
+                    </td>
+
+                    {/* وضعیت مالی (فقط بدهکاری/بستانکاری) */}
+                    <td className="px-4 py-4">
+                      <div className="flex flex-col gap-1.5">
+                        {(request.total_debt !== undefined && request.total_debt !== null) && (
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-gray-500">بدهکاری:</span>
+                            <span className="font-semibold text-red-600">
+                              {Number(request.total_debt || 0).toLocaleString('fa-IR')} تومان
+                            </span>
+                          </div>
+                        )}
+                        {(request.total_credit !== undefined && request.total_credit !== null) && (
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-gray-500">بستانکاری:</span>
+                            <span className="font-semibold text-green-600">
+                              {Number(request.total_credit || 0).toLocaleString('fa-IR')} تومان
+                            </span>
+                          </div>
+                        )}
+                        {(!request.total_debt && !request.total_credit) && (
+                          <span className="text-xs text-gray-400">نامشخص</span>
+                        )}
                       </div>
                     </td>
 

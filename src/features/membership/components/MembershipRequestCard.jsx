@@ -17,6 +17,20 @@ const RoleBadge = ({ role }) => {
   );
 };
 
+const OwnerTypeBadge = ({ ownerType }) => {
+  const ownerTypeConfig = {
+    empty: { color: "bg-gray-100 text-gray-800", text: "واحد خالی" },
+    resident: { color: "bg-green-100 text-green-800", text: "مالک مقیم" },
+    landlord: { color: "bg-orange-100 text-orange-800", text: "دارای مستاجر" },
+  };
+  const config = ownerTypeConfig[ownerType] || ownerTypeConfig.empty;
+  return (
+    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      {config.text}
+    </span>
+  );
+};
+
 const CardRow = ({ icon, label, value }) => (
   <div className="flex items-center gap-2">
     {icon}
@@ -63,6 +77,9 @@ const MembershipRequestCard = ({ request, onApprove, onReject, onViewDetails, sh
         <CardRow icon={<Home size={16} className="text-gray-500" />} label="واحد" value={request.unit_number} />
         <CardRow icon={<Building size={16} className="text-gray-500" />} label="طبقه" value={request.floor} />
         <CardRow icon={<User size={16} className="text-gray-500" />} label="نقش" value={<RoleBadge role={request.role} />} />
+        {request.role === 'owner' && request.owner_type && (
+          <CardRow icon={<User size={16} className="text-gray-500" />} label="نوع مالک" value={<OwnerTypeBadge ownerType={request.owner_type} />} />
+        )}
         <CardRow icon={<Car size={16} className="text-gray-500" />} label="پارکینگ" value={request.has_parking ? `${request.parking_count || 1} عدد` : 'ندارد'} />
         <CardRow icon={<Calendar size={16} className="text-gray-500" />} label="تاریخ" value={moment(request.created_at).format('jYYYY/jMM/jDD')} />
       </div>
@@ -122,6 +139,34 @@ const MembershipRequestCard = ({ request, onApprove, onReject, onViewDetails, sh
               </button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Status Messages */}
+      {request.status === 'owner_approved' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+          <p className="text-sm text-blue-700">
+            ✅ این درخواست توسط مالک تأیید شده و برای تأیید نهایی به مدیر ارسال شده است.
+          </p>
+        </div>
+      )}
+
+      {request.status === 'manager_approved' && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
+          <p className="text-sm text-green-700">
+            🎉 این درخواست کاملاً تأیید شده و شما عضو ساختمان شدید.
+          </p>
+        </div>
+      )}
+
+      {request.status === 'rejected' && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
+          <p className="text-sm text-red-700">
+            ❌ این درخواست رد شده است.
+            {request.rejection_reason && (
+              <span className="block mt-1 font-medium">دلیل: {request.rejection_reason}</span>
+            )}
+          </p>
         </div>
       )}
     </div>

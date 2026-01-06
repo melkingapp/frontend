@@ -1,13 +1,18 @@
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useMembershipRequests } from "../hooks/useMembershipRequests";
 import MembershipRequestForm from "../components/MembershipRequestForm";
 import MembershipRequestDetailsModal from "../components/MembershipRequestDetailsModal";
 import MembershipRequestCard from "../components/MembershipRequestCard";
 import { Plus, Building, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { approveMembershipRequestByOwner, rejectMembershipRequest } from "../membershipSlice";
+import { toast } from "sonner";
 
 export default function MembershipRequestsPage() {
+  const dispatch = useDispatch();
+  const { user } = useSelector(state => state.auth);
   const { requests, loading, error, handleRefresh } = useMembershipRequests();
-  
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -25,6 +30,46 @@ export default function MembershipRequestsPage() {
   const handleFormClose = () => {
     setIsFormOpen(false);
     handleRefresh();
+  };
+
+  const handleApprove = async (requestId) => {
+    const request = requests.find(r => r.request_id === requestId);
+    const isEdited = request?.has_been_edited;
+
+    const confirmMessage = isEdited
+      ? 'آیا از تأیید این درخواست عضویت اطمینان دارید؟ این درخواست ویرایش شده و برای تأیید نهایی به مدیر ارسال خواهد شد.'
+      : 'آیا از تأیید این درخواست عضویت اطمینان دارید؟';
+
+    if (window.confirm(confirmMessage)) {
+      try {
+        const result = await dispatch(approveMembershipRequestByOwner(requestId)).unwrap();
+
+        if (result?.auto_approved) {
+          toast.success('درخواست عضویت تأیید شد و عضو ساختمان شدید');
+        } else {
+          toast.success('درخواست عضویت تأیید شد و برای تأیید نهایی به مدیر ارسال شد');
+        }
+
+        handleRefresh();
+      } catch (error) {
+        console.error('Error approving request:', error);
+        toast.error('خطا در تأیید درخواست: ' + error);
+      }
+    }
+  };
+
+  const handleReject = async (requestId) => {
+    const reason = window.prompt('دلیل رد درخواست را وارد کنید:');
+    if (reason && reason.trim()) {
+      try {
+        await dispatch(rejectMembershipRequest({ requestId, rejectionReason: reason.trim() })).unwrap();
+        toast.success('درخواست عضویت رد شد');
+        handleRefresh();
+      } catch (error) {
+        console.error('Error rejecting request:', error);
+        toast.error('خطا در رد درخواست: ' + error);
+      }
+    }
   };
 
   if (loading && requests.length === 0) {
@@ -122,6 +167,9 @@ export default function MembershipRequestsPage() {
               key={request.request_id}
               request={request}
               onViewDetails={handleViewDetails}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              showActions={true}
             />
           ))
         )}

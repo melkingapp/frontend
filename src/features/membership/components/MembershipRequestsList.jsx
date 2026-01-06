@@ -77,6 +77,20 @@ const RoleBadge = ({ role }) => {
   );
 };
 
+const OwnerTypeBadge = ({ ownerType }) => {
+  const ownerTypeConfig = {
+    empty: { color: "bg-gray-100 text-gray-800", text: "واحد خالی" },
+    resident: { color: "bg-green-100 text-green-800", text: "مالک مقیم" },
+    landlord: { color: "bg-orange-100 text-orange-800", text: "دارای مستاجر" },
+  };
+  const config = ownerTypeConfig[ownerType] || ownerTypeConfig.empty;
+  return (
+    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      {config.text}
+    </span>
+  );
+};
+
 const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject, onWithdraw }) => {
   const { approveLoading, rejectLoading } = useSelector(state => state.membership);
   const { user } = useSelector(state => state.auth);
@@ -115,7 +129,7 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject, on
         <StatusBadge status={request.status} />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <div className={`grid gap-4 mb-4 ${request.role === 'owner' && request.owner_type ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
         <div className="flex items-center gap-2">
           <Home size={16} className="text-gray-500" />
           <div>
@@ -137,6 +151,15 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject, on
             <RoleBadge role={request.role} />
           </div>
         </div>
+        {request.role === 'owner' && request.owner_type && (
+          <div className="flex items-center gap-2">
+            <User size={16} className="text-gray-500" />
+            <div>
+              <p className="text-xs text-gray-500">نوع مالک</p>
+              <OwnerTypeBadge ownerType={request.owner_type} />
+            </div>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <Calendar size={16} className="text-gray-500" />
           <div>

@@ -56,6 +56,10 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
     
     // تعداد نفر
     resident_count: 1,
+    
+    // بدهکاری/بستانکاری اولیه
+    initial_debt: 0,
+    initial_credit: 0,
   });
   
   const [errors, setErrors] = useState({});
@@ -198,8 +202,35 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
       return;
     }
     
+    // Prepare unit data with financial fields
+    const unitData = { ...form };
+    
+    // Convert financial fields to numbers (defaults to 0)
+    unitData.initial_debt = parseFloat(unitData.initial_debt) || 0;
+    unitData.initial_credit = parseFloat(unitData.initial_credit) || 0;
+    
     try {
-      await dispatch(createUnit({ buildingId, unitData: form })).unwrap();
+      const result = await dispatch(createUnit({ buildingId, unitData })).unwrap();
+      // result is the unit object returned from the API
+      const createdUnit = result;
+      
+      // Show success message with debt/credit information
+      if (createdUnit) {
+        const totalDebt = createdUnit.total_debt ?? 0;
+        const totalCredit = createdUnit.total_credit ?? 0;
+        const balance = createdUnit.balance ?? 0;
+        
+        toast.success(
+          `واحد با موفقیت ایجاد شد\n` +
+          `بدهکاری: ${Number(totalDebt).toLocaleString('fa-IR')} تومان\n` +
+          `بستانکاری: ${Number(totalCredit).toLocaleString('fa-IR')} تومان\n` +
+          `مانده: ${Number(balance).toLocaleString('fa-IR')} تومان`,
+          { duration: 4000 }
+        );
+      } else {
+        toast.success("واحد با موفقیت ایجاد شد");
+      }
+      
       onClose();
       // Reset form and errors
       setForm({
@@ -215,6 +246,8 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
         has_parking: false,
         parking_count: 0,
         resident_count: 1,
+        initial_debt: 0,
+        initial_credit: 0,
       });
       setErrors({});
     } catch (error) {
@@ -430,6 +463,38 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                       required 
                     />
                   )}
+                </div>
+
+                {/* بدهکاری/بستانکاری اولیه */}
+                <div className="space-y-4 p-4 bg-blue-50 rounded-2xl border border-blue-200">
+                  <h4 className="text-lg font-semibold text-gray-800 flex items-center justify-between">
+                    <span>بدهکاری/بستانکاری اولیه (اختیاری)</span>
+                    <span className="text-xs font-normal text-gray-500">
+                      مقدار پیش‌فرض: ۰ تومان
+                    </span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField 
+                      label="بدهکاری اولیه (تومان)" 
+                      name="initial_debt" 
+                      type="number"
+                      placeholder="مثلاً 500000" 
+                      value={form.initial_debt} 
+                      onChange={handleChange} 
+                      error={errors.initial_debt}
+                      min="0"
+                    />
+                    <FormField 
+                      label="بستانکاری اولیه (تومان)" 
+                      name="initial_credit" 
+                      type="number"
+                      placeholder="مثلاً 200000" 
+                      value={form.initial_credit} 
+                      onChange={handleChange} 
+                      error={errors.initial_credit}
+                      min="0"
+                    />
+                  </div>
                 </div>
                 </form>
               </div>

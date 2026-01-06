@@ -106,6 +106,11 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     // پارکینگ
     has_parking: false,
     parking_count: 0,
+
+    // بدهکاری / بستانکاری اولیه (فقط برای واحدهای جدید)
+    initial_debt: "",
+    initial_credit: "",
+    initial_balance: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -141,6 +146,9 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         owner_phone_number: "",
         has_parking: false,
         parking_count: 0,
+        initial_debt: "",
+        initial_credit: "",
+        initial_balance: "",
       });
       setIsFromManagerUnit(false);
       setOriginalUnitData(null);
@@ -342,6 +350,20 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
       const unitRole = unitData.role === 'tenant' ? 'resident' : (unitData.role === 'owner' ? 'owner' : unitData.role);
       const determinedRole = isTenantMatch ? 'resident' : (hasOwnerType ? 'owner' : (unitRole || ""));
 
+      // owner_type فقط برای مالک (نه مستاجر)
+      // اگر owner_type وجود داره و empty string نیست، ازش استفاده کن
+      // توجه: 'empty', 'resident', 'landlord' مقادیر معتبر هستند
+      // empty string ('') یعنی مقدار نداره و نباید set بشه
+      const ownerTypeValue = isTenantMatch ? "" : (
+        unitData.owner_type &&
+        unitData.owner_type !== null &&
+        unitData.owner_type !== undefined &&
+        unitData.owner_type !== '' &&
+        (unitData.owner_type === 'empty' || unitData.owner_type === 'resident' || unitData.owner_type === 'landlord')
+          ? unitData.owner_type
+          : ""
+      );
+
       setForm(prevForm => ({
         ...prevForm,
         building_code: unitData.building_code || "",
@@ -355,9 +377,7 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         // برای مستاجر، نقش را به 'resident' تغییر می‌دهیم
         // اگر owner_type وجود دارد، role باید 'owner' باشد
         role: determinedRole,
-        // owner_type فقط برای مالک (نه مستاجر)
-        // اگر owner_type وجود داره (نه null و نه undefined و نه string خالی)، ازش استفاده کن
-        owner_type: isTenantMatch ? "" : (unitData.owner_type && unitData.owner_type.trim() ? unitData.owner_type : ""),
+        owner_type: ownerTypeValue,
         // Only pre-fill tenant info if owner_type is 'landlord' (برای مالک دارای مستاجر)
         tenant_full_name: isOwnerWithLandlord ? (unitData.tenant_full_name || "") : "",
         tenant_phone_number: isOwnerWithLandlord ? (unitData.tenant_phone_number || "") : "",
@@ -661,6 +681,10 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
         tenant_phone_number: isOwnerWithLandlord ? toNullIfEmpty(unitData.tenant_phone_number || form.tenant_phone_number) : null,
         has_parking: unitData.has_parking ?? form.has_parking ?? false,
         parking_count: toNumber(unitData.parking_count ?? form.parking_count) || 0,
+        // فیلدهای مالی اولیه (ورودی کاربر، فقط برای واحدهای جدید؛ سمت سرور فعلاً صرفاً دریافت می‌شود)
+        initial_debt: toNullIfEmpty(form.initial_debt),
+        initial_credit: toNullIfEmpty(form.initial_credit),
+        initial_balance: toNullIfEmpty(form.initial_balance),
       };
       
       // Log payload for debugging (only in development)
@@ -1402,4 +1426,3 @@ export default function MembershipRequestForm({ isOpen, onClose }) {
     </>
   );
 }
-
