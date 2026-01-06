@@ -10,7 +10,7 @@ export const sendOtp = async (phoneNumber, role) => {
         });
         return response;
     } catch (error) {
-        console.error('Send OTP error:', error);
+        console.error('Send OTP error:', error.message || 'Unknown error');
         throw error;
     }
 };
@@ -25,7 +25,7 @@ export const verifyOtp = async (phoneNumber, role, otp) => {
         });
         return response;
     } catch (error) {
-        console.error('Verify OTP error:', error);
+        console.error('Verify OTP error:', error.message || 'Unknown error');
         throw error;
     }
 };
@@ -38,7 +38,7 @@ export const login = async (accessToken, refreshToken, userData) => {
         localStorage.setItem('user', JSON.stringify(sanitizedData));
         return { success: true };
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('Login error:', error.message || 'Unknown error');
         throw error;
     }
 };
@@ -49,7 +49,7 @@ export const logout = async () => {
         clearTokens();
         return { success: true };
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('Logout error:', error.message || 'Unknown error');
         throw error;
     }
 };
@@ -89,7 +89,7 @@ export const register = async (userData) => {
         const response = await post('/register/', userData);
         return response;
     } catch (error) {
-        console.error('Register error:', error);
+        console.error('Register error:', error.message || 'Unknown error');
         throw error;
     }
 };
