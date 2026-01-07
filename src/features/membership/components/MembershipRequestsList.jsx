@@ -214,7 +214,11 @@ export default function MembershipRequestsList() {
 
   const handleApprove = async (requestId) => {
     try {
-      await dispatch(approveMembershipRequestByManager(requestId)).unwrap();
+      await dispatch(approveMembershipRequestByManager({
+        requestId,
+        initialDebt: 0,
+        initialCredit: 0
+      })).unwrap();
       // Refresh the list
       dispatch(fetchMembershipRequests({ status: statusFilter === 'all' ? '' : statusFilter }));
     } catch (error) {

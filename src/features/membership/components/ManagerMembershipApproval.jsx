@@ -73,7 +73,11 @@ export default function ManagerMembershipApproval() {
   const handleApprove = async (requestId) => {
     if (window.confirm('آیا از تایید نهایی این درخواست عضویت اطمینان دارید؟ این عمل باعث ایجاد واحد و دسترسی ساکن به سیستم می‌شود.')) {
       try {
-        await dispatch(approveMembershipRequestByManager(requestId)).unwrap();
+        await dispatch(approveMembershipRequestByManager({
+          requestId,
+          initialDebt: 0,
+          initialCredit: 0
+        })).unwrap();
         toast.success('درخواست عضویت تایید شد و واحد ایجاد شد');
         // بروزرسانی لیست
         dispatch(fetchMembershipRequests({ status: 'owner_approved' }));
