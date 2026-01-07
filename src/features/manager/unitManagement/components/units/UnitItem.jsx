@@ -163,7 +163,7 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
 
                     {/* وضعیت + دکمه ویرایش */}
                     <div className="flex items-center justify-between sm:justify-end gap-2">
-                        {ownerType === 'empty' ? (
+                        {role === 'owner' && ownerType === 'empty' ? (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-sm font-medium shadow-sm">
                                 <CircleSlash size={14} className="shrink-0" />
                                 واحد خالی

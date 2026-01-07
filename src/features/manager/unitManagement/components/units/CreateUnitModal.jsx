@@ -110,6 +110,14 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
           resident_count: 0,
         };
       }
+      // وقتی نقش به مستاجر تغییر میکنه، owner_type رو پاک کن
+      if (name === 'role' && value === 'tenant') {
+        return {
+          ...prev,
+          [name]: value,
+          owner_type: '', // پاک کردن owner_type
+        };
+      }
       return {
         ...prev,
         [name]: value,
