@@ -7,6 +7,7 @@ import OwnerRentalRequestsList from "../components/OwnerRentalRequestsList";
 import OwnerMembershipRequestsManager from "../components/OwnerMembershipRequestsManager";
 import RegularRequestsManager from "../components/RegularRequestsManager";
 import TenantRequestManager from "../components/TenantRequestManager";
+import UnitCreationRequestsManager from "../components/UnitCreationRequestsManager";
 // import RentalReای 09questForm from "../components/RentalRequestForm";
 // import BuildingSelector from "../../building/components/BuildingSelector";
 import Button from "../../../../shared/components/shared/feedback/Button";
@@ -63,6 +64,9 @@ export default function RequestsPage() {
 
             {/* انتخاب ساختمان برای مالکان - حذف شده چون درخواست مستقیماً به مدیر می‌رود */}
             {/* {user?.role === 'owner' && <BuildingSelector />} */}
+            
+            {/* درخواست‌های تأیید واحد */}
+            <UnitCreationRequestsManager />
             
             {/* درخواست‌های عادی */}
             <RequestsBase />

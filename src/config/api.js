@@ -30,6 +30,12 @@ export const API_CONFIG = {
         MEMBERSHIP_REQUESTS_BUILDING: (buildingId) => `/buildings/${buildingId}/resident-requests/`,
         MEMBERSHIP_REQUEST_UPDATE_STATUS: (requestId) => `/buildings/resident-requests/${requestId}/update-status/`,
         
+        // Unit Creation Requests
+        UNIT_CREATION_REQUESTS: '/buildings/unit-creation-requests/',
+        UNIT_CREATION_REQUEST_DETAIL: (requestId) => `/buildings/unit-creation-requests/${requestId}/`,
+        UNIT_CREATION_REQUEST_UPDATE: (requestId) => `/buildings/unit-creation-requests/${requestId}/update/`,
+        UNIT_CREATION_REQUEST_APPROVE_REJECT: (requestId) => `/buildings/unit-creation-requests/${requestId}/approve-reject/`,
+        
         // Settings
         BUILDING_SETTINGS: (buildingId) => `/buildings/${buildingId}/settings/`,
         BUILDING_SETTINGS_UPDATE: (buildingId) => `/buildings/${buildingId}/settings/update/`,
