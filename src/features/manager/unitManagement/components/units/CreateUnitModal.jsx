@@ -110,14 +110,6 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
           resident_count: 0,
         };
       }
-      // وقتی نقش به مستاجر تغییر میکنه، owner_type رو پاک کن
-      if (name === 'role' && value === 'tenant') {
-        return {
-          ...prev,
-          [name]: value,
-          owner_type: '', // پاک کردن owner_type
-        };
-      }
       return {
         ...prev,
         [name]: value,
@@ -358,23 +350,23 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                     {form.role === 'tenant' && (
                       <h4 className="text-lg font-semibold text-blue-800">اطلاعات مالک (اختیاری)</h4>
                     )}
-                    <FormField 
+                <FormField 
                       label={form.role === 'tenant' ? "نام و نام خانوادگی مالک" : "نام و نام خانوادگی"} 
-                      name="full_name" 
-                      placeholder="مثلاً علی احمدی" 
-                      value={form.full_name} 
-                      onChange={handleChange} 
-                      error={errors.full_name}
+                  name="full_name" 
+                  placeholder="مثلاً علی احمدی" 
+                  value={form.full_name} 
+                  onChange={handleChange} 
+                  error={errors.full_name}
                       required={form.role === 'owner' && form.owner_type !== 'empty'}
-                    />
+                />
 
-                    <FormField 
+                <FormField 
                       label={form.role === 'tenant' ? "شماره تماس مالک" : "شماره تماس"} 
-                      name="phone_number" 
-                      placeholder="مثلاً 09123456789" 
-                      value={form.phone_number} 
-                      onChange={handleChange} 
-                      error={errors.phone_number}
+                  name="phone_number" 
+                  placeholder="مثلاً 09123456789" 
+                  value={form.phone_number} 
+                  onChange={handleChange} 
+                  error={errors.phone_number}
                       required={form.role === 'owner' && form.owner_type !== 'empty'}
                     />
                   </div>
