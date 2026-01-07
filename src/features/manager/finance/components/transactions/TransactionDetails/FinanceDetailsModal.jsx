@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
 import { getFullMediaUrl } from "../../../../../../shared/utils/fileUrl";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchTransactionDetails, payBill, deleteExpense } from "../../../store/slices/financeSlice";
+import { fetchTransactionDetails, payBill, deleteExpense, fetchTransactions, fetchCurrentFundBalance, clearTransactions } from "../../../store/slices/financeSlice";
 import { useSelector as useReduxSelector } from "react-redux";
 import { selectMembershipRequests } from "../../../../../membership/membershipSlice";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusIcon } from "../../../../../../shared/utils";
@@ -339,6 +339,40 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
         toast.success(`مبلغ به موجودی صندوق و بستانکاری واحدهای ${unitNumbers} برگردانده شد`);
       }
       
+      // Get building ID for refresh
+      const buildingId = building?.building_id || building?.id;
+      
+      // Clear transactions cache to prevent showing old deleted transactions
+      dispatch(clearTransactions());
+
+      // Add a small delay to allow backend to process and invalidate cache
+      setTimeout(() => {
+        // Refresh transactions with a timestamp to bypass cache
+        const refreshFilters = {
+          building_id: buildingId,
+          _refresh: Date.now()
+        };
+
+        dispatch(fetchTransactions(refreshFilters))
+          .then(() => {
+            console.log("✅ Transactions refreshed after expense deletion from modal");
+          })
+          .catch((error) => {
+            console.error("❌ Failed to refresh transactions after expense deletion from modal:", error);
+          });
+
+        // Refresh current fund balance to update the balance display (only once)
+        if (buildingId) {
+          dispatch(fetchCurrentFundBalance(buildingId))
+            .then(() => {
+              console.log("✅ Fund balance refreshed after expense deletion from modal");
+            })
+            .catch((error) => {
+              console.error("❌ Failed to refresh fund balance after expense deletion from modal:", error);
+            });
+        }
+      }, 1000);
+      
       setShowDeleteConfirm(false);
       setDeleteWarning(null);
       onClose();
@@ -441,7 +475,12 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
               <div className="flex justify-between items-center border-b p-4">
                 <div className="flex items-center gap-2">
                   <Wallet className="text-primary" />
-                  <Dialog.Title className="text-lg font-bold">{transaction.title}</Dialog.Title>
+                  <Dialog.Title className="text-lg font-bold">
+                    {transaction.expense_name || 
+                     getPersianType(transaction.expense_type || transaction.bill_type || transaction.category || transaction.category_display || transaction.type || transaction.title, transaction) || 
+                     transaction.title || 
+                     "—"}
+                  </Dialog.Title>
                 </div>
                 <div className="flex items-center gap-2">
                   {isManager && !isExtraPayment && (

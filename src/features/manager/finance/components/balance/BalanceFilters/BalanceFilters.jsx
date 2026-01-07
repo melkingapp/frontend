@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { 
-  Filter, 
+import {
+  Filter,
   ChevronDown,
   X,
   Clock,
@@ -15,7 +15,9 @@ import {
   Car,
   ArrowLeftRight,
   ShoppingCart,
-  Calendar
+  Calendar,
+  Home,
+  Users
 } from "lucide-react";
 import moment from "moment-jalaali";
 import DateRangeModal from "../../transactions/TransactionFilters/DateRangeModal";
@@ -34,6 +36,8 @@ export default function BalanceFilters({
   const filterOptions = [
     { value: "all", label: "همه تراکنش‌ها", icon: <Filter size={16} /> },
     { value: "charge", label: "شارژ", icon: <Clock size={16} /> },
+    { value: "occupied_units", label: "واحدهای بر", icon: <Users size={16} /> },
+    { value: "empty_units", label: "واحدهای خالی", icon: <Home size={16} /> },
     { value: "maintenance", label: "تعمیرات", icon: <Clock size={16} /> },
     { value: "water", label: "قبض آب", icon: <Droplet size={16} /> },
     { value: "electricity", label: "قبض برق", icon: <Zap size={16} /> },

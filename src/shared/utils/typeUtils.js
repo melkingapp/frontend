@@ -27,6 +27,12 @@ export const getPersianType = (type, item = null) => {
     'شارژ': 'شارژ',
     'charge': 'شارژ',
     'Charge': 'شارژ',
+
+    // Charge types from backend
+    'شارژ جاری': 'شارژ جاری',
+    'شارژ عمرانی': 'شارژ عمرانی',
+    'current_charge': 'شارژ جاری',
+    'construction_charge': 'شارژ عمرانی',
     
     // Bills
     'electricity': 'قبض برق',

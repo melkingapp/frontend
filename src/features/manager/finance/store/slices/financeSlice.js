@@ -425,9 +425,20 @@ const financeSlice = createSlice({
                     newTransactions = Array.isArray(action.payload) ? action.payload : [];
                 }
 
-                // Merge strategy: preserve recently added expenses that might not be in API response yet
-                // This handles the case where cache hasn't updated or database replication delay
-                if (Array.isArray(state.transactions) && state.transactions.length > 0) {
+                // Check if this is a refresh request (indicated by _refresh in meta.arg)
+                const isRefresh = action.meta?.arg?._refresh !== undefined;
+                
+                // Check if state was cleared (empty transactions array)
+                const wasCleared = !Array.isArray(state.transactions) || state.transactions.length === 0;
+
+                // Strategy:
+                // 1. If this is a refresh request OR state was cleared, always use API response as source of truth
+                // 2. If API returns empty and we have existing transactions, keep existing (cache invalidation delay)
+                // 3. Otherwise, merge strategy: API is source of truth, but preserve recently added transactions
+                if (isRefresh || wasCleared) {
+                    // Use API response as source of truth - no merging
+                    state.transactions = newTransactions;
+                } else if (Array.isArray(state.transactions) && state.transactions.length > 0) {
                     // If API returns empty array, don't replace existing transactions
                     // (likely a cache issue - backend cache was invalidated but not yet refreshed)
                     if (newTransactions.length === 0) {
@@ -445,28 +456,25 @@ const financeSlice = createSlice({
                         }
                     });
 
-                    // Find transactions in current state that aren't in the new response
-                    // These might be recently added expenses that haven't been indexed yet
+                    // API is the source of truth - use new transactions
+                    // Only preserve existing transactions that aren't in the new response
+                    // if they were added very recently (within last 5 seconds) to handle race conditions
+                    const mergedTransactions = [...newTransactions];
+                    
                     const existingTransactionsMap = new Map();
                     state.transactions.forEach(tx => {
                         const id = tx.id || tx.shared_bill_id || tx.transaction_id;
-                        if (id) {
-                            existingTransactionsMap.set(String(id), tx);
-                        }
-                    });
-
-                    // Merge: use new transactions from API (they're the source of truth)
-                    // But preserve existing transactions that aren't in the new response
-                    // (they might be recently added and not yet in the API response)
-                    const mergedTransactions = [...newTransactions];
-                    
-                    // Add existing transactions that aren't in the new response
-                    // Only preserve if they look like valid transactions (have required fields)
-                    existingTransactionsMap.forEach((tx, id) => {
-                        if (!newTransactionsMap.has(id)) {
+                        if (id && !newTransactionsMap.has(String(id))) {
                             // Only preserve if it looks like a valid transaction
-                            // (has required fields like amount, type, etc.)
-                            if (tx.amount !== undefined || tx.total_amount !== undefined || tx.expense_type) {
+                            // and was added recently (to avoid keeping stale data)
+                            const txDate = new Date(tx.created_at || tx.date || tx.billing_date || 0);
+                            const now = new Date();
+                            const secondsAgo = (now - txDate) / 1000;
+                            
+                            // Only preserve transactions added in the last 5 seconds
+                            // This handles race conditions where a transaction was added
+                            // but hasn't appeared in the API response yet
+                            if (secondsAgo < 5 && (tx.amount !== undefined || tx.total_amount !== undefined || tx.expense_type)) {
                                 mergedTransactions.push(tx);
                             }
                         }

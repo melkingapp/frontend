@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "sonner";
-import { registerExpense, updateExpense, fetchTransactions } from "../store/slices/financeSlice";
+import { registerExpense, updateExpense, fetchTransactions, fetchCurrentFundBalance } from "../store/slices/financeSlice";
 
 export function useExpenseSubmission(building, buildings, buildingUnits) {
   const dispatch = useDispatch();
@@ -46,8 +46,8 @@ export function useExpenseSubmission(building, buildings, buildingUnits) {
       }
 
       // Handle files - ensure proper File object extraction
-      if (data.files) {
-        if (Array.isArray(data.files) && data.files.length > 0) {
+      if (data.files && data.files.length > 0) {
+        if (Array.isArray(data.files)) {
           // Use the first file as attachment
           const file = data.files[0];
           // Validate that it's actually a File object
@@ -95,11 +95,36 @@ export function useExpenseSubmission(building, buildings, buildingUnits) {
       if (buildingId) {
         filters.building_id = buildingId;
       }
-      
+
+      // Clear any cached data and force fresh fetch
+      dispatch({ type: 'finance/clearTransactions' });
+
       // Add a small delay to allow backend cache invalidation and database update
       setTimeout(() => {
-        dispatch(fetchTransactions(filters));
-      }, 500);
+        // Force refresh by adding a timestamp to bypass any frontend caching
+        const refreshFilters = {
+          ...filters,
+          _refresh: Date.now() // Add timestamp to force fresh request
+        };
+
+        // Refresh transactions
+        dispatch(fetchTransactions(refreshFilters))
+          .then(() => {
+            console.log("✅ Transactions refreshed after expense registration");
+          })
+          .catch((error) => {
+            console.error("❌ Failed to refresh transactions after expense registration:", error);
+          });
+
+        // Refresh current fund balance to update the balance display
+        dispatch(fetchCurrentFundBalance(buildingId))
+          .then(() => {
+            console.log("✅ Fund balance refreshed after expense registration");
+          })
+          .catch((error) => {
+            console.error("❌ Failed to refresh fund balance after expense registration:", error);
+          });
+      }, 1000); // Increased delay to 1 second
 
       // Close modal and reset editing state
       setActiveModal(null);

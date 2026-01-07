@@ -8,6 +8,7 @@ import { FinanceTableRow } from "../../../manager/finance/components/transaction
 import { FinanceDetailsModal } from "../../../manager/finance/components/transactions/TransactionDetails";
 import { TransactionFilter } from "../../../manager/finance/components/transactions/TransactionFilters";
 import useCategories from "../../../../shared/hooks/useCategories";
+import { useResidentUnitData } from "../../building/hooks/useResidentUnitData";
 
 moment.loadPersian({ dialect: "persian-modern" });
 
@@ -26,7 +27,17 @@ const getStartOfYear = () => {
 
 export default function BuildingBalanceTable() {
     const dispatch = useDispatch();
-    const building = useSelector(selectSelectedBuilding);
+    const user = useSelector((state) => state.auth?.user);
+    const isManager = user?.role === 'manager';
+    const isResident = user?.role === 'resident';
+
+    // Use resident unit data hook for resident-specific information
+    const { selectedBuilding: residentBuilding, approvedBuildings } = useResidentUnitData();
+    const managerBuilding = useSelector(selectSelectedBuilding);
+
+    // Select building based on role - residents get unit-specific data, managers get building data
+    const building = isResident ? residentBuilding : managerBuilding;
+
     const currentFundBalance = useSelector(selectCurrentFundBalance);
     const categories = useCategories();
     
@@ -45,16 +56,21 @@ export default function BuildingBalanceTable() {
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
+        // For residents, wait for approvedBuildings to be loaded if needed
+        if (isResident && approvedBuildings.length === 0) {
+            return; // Wait for buildings to load
+        }
+
         if (building?.building_id) {
             setLoading(true);
-            dispatch(fetchTransactions({ 
+            dispatch(fetchTransactions({
                 building_id: building.building_id,
                 date_from: dateRange.from,
                 date_to: dateRange.to
             }))
                 .finally(() => setLoading(false));
         }
-    }, [dispatch, building?.building_id, dateRange]);
+    }, [dispatch, building?.building_id, dateRange, isResident, approvedBuildings.length]);
     
     // Sort and filter transactions
     const sortedData = [...transactions].sort(
@@ -335,7 +351,7 @@ export default function BuildingBalanceTable() {
                 )}
                 
                 {/* Modal */}
-                <FinanceDetailsModal isResident building={building} transaction={selected} onClose={() => setSelected(null)} />
+                <FinanceDetailsModal isResident={isResident} building={building} transaction={selected} onClose={() => setSelected(null)} />
             </div>
         </div>
     );

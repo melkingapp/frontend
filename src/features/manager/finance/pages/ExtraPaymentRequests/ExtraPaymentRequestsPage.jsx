@@ -55,6 +55,10 @@ export default function ExtraPaymentRequestsPage() {
         try {
             await dispatch(approveExtraPaymentRequest(requestId)).unwrap();
             toast.success("درخواست با موفقیت تایید شد");
+
+            // Signal to refresh debt/credit data in other tabs
+            localStorage.setItem('refreshDebtCredit', Date.now().toString());
+
             loadRequests();
         } catch (error) {
             toast.error(error || "خطا در تایید درخواست");
