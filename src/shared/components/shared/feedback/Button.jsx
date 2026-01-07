@@ -22,6 +22,7 @@ export default function Button({
     className = '',
     type = 'button',
     loading = false,
+    loadingText = 'در حال پردازش...',
     ...rest
 }) {
     return (
@@ -29,6 +30,7 @@ export default function Button({
             type={type}
             onClick={onClick}
             disabled={disabled || loading}
+            aria-busy={loading}
             className={`
           ${SIZES[size]} 
           ${COLORS[color]} 
@@ -41,8 +43,8 @@ export default function Button({
         >
             {loading ? (
                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>در حال پردازش...</span>
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    <span>{loadingText}</span>
                 </div>
             ) : (
                 children
