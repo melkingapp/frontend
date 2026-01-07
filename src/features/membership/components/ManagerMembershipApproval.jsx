@@ -3,6 +3,7 @@ import { Building, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCirc
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest } from "../membershipSlice";
+import { extractErrorMessage } from "../../../shared/utils/errorUtils";
 import moment from "moment-jalaali";
 
 moment.loadPersian({ dialect: "persian-modern" });
@@ -72,13 +73,23 @@ export default function ManagerMembershipApproval() {
   const handleApprove = async (requestId) => {
     if (window.confirm('آیا از تایید نهایی این درخواست عضویت اطمینان دارید؟ این عمل باعث ایجاد واحد و دسترسی ساکن به سیستم می‌شود.')) {
       try {
-        await dispatch(approveMembershipRequestByManager(requestId)).unwrap();
+        await dispatch(approveMembershipRequestByManager({
+          requestId,
+          initialDebt: 0,
+          initialCredit: 0
+        })).unwrap();
         toast.success('درخواست عضویت تایید شد و واحد ایجاد شد');
         // بروزرسانی لیست
         dispatch(fetchMembershipRequests({ status: 'owner_approved' }));
       } catch (error) {
         console.error('Error approving request:', error);
-        toast.error('خطا در تایید درخواست: ' + error);
+        
+        const errorMessage = extractErrorMessage(error);
+        
+        toast.error(errorMessage, {
+          duration: 6000,
+          description: 'لطفاً وضعیت درخواست را بررسی کنید.'
+        });
       }
     }
   };
@@ -93,7 +104,12 @@ export default function ManagerMembershipApproval() {
         dispatch(fetchMembershipRequests({ status: 'owner_approved' }));
       } catch (error) {
         console.error('Error rejecting request:', error);
-        toast.error('خطا در رد درخواست: ' + error);
+        
+        const errorMessage = extractErrorMessage(error);
+        
+        toast.error(errorMessage, {
+          duration: 5000
+        });
       }
     }
   };

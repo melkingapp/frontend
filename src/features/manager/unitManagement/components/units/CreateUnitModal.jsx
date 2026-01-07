@@ -42,20 +42,24 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
     floor: "",
     area: "",
     role: "", // مالک یا مستاجر
-    
+
     // اطلاعات مالک
     owner_type: "", // مقیم یا دارای مستاجر
-    
+
     // اطلاعات مستاجر (اگر مالک دارای مستاجر باشد)
     tenant_full_name: "",
     tenant_phone_number: "",
-    
+
     // پارکینگ
     has_parking: false,
     parking_count: 0,
-    
+
     // تعداد نفر
     resident_count: 1,
+
+    // بدهکاری و بستانکاری اولیه
+    initial_debt: 0,
+    initial_credit: 0,
   });
   
   const [errors, setErrors] = useState({});
@@ -176,7 +180,19 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
     if (form.has_parking && form.parking_count <= 0) {
       newErrors.parking_count = 'تعداد پارکینگ باید بیشتر از صفر باشد';
     }
-    
+
+    // Initial debt/credit validation
+    if (form.initial_debt < 0) {
+      newErrors.initial_debt = 'بدهکاری اولیه نمی‌تواند منفی باشد';
+    }
+    if (form.initial_credit < 0) {
+      newErrors.initial_credit = 'بستانکاری اولیه نمی‌تواند منفی باشد';
+    }
+    if (Number(form.initial_debt) > 0 && Number(form.initial_credit) > 0) {
+      newErrors.initial_debt = 'نمی‌توانید همزمان بدهکاری و بستانکاری اولیه داشته باشید';
+      newErrors.initial_credit = 'نمی‌توانید همزمان بدهکاری و بستانکاری اولیه داشته باشید';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -215,6 +231,8 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
         has_parking: false,
         parking_count: 0,
         resident_count: 1,
+        initial_debt: 0,
+        initial_credit: 0,
       });
       setErrors({});
     } catch (error) {
@@ -418,18 +436,48 @@ export default function CreateUnitModal({ isOpen, onClose, buildingId: propBuild
                   </div>
 
                   {form.has_parking && (
-                    <FormField 
-                      label="تعداد پارکینگ" 
-                      name="parking_count" 
-                      type="number" 
-                      placeholder="مثلاً 1" 
-                      value={form.parking_count} 
-                      onChange={handleChange} 
+                    <FormField
+                      label="تعداد پارکینگ"
+                      name="parking_count"
+                      type="number"
+                      placeholder="مثلاً 1"
+                      value={form.parking_count}
+                      onChange={handleChange}
                       min="1"
                       error={errors.parking_count}
-                      required 
+                      required
                     />
                   )}
+                </div>
+
+                {/* بدهکاری و بستانکاری اولیه */}
+                <div className="space-y-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <h4 className="text-lg font-semibold text-blue-800">بدهکاری و بستانکاری اولیه</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      label="بدهکاری اولیه (تومان)"
+                      name="initial_debt"
+                      type="number"
+                      placeholder="مثلاً ۱۰۰۰۰۰"
+                      value={form.initial_debt}
+                      onChange={handleChange}
+                      min="0"
+                      error={errors.initial_debt}
+                    />
+                    <FormField
+                      label="بستانکاری اولیه (تومان)"
+                      name="initial_credit"
+                      type="number"
+                      placeholder="مثلاً ۵۰۰۰۰"
+                      value={form.initial_credit}
+                      onChange={handleChange}
+                      min="0"
+                      error={errors.initial_credit}
+                    />
+                  </div>
+                  <p className="text-sm text-blue-600">
+                    💡 این مقادیر به عنوان بدهکاری/بستانکاری کل واحد ثبت خواهند شد
+                  </p>
                 </div>
                 </form>
               </div>

@@ -5,6 +5,7 @@ import { createUnit } from "../../manager/unitManagement/slices/unitsSlice";
 import { approveMembershipRequestByManager } from "../membershipSlice";
 import { Dialog, Transition } from "@headlessui/react";
 import Button from "../../../shared/components/shared/feedback/Button";
+import { extractErrorMessage } from "../../../shared/utils/errorUtils";
 import { 
   Building, 
   User, 
@@ -13,7 +14,8 @@ import {
   Users,
   CheckCircle,
   AlertCircle,
-  X
+  X,
+  DollarSign
 } from "lucide-react";
 
 const InfoCard = ({ icon: Icon, title, value, subtitle, color = "blue" }) => {
@@ -53,17 +55,42 @@ export default function MembershipToUnitConverter({
   const { approveLoading } = useSelector(state => state.membership);
   
   const [isConverting, setIsConverting] = useState(false);
+  const [initialDebt, setInitialDebt] = useState(0);
+  const [initialCredit, setInitialCredit] = useState(0);
+  const [debtCreditError, setDebtCreditError] = useState("");
 
   if (!membershipRequest) return null;
 
+  const validateDebtCredit = () => {
+    if (initialDebt > 0 && initialCredit > 0) {
+      setDebtCreditError("نمی‌توانید همزمان بدهکاری و بستانکاری داشته باشید");
+      return false;
+    }
+    setDebtCreditError("");
+    return true;
+  };
+
   const handleConvertAndApprove = async () => {
+    // اعتبارسنجی بدهکاری/بستانکاری
+    if (!validateDebtCredit()) {
+      return;
+    }
+
     setIsConverting(true);
     
     try {
-      // فقط تایید نهایی توسط مدیر (ایجاد واحد در بک‌اند انجام می‌شود)
-      await dispatch(approveMembershipRequestByManager(membershipRequest.request_id)).unwrap();
+      // تایید نهایی توسط مدیر با مقادیر بدهکاری/بستانکاری اولیه
+      await dispatch(approveMembershipRequestByManager({
+        requestId: membershipRequest.request_id,
+        initialDebt: parseFloat(initialDebt) || 0,
+        initialCredit: parseFloat(initialCredit) || 0
+      })).unwrap();
 
       console.log("✅ Membership request approved successfully");
+
+      // ریست کردن فیلدها
+      setInitialDebt(0);
+      setInitialCredit(0);
 
       // بستن مدال و اطلاع‌رسانی موفقیت
       onSuccess?.();
@@ -71,7 +98,16 @@ export default function MembershipToUnitConverter({
 
     } catch (error) {
       console.error("❌ Error approving membership request:", error);
-      toast.error('خطا در تایید درخواست عضویت: ' + error);
+      
+      const errorMessage = extractErrorMessage(error);
+      
+      // نمایش پیام خطا با توضیحات مناسب
+      toast.error(errorMessage, {
+        duration: 6000,
+        description: membershipRequest?.requires_owner_approval 
+          ? 'این درخواست نیاز به تایید مالک دارد. لطفاً منتظر تایید مالک بمانید.'
+          : 'لطفاً وضعیت درخواست را بررسی کنید و دوباره تلاش کنید.'
+      });
     } finally {
       setIsConverting(false);
     }
@@ -275,6 +311,37 @@ export default function MembershipToUnitConverter({
                       </div>
                     )}
 
+                    {/* اطلاعات مالک (برای مستاجر) */}
+                    {membershipRequest.role === 'resident' && 
+                     membershipRequest.owner_full_name && 
+                     membershipRequest.owner_full_name.trim() !== '' && 
+                     membershipRequest.owner_phone_number && 
+                     membershipRequest.owner_phone_number.trim() !== '' && (
+                      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-4 border border-amber-200">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="p-2 bg-amber-100 rounded-lg">
+                            <User size={18} className="text-amber-600" />
+                          </div>
+                          <h4 className="font-bold text-gray-800 text-lg">اطلاعات مالک</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <InfoCard
+                            icon={User}
+                            title="نام و نام خانوادگی مالک"
+                            value={membershipRequest.owner_full_name}
+                            color="orange"
+                          />
+                          <InfoCard
+                            icon={User}
+                            title="شماره تماس مالک"
+                            value={membershipRequest.owner_phone_number}
+                            color="orange"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* پارکینگ */}
                     <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-100">
                       <div className="flex items-center gap-2 mb-4">
@@ -299,6 +366,80 @@ export default function MembershipToUnitConverter({
                           />
                         )}
                       </div>
+                    </div>
+
+                    {/* بدهکاری و بستانکاری اولیه */}
+                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-emerald-100 rounded-lg">
+                          <DollarSign size={18} className="text-emerald-600" />
+                        </div>
+                        <h4 className="font-bold text-gray-800 text-lg">بدهکاری و بستانکاری اولیه</h4>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        در صورت وجود بدهکاری یا بستانکاری اولیه برای این واحد، مقادیر را وارد کنید.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            بدهکاری اولیه (تومان)
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              value={initialDebt}
+                              onChange={(e) => {
+                                setInitialDebt(e.target.value);
+                                if (debtCreditError) setDebtCreditError("");
+                              }}
+                              placeholder="مثلاً 1000000"
+                              className="w-full px-4 py-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-red-50/50"
+                            />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500 text-sm">
+                              تومان
+                            </span>
+                          </div>
+                          <p className="text-xs text-red-600 mt-1">
+                            مبلغی که ساکن به ساختمان بدهکار است
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            بستانکاری اولیه (تومان)
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              value={initialCredit}
+                              onChange={(e) => {
+                                setInitialCredit(e.target.value);
+                                if (debtCreditError) setDebtCreditError("");
+                              }}
+                              placeholder="مثلاً 500000"
+                              className="w-full px-4 py-2.5 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-50/50"
+                            />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 text-sm">
+                              تومان
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600 mt-1">
+                            مبلغی که ساختمان به ساکن بدهکار است
+                          </p>
+                        </div>
+                      </div>
+                      {debtCreditError && (
+                        <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
+                          <p className="text-sm text-red-700 flex items-center gap-2">
+                            <AlertCircle size={16} />
+                            {debtCreditError}
+                          </p>
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500 mt-3">
+                        💡 توجه: نمی‌توانید همزمان هم بدهکاری و هم بستانکاری وارد کنید. در صورت عدم نیاز، فیلدها را خالی بگذارید.
+                      </p>
                     </div>
                   </div>
 

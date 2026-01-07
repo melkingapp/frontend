@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest, withdrawMembershipRequest } from "../membershipSlice";
+import { extractErrorMessage } from "../../../shared/utils/errorUtils";
 import { 
   Clock, 
   CheckCircle, 
@@ -63,7 +64,7 @@ const StatusBadge = ({ status }) => {
 
 const RoleBadge = ({ role }) => {
   const roleConfig = {
-    resident: { color: "bg-blue-100 text-blue-800", text: "ساکن" },
+    resident: { color: "bg-blue-100 text-blue-800", text: "مستاجر" },
     owner: { color: "bg-purple-100 text-purple-800", text: "مالک" },
   };
 
@@ -213,12 +214,22 @@ export default function MembershipRequestsList() {
 
   const handleApprove = async (requestId) => {
     try {
-      await dispatch(approveMembershipRequestByManager(requestId)).unwrap();
+      await dispatch(approveMembershipRequestByManager({
+        requestId,
+        initialDebt: 0,
+        initialCredit: 0
+      })).unwrap();
       // Refresh the list
       dispatch(fetchMembershipRequests({ status: statusFilter === 'all' ? '' : statusFilter }));
     } catch (error) {
       console.error('Error approving request:', error);
-      toast.error('خطا در تایید درخواست: ' + error);
+      
+      const errorMessage = extractErrorMessage(error);
+      
+      toast.error(errorMessage, {
+        duration: 6000,
+        description: 'لطفاً وضعیت درخواست را بررسی کنید.'
+      });
     }
   };
 
@@ -229,7 +240,12 @@ export default function MembershipRequestsList() {
       dispatch(fetchMembershipRequests({ status: statusFilter === 'all' ? '' : statusFilter }));
     } catch (error) {
       console.error('Error rejecting request:', error);
-      toast.error('خطا در رد درخواست: ' + error);
+      
+      const errorMessage = extractErrorMessage(error);
+      
+      toast.error(errorMessage, {
+        duration: 5000
+      });
     }
   };
 

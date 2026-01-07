@@ -76,9 +76,16 @@ class MembershipApiService {
 
   /**
    * تایید نهایی درخواست عضویت توسط مدیر
+   * @param {Object} params - پارامترها
+   * @param {number} params.requestId - شناسه درخواست
+   * @param {number} [params.initialDebt=0] - بدهکاری اولیه
+   * @param {number} [params.initialCredit=0] - بستانکاری اولیه
    */
-  async approveMembershipRequestByManager(requestId) {
-    const { data } = await api.post(`/membership/${requestId}/approve-by-manager/`);
+  async approveMembershipRequestByManager({ requestId, initialDebt = 0, initialCredit = 0 }) {
+    const { data } = await api.post(`/membership/${requestId}/approve-by-manager/`, {
+      initial_debt: initialDebt,
+      initial_credit: initialCredit
+    });
     return data;
   }
 

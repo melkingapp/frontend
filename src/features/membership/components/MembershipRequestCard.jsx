@@ -6,7 +6,7 @@ moment.loadPersian({ dialect: "persian-modern" });
 
 const RoleBadge = ({ role }) => {
   const roleConfig = {
-    resident: { color: "bg-blue-100 text-blue-800", text: "ساکن" },
+    resident: { color: "bg-blue-100 text-blue-800", text: "مستاجر" },
     owner: { color: "bg-purple-100 text-purple-800", text: "مالک" },
   };
   const config = roleConfig[role] || roleConfig.resident;
@@ -66,6 +66,26 @@ const MembershipRequestCard = ({ request, onApprove, onReject, onViewDetails, sh
         <CardRow icon={<Car size={16} className="text-gray-500" />} label="پارکینگ" value={request.has_parking ? `${request.parking_count || 1} عدد` : 'ندارد'} />
         <CardRow icon={<Calendar size={16} className="text-gray-500" />} label="تاریخ" value={moment(request.created_at).format('jYYYY/jMM/jDD')} />
       </div>
+
+      {/* نمایش اطلاعات مالک برای مستاجر */}
+      {request.role === 'resident' && request.owner_full_name && request.owner_full_name.trim() !== '' && (
+        <div className="bg-amber-50 border-r-4 border-amber-400 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <User size={16} className="text-amber-600" />
+            <p className="text-sm font-semibold text-amber-800">اطلاعات مالک:</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <p className="text-gray-700">
+              <span className="font-medium">نام:</span> {request.owner_full_name}
+            </p>
+            {request.owner_phone_number && (
+              <p className="text-gray-700">
+                <span className="font-medium">شماره تماس:</span> {request.owner_phone_number}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {request.rejection_reason && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 my-4">

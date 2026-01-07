@@ -10,7 +10,9 @@ import {
   Calendar,
   RefreshCw,
   AlertCircle,
-  Info
+  Info,
+  DollarSign,
+  CreditCard
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -338,6 +340,9 @@ export default function SuggestedRequestsTable() {
                 <th className="px-5 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
                   تاریخ
                 </th>
+                <th className="px-5 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  بدهکاری/بستانکاری
+                </th>
                 <th className="px-5 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                   عملیات
                 </th>
@@ -404,6 +409,31 @@ export default function SuggestedRequestsTable() {
                         <span className="text-sm text-gray-600">
                           {new Date(request.created_at).toLocaleDateString('fa-IR')}
                         </span>
+                      </div>
+                    </td>
+
+                    {/* بدهکاری/بستانکاری */}
+                    <td className="px-4 py-4">
+                      <div className="space-y-1">
+                        {(request.initial_debt && parseFloat(request.initial_debt) > 0) && (
+                          <div className="flex items-center gap-1 text-red-600">
+                            <DollarSign size={14} />
+                            <span className="text-sm font-medium">
+                              بدهکاری: {new Intl.NumberFormat('fa-IR').format(parseFloat(request.initial_debt))} تومان
+                            </span>
+                          </div>
+                        )}
+                        {(request.initial_credit && parseFloat(request.initial_credit) > 0) && (
+                          <div className="flex items-center gap-1 text-green-600">
+                            <CreditCard size={14} />
+                            <span className="text-sm font-medium">
+                              بستانکاری: {new Intl.NumberFormat('fa-IR').format(parseFloat(request.initial_credit))} تومان
+                            </span>
+                          </div>
+                        )}
+                        {(!request.initial_debt || parseFloat(request.initial_debt || 0) === 0) && (!request.initial_credit || parseFloat(request.initial_credit || 0) === 0) && (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
                       </div>
                     </td>
 
