@@ -1,4 +1,4 @@
-import { HomeIcon, HousePlus, Loader2, RefreshCw, Upload } from "lucide-react";
+import { HomeIcon, HousePlus, Loader2, RefreshCw, Upload, FileText, Download } from "lucide-react";
 import UnitItem from "./UnitItem";
 import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,14 +6,22 @@ import CreateUnitModal from "./CreateUnitModal";
 import UnitDetailsModal from "./UnitDetailsModal";
 import BulkUnitImportModal from "../../../../buildings/components/BulkUnitImportModal";
 import { fetchUnits } from "../../slices/unitsSlice";
+import { exportCompleteReports } from "../../../../../shared/services/billingService";
+import { toast } from "sonner";
+import { selectSelectedBuilding } from "../../../building/buildingSlice";
+import moment from "moment-jalaali";
+
+moment.loadPersian({ dialect: "persian-modern" });
 
 export default function UnitBase({ limit, showCreateButton = true, buildingId = null }) {
     const dispatch = useDispatch();
     const { units: reduxUnits, loading, error } = useSelector(state => state.units);
     const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
+    const selectedBuilding = useSelector(selectSelectedBuilding);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
     const [selectedUnit, setSelectedUnit] = useState(null);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Use Redux data if available, otherwise fall back to props
     const dataSource = (reduxUnits || []).filter(unit => unit != null);
@@ -41,6 +49,41 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
         setSelectedUnit({ ...unit, editMode: true });
     }, []);
 
+    const handleExportMembersReport = async () => {
+        const currentBuildingId = buildingId || selectedBuildingId || selectedBuilding?.building_id || selectedBuilding?.id;
+        if (!currentBuildingId) {
+            toast.error("لطفاً ابتدا یک ساختمان انتخاب کنید");
+            return;
+        }
+
+        setIsExporting(true);
+        try {
+            const currentYear = moment().jYear();
+            const blob = await exportCompleteReports(currentBuildingId, currentYear, null);
+
+            // ایجاد فایل اکسل
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const buildingTitle = selectedBuilding?.title || buildings?.find(b => (b.building_id || b.id) === currentBuildingId)?.title || 'building';
+            const safeBuildingName = buildingTitle.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
+            a.download = `Building-Reports-${safeBuildingName}-${moment().format('YYYYMMDD')}.xlsx`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            toast.success("گزارش‌های کامل با موفقیت export شدند");
+        } catch (error) {
+            console.error("Error exporting reports:", error);
+            toast.error("خطا در export گزارش‌ها");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     return (
         <div className="p-6 bg-white rounded-xl shadow border border-gray-100">
             <div className="flex justify-between items-center mb-6">
@@ -48,7 +91,7 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
                     <HomeIcon className="text-melkingDarkBlue" size={20} />
                     مدیریت واحدها
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <button
                         onClick={handleRefresh}
                         disabled={loading}
@@ -57,6 +100,18 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
                         <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
                         بروزرسانی
                     </button>
+                    
+                    {(buildingId || selectedBuildingId || selectedBuilding) && (
+                        <button
+                            onClick={handleExportMembersReport}
+                            disabled={isExporting}
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Download size={16} className={isExporting ? "animate-pulse" : ""} />
+                            <span className="whitespace-nowrap">گزارش اعضا</span>
+                        </button>
+                    )}
+                    
                     {showCreateButton && (
                         <>
                             <button

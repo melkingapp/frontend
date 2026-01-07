@@ -21,6 +21,7 @@ import SearchBox from "../../../../../shared/components/shared/inputs/SearchBox"
 import { fetchBalanceSheet, fetchBalanceTransactions } from "../../store/slices/financeSlice";
 import { getPersianType } from "../../../../../shared/utils/typeUtils";
 import { exportBalanceSheet } from "../../../../../shared/services/billingService";
+import ReportsMenu from "../../components/reports/ReportsMenu";
 import moment from "moment-jalaali";
 
 moment.loadPersian({ dialect: "persian-modern" });
@@ -303,12 +304,14 @@ export default function BuildingBalance() {
           </div>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
+            <ReportsMenu building={building} isManager={isManager} />
+            
             <button
               onClick={handleExportData}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-slate-800 text-white rounded-lg md:rounded-xl hover:bg-slate-900 transition-all duration-200 shadow-lg shadow-slate-800/20 hover:shadow-slate-800/30 font-semibold text-sm md:text-base"
             >
               <Download size={18} className="md:w-5 md:h-5" />
-              <span className="whitespace-nowrap">خروجی Excel</span>
+              <span className="whitespace-nowrap">خروجی Excel بیلان</span>
             </button>
             
             <button

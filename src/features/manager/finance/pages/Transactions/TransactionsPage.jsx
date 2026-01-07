@@ -32,6 +32,7 @@ import { getPersianType } from "../../../../../shared/utils/typeUtils";
 import DeleteConfirmModal from "../../../../../shared/components/shared/feedback/DeleteConfirmModal";
 import { getBuildingUnitsDebtCreditSummary, getUnitDebtSummary } from "../../../../../shared/services/billingService";
 import { approveExtraPaymentRequest } from "../../store/slices/extraPaymentSlice";
+import ReportsMenu from "../../components/reports/ReportsMenu";
 
 export default function FinanceTransactions() {
   const dispatch = useDispatch();
@@ -448,18 +449,26 @@ export default function FinanceTransactions() {
   return (
     <>
       <div className="p-4">
-        {/* Submit Request Button */}
-        {userUnits.length > 0 && (
-          <div className="mb-4 flex justify-end">
-            <button
-              onClick={() => setShowExtraPaymentForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-            >
-              <Plus size={18} />
-              <span>ثبت پرداخت اضافی</span>
-            </button>
-          </div>
-        )}
+        {/* Header Actions */}
+        <div className="mb-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          {/* Reports Menu - Only for Managers */}
+          {isManager && building && (
+            <ReportsMenu building={building} isManager={isManager} />
+          )}
+          
+          {/* Submit Request Button */}
+          {userUnits.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowExtraPaymentForm(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+              >
+                <Plus size={18} />
+                <span>ثبت پرداخت اضافی</span>
+              </button>
+            </div>
+          )}
+        </div>
 
         <ViewModeSwitcher
           viewMode={viewMode}

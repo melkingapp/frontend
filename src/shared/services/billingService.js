@@ -747,6 +747,124 @@ export const getBuildingUnitsDebtCreditSummary = async (buildingId) => {
     }
 };
 
+// ===============================
+// REPORTS APIs
+// ===============================
+
+// Get building members report
+export const getBuildingMembersReport = async (buildingId, includeEmptyUnits = false) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        if (includeEmptyUnits) {
+            params.append('include_empty_units', 'true');
+        }
+        const response = await get(`/billing/building-members-report/?${params.toString()}`);
+        return response;
+    } catch (error) {
+        console.error('Get building members report error:', error);
+        throw error;
+    }
+};
+
+// Get yearly balance report
+export const getYearlyBalanceReport = async (buildingId, year) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        params.append('year', year);
+        const response = await get(`/billing/yearly-balance-report/?${params.toString()}`);
+        return response;
+    } catch (error) {
+        console.error('Get yearly balance report error:', error);
+        throw error;
+    }
+};
+
+// Get monthly resident report
+export const getMonthlyResidentReport = async (buildingId, year, month) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        params.append('year', year);
+        params.append('month', month);
+        const response = await get(`/billing/monthly-resident-report/?${params.toString()}`);
+        return response;
+    } catch (error) {
+        console.error('Get monthly resident report error:', error);
+        throw error;
+    }
+};
+
+// Get monthly owner report
+export const getMonthlyOwnerReport = async (buildingId, year, month) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        params.append('year', year);
+        params.append('month', month);
+        const response = await get(`/billing/monthly-owner-report/?${params.toString()}`);
+        return response;
+    } catch (error) {
+        console.error('Get monthly owner report error:', error);
+        throw error;
+    }
+};
+
+// Get debt credit report
+export const getDebtCreditReport = async (buildingId) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        const response = await get(`/billing/debt-credit-report/?${params.toString()}`);
+        return response;
+    } catch (error) {
+        console.error('Get debt credit report error:', error);
+        throw error;
+    }
+};
+
+// Get expenses report
+export const getExpensesReport = async (buildingId, dateFrom = null, dateTo = null) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        if (dateFrom) {
+            params.append('date_from', dateFrom);
+        }
+        if (dateTo) {
+            params.append('date_to', dateTo);
+        }
+        const response = await get(`/billing/expenses-report/?${params.toString()}`);
+        return response;
+    } catch (error) {
+        console.error('Get expenses report error:', error);
+        throw error;
+    }
+};
+
+// Export complete reports to Excel
+export const exportCompleteReports = async (buildingId, year = null, month = null) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('building_id', buildingId);
+        if (year) {
+            params.append('year', year);
+        }
+        if (month) {
+            params.append('month', month);
+        }
+        const queryString = params.toString();
+        const response = await get(`/billing/export-complete-reports/?${queryString}`, {
+            responseType: 'blob'
+        });
+        return response;
+    } catch (error) {
+        console.error('Export complete reports error:', error);
+        throw error;
+    }
+};
+
 // Get unit debt summary (single unit)
 export const getUnitDebtSummary = async (unitId) => {
     try {
@@ -1232,7 +1350,15 @@ const billingService = {
     createExtraPaymentRequest,
     getExtraPaymentRequests,
     approveExtraPaymentRequest,
-    rejectExtraPaymentRequest
+    rejectExtraPaymentRequest,
+    // Reports APIs
+    getBuildingMembersReport,
+    getYearlyBalanceReport,
+    getMonthlyResidentReport,
+    getMonthlyOwnerReport,
+    getDebtCreditReport,
+    getExpensesReport,
+    exportCompleteReports
 };
 
 export default billingService;
