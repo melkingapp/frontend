@@ -113,24 +113,12 @@ export default function DebtCreditView({
         const totalCredit = unit.total_credit || 0;
         const lastChange = unit.last_change;
 
-        // تعیین نوع تغییر و پیام مناسب
+        // نمایش آخرین پرداخت اضافی تأیید شده
         let changeMessage = "—";
         let changeColor = "text-gray-400";
-        if (lastChange) {
-          if (lastChange.type === 'extra_payment') {
-            if (totalDebt > 0 && totalCredit === 0) {
-              // اگر بدهکاری دارد و بستانکاری ندارد، احتمالاً از بدهکاری کم شده
-              changeMessage = `کاهش بدهکاری: ${Number(lastChange.amount).toLocaleString('fa-IR')} تومان`;
-              changeColor = "text-blue-600";
-            } else if (totalCredit > 0) {
-              // اگر بستانکاری دارد، بستانکاری اضافه شده
-              changeMessage = `افزایش بستانکاری: ${Number(lastChange.amount).toLocaleString('fa-IR')} تومان`;
-              changeColor = "text-emerald-600";
-            } else {
-              changeMessage = `پرداخت: ${Number(lastChange.amount).toLocaleString('fa-IR')} تومان`;
-              changeColor = "text-blue-600";
-            }
-          }
+        if (lastChange && lastChange.type === 'extra_payment') {
+          changeMessage = `پرداخت اضافی: ${Number(lastChange.amount).toLocaleString('fa-IR')} تومان`;
+          changeColor = "text-blue-600";
         }
 
         return (

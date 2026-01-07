@@ -45,7 +45,7 @@ const initialState = {
         { value: "electricity_bill", label: "قبض برق" },
         { value: "camera", label: "دوربین" },
         { value: "parking", label: "پارکینگ" },
-        { value: "charge", label: "شارژ" },
+        // { value: "charge", label: "شارژ" },
         { value: "repair", label: "تعمیرات" },
         { value: "cleaning", label: "نظافت" },
         { value: "purchases", label: "اقلام خریدنی" },

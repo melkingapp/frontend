@@ -103,7 +103,7 @@ export default function ExpenseForm({
                     </p>
                     {form.amount && form.target && (
                         <p className="text-xs text-blue-600 mt-1">
-                            مبلغ هر واحد: {formatNumber(Math.floor(form.amount / (form.target === 'all' ? unitsList.length : form.selectedUnits.length)))} تومان
+                            مبلغ هر واحد: {formatNumber(Math.floor(form.amount / unitsList.length))} تومان
                         </p>
                     )}
                 </div>

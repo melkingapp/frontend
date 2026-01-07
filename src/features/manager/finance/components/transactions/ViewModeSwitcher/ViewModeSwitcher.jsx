@@ -105,8 +105,8 @@ export default function ViewModeSwitcher({
         </button>
       </div>
 
-      {/* Unit Selection (only in unit view mode) */}
-      {viewMode === 'unit' && (
+      {/* Unit Selection (in unit and charge view modes) */}
+      {(viewMode === 'unit' || viewMode === 'charge') && (
         <div className="flex-1 min-w-[220px] max-w-md w-full relative">
           <button
             type="button"

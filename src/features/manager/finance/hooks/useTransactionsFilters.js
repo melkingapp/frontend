@@ -79,10 +79,53 @@ export function useTransactionsFilters(transactions, viewMode) {
         const expectedTitle = filterMapping[filter];
         const expectedBillType = billTypeMapping[filter];
         
+        // Special handling for charge filter to include current_charge and construction_charge categories
+        const isChargeFilter = filter === 'charge';
+        const matchesChargeCategory = isChargeFilter && item.category &&
+          (item.category === 'current_charge' || item.category === 'construction_charge');
+
+        // Special handling for charge filter
+        let isChargeItem = false;
+
+        if (isChargeFilter) {
+          // Debug: log all available fields for the first few items
+          if (item.id === 47 || item.id === 46) {
+            console.log('🔍 Full item data for debugging:', item);
+          }
+
+          // Check if this is a charge by multiple criteria
+          isChargeItem =
+            // By bill_type (from SharedBill)
+            (item.bill_type && (item.bill_type === 'current_charge' || item.bill_type === 'construction_charge')) ||
+            // By category (from Invoice)
+            (item.category && (item.category === 'current_charge' || item.category === 'construction_charge')) ||
+            // By subject (from balance transactions)
+            (item.subject && (item.subject === 'شارژ جاری' || item.subject === 'شارژ عمرانی')) ||
+            // By title content (fallback for charge titles)
+            (item.title && (
+              item.title.includes('شارژ') ||
+              item.title.includes('عمرانی') ||
+              item.title.includes('جاری') ||
+              item.title === 'شاررررررز' ||  // Known charge titles
+              item.title === 'عمرانی'
+            ));
+
+          console.log('🔍 Charge filter debug:', {
+            id: item.id,
+            title: item.title,
+            bill_type: item.bill_type,
+            category: item.category,
+            subject: item.subject,
+            isChargeItem,
+            matchesFilter: matchesFilter
+          });
+        }
+
         matchesFilter =
           (item.title && item.title === expectedTitle) ||
           (item.bill_type && item.bill_type === expectedBillType) ||
           (item.category && item.category === filter) ||
+          isChargeItem ||
           (item.title && item.title === filterLabel) ||
           (item.expense_type && item.expense_type === expectedBillType) ||
           (item.transaction_type && item.transaction_type === expectedTitle);
@@ -135,9 +178,29 @@ export function useTransactionsFilters(transactions, viewMode) {
         if (maxAmount !== null && itemAmount > maxAmount) matchesAmount = false;
       }
 
-      return matchesFilter && matchesSearch && matchesDate && matchesAmount;
+      const finalResult = matchesFilter && matchesSearch && matchesDate && matchesAmount;
+
+      if (filter === 'charge') {
+        console.log('🎯 Final filter result for item:', item.id, {
+          matchesFilter,
+          matchesSearch,
+          matchesDate,
+          matchesAmount,
+          finalResult
+        });
+      }
+
+      return finalResult;
     });
   }, [sortedData, filter, searchTerm, dateRange, amountRange, viewMode, categories]);
+
+  // Debug logging
+  console.log('🔍 useTransactionsFilters:', {
+    sortedDataLength: sortedData?.length || 0,
+    filter,
+    filteredDataLength: filteredData?.length || 0,
+    viewMode
+  });
 
   const totalCost = useMemo(() => {
     return filteredData.reduce((sum, t) => sum + (t.amount || 0), 0);

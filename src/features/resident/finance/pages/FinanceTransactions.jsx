@@ -8,6 +8,7 @@ import {
   UnitTransactionsView,
   BuildingTransactionsView,
   UnitTransactionsSummary,
+  ChargesTab,
 } from "../../../manager/finance/components/transactions/TransactionList";
 import {
   FinanceDetailsModal,
@@ -267,8 +268,19 @@ export default function FinanceTransactions() {
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
-    if (mode === "building" || mode === "charge") {
+    if (mode === "building") {
       setSelectedUnitId(null);
+    } else if (mode === "charge") {
+      // For charge mode, set selectedUnitId to user's unit if resident, first unit if manager
+      if (!isManager && userUnits.length > 0) {
+        const userUnitId = userUnits[0].units_id || userUnits[0].id;
+        setSelectedUnitId(userUnitId);
+      } else if (isManager && unitOptions.length > 0) {
+        // For managers, select the first unit by default
+        setSelectedUnitId(unitOptions[0].value);
+      } else {
+        setSelectedUnitId(null);
+      }
     } else if (mode === "unit") {
       if (userUnits.length > 0) {
         const userUnitId = userUnits[0].units_id || userUnits[0].id;
@@ -388,7 +400,21 @@ export default function FinanceTransactions() {
 
         {!showDebtCredit && (
           <>
-            {viewMode === "unit" ? (
+            {viewMode === "charge" ? (
+              selectedUnitId ? (
+                <ChargesTab
+                  unitId={selectedUnitId}
+                  buildingId={building?.building_id}
+                  dateRange={dateRange}
+                  isManager={isManager}
+                  onChargeSelect={handleSelectUnitInvoice}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">لطفاً یک واحد انتخاب کنید تا شارژهای آن نمایش داده شود.</p>
+                </div>
+              )
+            ) : viewMode === "unit" ? (
               <UnitTransactionsView
                 unitTransactions={unitTransactions}
                 unitTransactionsLoading={unitTransactionsLoading}

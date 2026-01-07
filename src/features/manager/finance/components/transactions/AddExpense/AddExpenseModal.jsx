@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { X } from "lucide-react";
 import ExpenseForm from "./ExpenseForm";
@@ -7,8 +7,46 @@ import useClickOutside from "../../../../../../shared/hooks/useClickOutside";
 import { addExpenseType } from "../../../store/slices/expenseTypesSlice";
 import { fetchBuildingUnits } from "../../../../building/buildingSlice";
 import { selectBuildingUnits } from "../../../../building/buildingSlice";
+import { getPersianType } from "../../../../../../shared/utils/typeUtils";
 
 // This will be populated from building units
+
+// Helper function to determine if a unit is occupied based on multiple criteria
+// This matches the backend's is_actually_occupied property logic
+// واحدهای پر: مالک مقیم (resident) یا landlord با مستاجر
+// واحدهای خالی: واحد خالی (empty) یا landlord بدون مستاجر
+const determineUnitOccupancy = (unit) => {
+    // First check the is_occupied field if available (matches backend: if is_occupied is not None)
+    if (unit.is_occupied !== undefined && unit.is_occupied !== null) {
+        return Boolean(unit.is_occupied);
+    }
+
+    // اگر owner_type خالی است، بر اساس tenant بررسی کن
+    if (!unit.owner_type) {
+        const hasTenant = Boolean(unit.tenant_full_name || unit.tenant_phone_number);
+        return hasTenant;
+    }
+
+    // اگر owner_type == 'empty' باشد، واحد خالی است
+    if (unit.owner_type === 'empty') {
+        return false;
+    }
+
+    // اگر owner_type == 'resident' باشد، واحد اشغال شده است (مالک مقیم)
+    if (unit.owner_type === 'resident') {
+        return true;
+    }
+
+    // اگر owner_type == 'landlord' باشد، بر اساس وجود مستاجر تصمیم بگیر
+    if (unit.owner_type === 'landlord') {
+        const hasTenant = Boolean(unit.tenant_full_name || unit.tenant_phone_number);
+        return hasTenant; // اگر مستاجر دارد = پر، اگر ندارد = خالی
+    }
+
+    // حالت پیش‌فرض: بر اساس tenant بررسی کن
+    const hasTenant = Boolean(unit.tenant_full_name || unit.tenant_phone_number);
+    return hasTenant;
+};
 
 const paymentTargets = [
     { value: "all", label: "همه واحدها" },
@@ -172,6 +210,41 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
     const modalRef = useRef(null);
     useClickOutside(modalRef, () => { if (isOpen) onClose(); });
 
+    // اضافه کردن type editingExpense به expenseTypes اگر وجود نداشته باشد
+    const enhancedExpenseTypes = useMemo(() => {
+        if (editingExpense && editingExpense.bill_type) {
+            const mappedType = (() => {
+                const typeMapping = {
+                    'water': 'water_bill',
+                    'electricity': 'electricity_bill',
+                    'gas': 'gas_bill',
+                    'maintenance': 'repair',
+                    'cleaning': 'cleaning',
+                    'security': 'security',
+                    'camera': 'camera',
+                    'parking': 'parking',
+                    'purchases': 'purchases',
+                    'charge': 'charge',
+                    'other': 'other',
+                };
+                return typeMapping[editingExpense.bill_type] || editingExpense.bill_type;
+            })();
+            
+            // بررسی آیا این type در expenseTypes وجود دارد
+            const exists = expenseTypes.some(type => type.value === mappedType);
+            
+            if (!exists) {
+                // اگر وجود نداشت، با getPersianType label آن را پیدا کن و اضافه کن
+                const label = getPersianType(mappedType, editingExpense);
+                return [...expenseTypes, { value: mappedType, label }];
+            }
+        }
+        return expenseTypes;
+    }, [expenseTypes, editingExpense]);
+    
+    // اضافه کردن dependency برای form.type در enhancedExpenseTypes
+    // این باعث می‌شود که اگر form.type تغییر کرد، enhancedExpenseTypes دوباره محاسبه شود
+
     // بررسی allocationData بعد از ثبت
     useEffect(() => {
         if (editingExpense?.allocationData && isOpen) {
@@ -183,7 +256,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
     // پر کردن فرم با مقادیر expense در حالت ویرایش
     useEffect(() => {
         if (editingExpense && isOpen && !editingExpense.allocationData) {
-            // Mapping از transaction به form
+            // استفاده از enhancedExpenseTypes برای mapping درست
             const typeMapping = {
                 'water': 'water_bill',
                 'electricity': 'electricity_bill',
@@ -198,7 +271,14 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
                 'other': 'other',
             };
 
-            const mappedType = typeMapping[editingExpense.bill_type] || editingExpense.bill_type;
+            let mappedType = typeMapping[editingExpense.bill_type] || editingExpense.bill_type;
+            
+            // اگر mappedType در expenseTypes نیست، مطمئن شو که در enhancedExpenseTypes هست
+            // این کار باعث می‌شود که label درست نمایش داده شود
+            if (!expenseTypes.some(type => type.value === mappedType)) {
+                // نوع هزینه در expenseTypes نیست، اما در enhancedExpenseTypes اضافه شده است
+                // mappedType همان است که در enhancedExpenseTypes استفاده شده
+            }
             
             // تعیین target بر اساس unit_count
             let target = "all";
@@ -271,20 +351,19 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
     }, [isOpen, buildingId, dispatch]);
 
     // Filter units based on target selection
+    // Using useMemo to properly track buildingUnits changes (not just length)
     useEffect(() => {
-        
         if (!buildingUnits || !Array.isArray(buildingUnits) || buildingUnits.length === 0) {
             setFilteredUnits([]);
             return;
         }
 
         const unitsList = buildingUnits.map(unit => ({
-            value: unit.unit_number || unit.id,
-            label: `واحد ${unit.unit_number || unit.id}`,
-            isOccupied: unit.is_occupied || unit.occupied || false,
+            value: unit.unit_number || unit.units_id || unit.id,
+            label: `واحد ${unit.unit_number || unit.units_id || unit.id}`,
+            isOccupied: determineUnitOccupancy(unit),
             unit: unit
         }));
-
 
         switch (form.target) {
             case "full":
@@ -301,7 +380,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
                 setFilteredUnits(unitsList);
                 break;
         }
-    }, [buildingUnits?.length, form.target]);
+    }, [buildingUnits, form.target]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -456,7 +535,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, isLoading =
                         onAmountChange={handleAmountChange}
                         onCheckboxChange={handleCheckboxChange}
                         unitsList={filteredUnits}
-                        expenseTypes={[...expenseTypes, { value: "AddExpenseType", label: "افزودن نوع هزینه" }]} // فقط برای UI اضافه شده
+                        expenseTypes={[...enhancedExpenseTypes, { value: "AddExpenseType", label: "افزودن نوع هزینه" }]} // فقط برای UI اضافه شده
                         paymentTargets={paymentTargets}
                         allocationMethods={allocationMethods}
                         distributionMethods={distributionMethods}

@@ -1311,6 +1311,25 @@ export const deleteChargeSchedule = async (scheduleId) => {
     }
 };
 
+// Get unit financial transactions (charges for a specific unit)
+export const getUnitFinancialTransactions = async (unitId, filters = {}) => {
+    try {
+        const params = new URLSearchParams();
+        params.append('unit_id', unitId);
+
+        if (filters.date_from) params.append('date_from', filters.date_from);
+        if (filters.date_to) params.append('date_to', filters.date_to);
+
+        const queryString = params.toString();
+        const endpoint = queryString ? `/billing/unit-financial-transactions/?${queryString}` : '/billing/unit-financial-transactions/';
+        const response = await get(endpoint);
+        return response;
+    } catch (error) {
+        console.error('Get unit financial transactions error:', error);
+        throw error;
+    }
+};
+
 // Default export (برای backward compatibility)
 const billingService = {
     registerExpense,
@@ -1347,6 +1366,7 @@ const billingService = {
     toggleChargeSchedule,
     executeChargeSchedule,
     deleteChargeSchedule,
+    getUnitFinancialTransactions,
     createExtraPaymentRequest,
     getExtraPaymentRequests,
     approveExtraPaymentRequest,

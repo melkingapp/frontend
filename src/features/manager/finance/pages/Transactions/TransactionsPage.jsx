@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Plus, Coins } from "lucide-react";
 import { toast } from "sonner";
-import ExtraPaymentRequestForm from "../../../../resident/finance/components/ExtraPaymentRequestForm";
 import {
   FinanceSummary,
   UnitTransactionsView,
   BuildingTransactionsView,
   UnitTransactionsSummary,
+  ChargesTab,
 } from "../../components/transactions/TransactionList";
 import {
   FinanceDetailsModal,
@@ -27,7 +27,7 @@ import FloatingActionButton from "../../../../../shared/components/shared/feedba
 import { AddExpenseModal } from "../../components/transactions/AddExpense";
 import { PayBillModal } from "../../components/transactions/PayBill";
 import useCategories from "../../../../../shared/hooks/useCategories";
-import { deleteExpense, fetchTransactions, selectFinanceLoading } from "../../store/slices/financeSlice";
+import { deleteExpense, fetchTransactions, fetchCurrentFundBalance, clearTransactions, selectFinanceLoading } from "../../store/slices/financeSlice";
 import { getPersianType } from "../../../../../shared/utils/typeUtils";
 import DeleteConfirmModal from "../../../../../shared/components/shared/feedback/DeleteConfirmModal";
 import { getBuildingUnitsDebtCreditSummary, getUnitDebtSummary } from "../../../../../shared/services/billingService";
@@ -51,11 +51,37 @@ export default function FinanceTransactions() {
   const [showUnitFinancialModal, setShowUnitFinancialModal] = useState(false);
   const [selectedUnitInvoice, setSelectedUnitInvoice] = useState(null);
   const [unitStatusFilter, setUnitStatusFilter] = useState("all");
-  const [showExtraPaymentForm, setShowExtraPaymentForm] = useState(false);
   const [debtCreditData, setDebtCreditData] = useState(null);
   const [debtCreditLoading, setDebtCreditLoading] = useState(false);
   const [debtCreditError, setDebtCreditError] = useState(null);
   const fetchDebtCreditRef = useRef(false);
+  const [debtCreditRefreshKey, setDebtCreditRefreshKey] = useState(0);
+
+  // Listen for debt/credit refresh signals from other components
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'refreshDebtCredit' && showDebtCredit) {
+        console.log('Debt/credit refresh signal received, refreshing data...');
+        setDebtCreditRefreshKey(prev => prev + 1);
+        // Clear the signal
+        localStorage.removeItem('refreshDebtCredit');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check on mount in case there was a pending refresh
+    const pendingRefresh = localStorage.getItem('refreshDebtCredit');
+    if (pendingRefresh && showDebtCredit) {
+      console.log('Found pending debt/credit refresh on mount');
+      setDebtCreditRefreshKey(prev => prev + 1);
+      localStorage.removeItem('refreshDebtCredit');
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [showDebtCredit]);
   const expenseSubmittedRef = useRef(false);
   const expenseSubmittedSuccessfullyRef = useRef(false);
 
@@ -76,34 +102,6 @@ export default function FinanceTransactions() {
     setDateRange,
   } = useTransactions();
 
-  // Listen for extra payment approval to refresh data
-  const extraPaymentState = useSelector((state) => state.extraPayment);
-  useEffect(() => {
-    // Refresh transactions and debt/credit data when an extra payment is approved
-    if (building?.building_id && extraPaymentState.requests.length > 0) {
-      const hasApprovedRequest = extraPaymentState.requests.some(r => r.status === 'approved' && r.manager_approved_at);
-      if (hasApprovedRequest) {
-        // Refresh transactions
-        dispatch(fetchTransactions({ building_id: building.building_id }));
-        // Refresh debt/credit if showing
-        if (showDebtCredit && !debtCreditLoading && !fetchDebtCreditRef.current) {
-          fetchDebtCreditRef.current = true;
-          setDebtCreditLoading(true);
-          getBuildingUnitsDebtCreditSummary(building.building_id)
-            .then((response) => {
-              setDebtCreditData(response);
-              setDebtCreditLoading(false);
-              fetchDebtCreditRef.current = false;
-            })
-            .catch((error) => {
-              fetchDebtCreditRef.current = false;
-              setDebtCreditLoading(false);
-            });
-        }
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extraPaymentState.requests]);
 
   const { sortedData, newestDate, oldestDate } = useTransactionsData(
     viewMode,
@@ -111,6 +109,7 @@ export default function FinanceTransactions() {
     unitStatusFilter
   );
 
+  // Always call the hook to maintain hook order
   const {
     filter,
     setFilter,
@@ -120,10 +119,13 @@ export default function FinanceTransactions() {
     setDateRange: setFiltersDateRange,
     amountRange,
     setAmountRange,
-    filteredData,
+    filteredData: rawFilteredData,
     totalCost,
     resetFilters,
   } = useTransactionsFilters(sortedData, viewMode);
+
+  // In charge mode, don't use filtered data
+  const filteredData = viewMode === 'charge' ? [] : rawFilteredData;
 
   useEffect(() => {
     if (dateRange !== filtersDateRange) {
@@ -246,7 +248,39 @@ export default function FinanceTransactions() {
         toast.success(`مبلغ به موجودی صندوق و بستانکاری واحدهای ${unitNumbers} برگردانده شد`);
       }
 
-      refreshTransactions();
+      // Get building ID for refresh
+      const buildingId = building?.building_id || building?.id;
+      
+      // Clear transactions cache to prevent showing old deleted transactions
+      dispatch(clearTransactions());
+
+      // Add a small delay to allow backend to process and invalidate cache
+      setTimeout(() => {
+        // Refresh transactions with a timestamp to bypass cache
+        const refreshFilters = {
+          building_id: buildingId,
+          _refresh: Date.now()
+        };
+
+        dispatch(fetchTransactions(refreshFilters))
+          .then(() => {
+            console.log("✅ Transactions refreshed after expense deletion");
+          })
+          .catch((error) => {
+            console.error("❌ Failed to refresh transactions after expense deletion:", error);
+          });
+
+        // Refresh current fund balance to update the balance display (only once)
+        if (buildingId) {
+          dispatch(fetchCurrentFundBalance(buildingId))
+            .then(() => {
+              console.log("✅ Fund balance refreshed after expense deletion");
+            })
+            .catch((error) => {
+              console.error("❌ Failed to refresh fund balance after expense deletion:", error);
+            });
+        }
+      }, 1000);
 
       setExpenseToDelete(null);
       setDeleteWarning(null);
@@ -264,10 +298,25 @@ export default function FinanceTransactions() {
     refreshTransactions();
   };
 
+  const refreshDebtCredit = () => {
+    setDebtCreditRefreshKey(prev => prev + 1);
+  };
+
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
-    if (mode === "building" || mode === "charge") {
+    if (mode === "building") {
       setSelectedUnitId(null);
+    } else if (mode === "charge") {
+      // For charge mode, set selectedUnitId to user's unit if resident, first unit if manager
+      if (!isManager && userUnits.length > 0) {
+        const userUnitId = userUnits[0].units_id || userUnits[0].id;
+        setSelectedUnitId(userUnitId);
+      } else if (isManager && unitOptions.length > 0) {
+        // For managers, select the first unit by default
+        setSelectedUnitId(unitOptions[0].value);
+      } else {
+        setSelectedUnitId(null);
+      }
     } else if (mode === "unit") {
       if (userUnits.length > 0) {
         const userUnitId = userUnits[0].units_id || userUnits[0].id;
@@ -279,14 +328,17 @@ export default function FinanceTransactions() {
   };
 
   useEffect(() => {
+    console.log('🔄 ViewMode/Filter change:', { viewMode, filter });
     if (viewMode === "charge") {
-      setFilter("all"); // Data is already filtered by backend, so show all
+      console.log('🎯 Setting filter to all for charge mode');
+      setFilter("all"); // Don't filter, use ChargesTab instead
     } else if (viewMode === "building" && filter === "charge") {
+      console.log('🏠 Resetting filter to all');
       setFilter("all"); // Reset to all when switching from charge mode
     }
   }, [viewMode, filter, setFilter]);
 
-  // Fetch debt/credit data when showDebtCredit becomes true
+  // Fetch debt/credit data when showDebtCredit becomes true or debtCreditRefreshKey changes
   useEffect(() => {
     if (showDebtCredit && building?.building_id && !debtCreditLoading && !fetchDebtCreditRef.current) {
       fetchDebtCreditRef.current = true;
@@ -379,9 +431,12 @@ export default function FinanceTransactions() {
       setDebtCreditData(null);
       setDebtCreditError(null);
       fetchDebtCreditRef.current = false;
+    } else if (debtCreditRefreshKey > 0) {
+      // Force refresh when debtCreditRefreshKey changes
+      fetchDebtCreditRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDebtCredit, building?.building_id, isManager]);
+  }, [showDebtCredit, building?.building_id, isManager, debtCreditRefreshKey]);
 
   // Also fetch when buildingUnits become available (in case they load after showDebtCredit is set)
   // Use a ref to track if we've already tried to fetch when buildingUnits loaded
@@ -502,7 +557,7 @@ export default function FinanceTransactions() {
           />
         )}
 
-        {!showDebtCredit && (
+        {!showDebtCredit && viewMode === "building" && (
           <TransactionsFilters
             filter={filter}
             setFilter={setFilter}
@@ -543,6 +598,20 @@ export default function FinanceTransactions() {
                 onDelete={handleDeleteExpense}
                 isManager={isManager}
               />
+            ) : viewMode === "charge" ? (
+              selectedUnitId ? (
+                <ChargesTab
+                  unitId={selectedUnitId}
+                  buildingId={building?.building_id}
+                  dateRange={dateRange}
+                  isManager={isManager}
+                  onChargeSelect={handleSelectUnitInvoice}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">لطفاً یک واحد انتخاب کنید تا شارژهای آن نمایش داده شود.</p>
+                </div>
+              )
             ) : (
               <BuildingTransactionsView
                 filteredData={filteredData}
@@ -558,7 +627,7 @@ export default function FinanceTransactions() {
 
         <FinanceDetailsModal
           building={building}
-          transaction={viewMode === "building" ? selected : null}
+          transaction={(viewMode === "building" || viewMode === "charge") ? selected : null}
           onClose={() => setSelected(null)}
           onEdit={handleEditExpense}
         />
@@ -650,15 +719,6 @@ export default function FinanceTransactions() {
         newestDate={newestDate}
       />
 
-      {/* Extra Payment Request Form */}
-      <ExtraPaymentRequestForm
-        isOpen={showExtraPaymentForm}
-        onClose={() => setShowExtraPaymentForm(false)}
-        onSuccess={() => {
-          setShowExtraPaymentForm(false);
-          refreshTransactions();
-        }}
-      />
     </>
   );
 }
