@@ -323,12 +323,12 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                 </h2>
 
                 <div className="overflow-y-auto custom-scroll max-h-[70vh] pr-2">
-                    {/* Owner Card */}
+                    {/* Owner Card - اطلاعات مالک */}
                     <EditableCard
                         title={ownerData.role === 'owner' 
                             ? `مالک ${ownerData.owner_type === 'landlord' ? '(دارای مستاجر)' : ownerData.owner_type === 'empty' ? '(خالی)' : '(مقیم)'}`
                             : ownerData.role === 'tenant' 
-                                ? 'مستاجر' 
+                                ? 'مالک' 
                                 : 'اطلاعات واحد'}
                         data={ownerData}
                         setData={handleOwnerDataChange}
@@ -392,8 +392,8 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                         colorClass="bg-gradient-to-r from-emerald-50 to-emerald-100"
                     />
 
-                    {/* Tenant Card - فقط وقتی role === "owner" && owner_type === "landlord" */}
-                    {ownerData.role === "owner" && ownerData.owner_type === "landlord" && (
+                    {/* Tenant Card - وقتی role === "owner" && owner_type === "landlord" یا role === "tenant" */}
+                    {((ownerData.role === "owner" && ownerData.owner_type === "landlord") || ownerData.role === "tenant") && (
                         <EditableCard
                             title="مستاجر"
                             data={tenantData}

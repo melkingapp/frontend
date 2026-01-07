@@ -6,12 +6,10 @@ export const fetchUnits = createAsyncThunk(
   "units/fetchUnits",
   async (buildingId, { rejectWithValue }) => {
     try {
-      console.log("🔥 fetchUnits - Building ID:", buildingId);
       const response = await unitsApi.getBuildingUnits(buildingId);
-      console.log("🔥 fetchUnits - API response:", response);
       return response.units || [];
     } catch (error) {
-      console.error("🔥 fetchUnits - Error:", error);
+      console.error("fetchUnits - Error:", error);
       return rejectWithValue(error.response?.data?.error || error.message);
     }
   }

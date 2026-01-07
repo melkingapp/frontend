@@ -146,6 +146,38 @@ export default function ExpenseForm({
                     error={errors.distribution}
                     disabled={hasPayments && isEditing}
                 />
+                
+                {/* ✅ اضافه شد: هشدارهای برای روش‌های توزیع نامناسب */}
+                {form.distribution === "per_person" && unitsList && (
+                    (() => {
+                        const totalResidents = unitsList.reduce((sum, unit) => {
+                            return sum + (unit.resident_count || 0);
+                        }, 0);
+                        return totalResidents === 0 ? (
+                            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p className="text-sm text-amber-800">
+                                    ⚠️ <strong>هشدار:</strong> تمام واحدهای انتخاب‌شده خالی هستند. مبلغ به صورت مساوی تقسیم خواهد شد.
+                                </p>
+                            </div>
+                        ) : null;
+                    })()
+                )}
+                
+                {form.distribution === "parking" && unitsList && (
+                    (() => {
+                        const totalParking = unitsList.reduce((sum, unit) => {
+                            return sum + (unit.parking_count || 0);
+                        }, 0);
+                        return totalParking === 0 ? (
+                            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p className="text-sm text-amber-800">
+                                    ⚠️ <strong>هشدار:</strong> هیچ واحدی پارکینگ ندارد. مبلغ به صورت مساوی تقسیم خواهد شد.
+                                </p>
+                            </div>
+                        ) : null;
+                    })()
+                )}
+                
                 {form.distribution === "custom" && (
                     <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         {hasPayments && isEditing && (

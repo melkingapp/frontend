@@ -1,6 +1,6 @@
 import moment from "moment-jalaali";
-import { Building, Clock, CheckCircle, XCircle, Eye, Calendar, User, Home, Car } from "lucide-react";
-import StatusBadge from "./StatusBadge";
+import { Building, Clock, CheckCircle, XCircle, Eye, Calendar, User, Home, Car, DollarSign } from "lucide-react";
+import StatusBadge from "./StatusBadge"; 
 
 moment.loadPersian({ dialect: "persian-modern" });
 
@@ -65,6 +65,12 @@ const MembershipRequestCard = ({ request, onApprove, onReject, onViewDetails, sh
         <CardRow icon={<User size={16} className="text-gray-500" />} label="نقش" value={<RoleBadge role={request.role} />} />
         <CardRow icon={<Car size={16} className="text-gray-500" />} label="پارکینگ" value={request.has_parking ? `${request.parking_count || 1} عدد` : 'ندارد'} />
         <CardRow icon={<Calendar size={16} className="text-gray-500" />} label="تاریخ" value={moment(request.created_at).format('jYYYY/jMM/jDD')} />
+        {request.initial_debt && Number(request.initial_debt) !== 0 && (
+          <CardRow icon={<DollarSign size={16} className="text-gray-500" />} label="بدهکاری اولیه" value={`${request.initial_debt} تومان`} />
+        )}
+        {request.initial_credit && Number(request.initial_credit) !== 0 && (
+          <CardRow icon={<DollarSign size={16} className="text-gray-500" />} label="بستانکاری اولیه" value={`${request.initial_credit} تومان`} />
+        )}
       </div>
 
       {/* نمایش اطلاعات مالک برای مستاجر */}

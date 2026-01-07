@@ -14,6 +14,7 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
     const parkingCount = unit.parking_count || 0;
     const residentCount = (unit.resident_count ?? 0);
     const ownerType = unit.owner_type || "";
+    const isActuallyOccupied = unit.is_actually_occupied !== undefined ? unit.is_actually_occupied : true; // default to true if not provided
     // فیلدهای مالی واحد
     const totalDebt = unit.total_debt ?? 0;
     const totalCredit = unit.total_credit ?? 0;
@@ -25,13 +26,17 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
     const ownerFromObject = unit.owner ? (unit.owner.first_name && unit.owner.last_name ? `${unit.owner.first_name} ${unit.owner.last_name}` : unit.owner.full_name || "") : "";
     
     // سازگاری با فیلدهای قدیمی
-    // برای واحدهای tenant: ownerName باید از owner_full_name باشد، residentName از full_name
-    // برای واحدهای owner: ownerName از full_name، residentName از tenant_full_name
+    // برای واحدهای tenant: 
+    //   - ownerName از full_name (اطلاعات مالک ذخیره شده در full_name)
+    //   - residentName از tenant_full_name (اطلاعات مستاجر)
+    // برای واحدهای owner: 
+    //   - ownerName از full_name
+    //   - residentName از tenant_full_name
     const ownerName = role === "tenant" 
-        ? (ownerFullName || ownerFromObject || unit.owner_name || `مالک واحد ${unit.unit_number || ""}`.trim()) 
+        ? (fullName || ownerFullName || ownerFromObject || unit.owner_name || `مالک واحد ${unit.unit_number || ""}`.trim()) 
         : (unit.owner_name || fullName);
     const residentName = role === "tenant"
-        ? (fullName || unit.resident_name || "")
+        ? (tenantFullName || unit.resident_name || "")
         : (unit.resident_name || tenantFullName);
     
     // تعیین نوع واحد بر اساس نقش
@@ -134,7 +139,7 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
                                 >
                                     {role === "owner" && tenantFullName ? "مالک دارای مستاجر" : 
                                      role === "owner" ? "مالک" : 
-                                     role === "tenant" ? "مستاجر" :
+                                     role === "tenant" ? "مالک" :
                                      ownerName && residentName ? "مالک و ساکن" : 
                                      ownerName ? "مالک" : 
                                      residentName ? "ساکن" : "خالی"}
@@ -145,7 +150,7 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
                                     مالک {ownerConfirmed ? 'تأیید شده' : 'تأیید نشده'}
                                   </span>
                                 )}
-                                {(tenantFullName || (role === "tenant" && fullName)) && (
+                                {(tenantFullName || role === "tenant") && (
                                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${tenantConfirmed ? 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' : 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200'}`}>
                                     {tenantConfirmed ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
                                     مستأجر {tenantConfirmed ? 'تأیید شده' : 'تأیید نشده'}
@@ -158,7 +163,7 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
 
                     {/* وضعیت + دکمه ویرایش */}
                     <div className="flex items-center justify-between sm:justify-end gap-2">
-                        {ownerType === 'empty' || Number(residentCount) === 0 ? (
+                        {!isActuallyOccupied ? (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-sm font-medium shadow-sm">
                                 <CircleSlash size={14} className="shrink-0" />
                                 واحد خالی
@@ -185,16 +190,16 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
 
                 {/* نمایش مستاجر: برای واحدهای owner که مستاجر دارند و برای واحدهای tenant */}
                 {((role === "owner" && tenantFullName) || (ownerName && residentName && ownerName !== residentName)) || 
-                 (role === "tenant" && fullName) ? (
+                 (role === "tenant" && tenantFullName) ? (
                     <div className="mt-3 p-3 bg-sky-50 rounded-xl shadow-sm border border-sky-200">
                         <div className="flex items-center gap-3">
                             {/* آواتار مستاجر */}
                             <div className="w-12 h-12 shrink-0 rounded-full bg-sky-100 text-sky-700 grid place-items-center font-bold text-lg">
-                                {(role === "tenant" ? fullName : (tenantFullName || residentName))?.[0] || "?"}
+                                {(tenantFullName || residentName)?.[0] || "?"}
                             </div>
                             <div className="flex flex-col space-y-2">
                                 <span className="text-sm font-semibold text-gray-900">
-                                    {role === "tenant" ? fullName : (tenantFullName || residentName)}
+                                    {tenantFullName || residentName}
                                 </span>
                             </div>
                             {/* برچسب مشخص‌کننده */}

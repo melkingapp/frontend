@@ -11,7 +11,8 @@ import {
   Phone,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  DollarSign
 } from "lucide-react";
 import moment from "moment-jalaali";
 
@@ -237,6 +238,22 @@ export default function MembershipRequestDetailsModal({ request, isOpen, onClose
                         value={request.resident_count}
                         color="purple"
                       />
+                      {request.initial_debt && Number(request.initial_debt) !== 0 && (
+                        <InfoCard
+                          icon={DollarSign}
+                          title="بدهکاری اولیه"
+                          value={`${request.initial_debt} تومان`}
+                          color="gray"
+                        />
+                      )}
+                      {request.initial_credit && Number(request.initial_credit) !== 0 && (
+                        <InfoCard
+                          icon={DollarSign}
+                          title="بستانکاری اولیه"
+                          value={`${request.initial_credit} تومان`}
+                          color="gray"
+                        />
+                      )}
                     </div>
                   </div>
 
