@@ -1,8 +1,9 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useRef, useState } from "react";
 import { RefreshCcw, Edit3 } from "lucide-react";
+import Button from "../../../shared/components/shared/feedback/Button";
 
-export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
+export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack, loading }) {
     const inputsRef = useRef([]);
     const [timer, setTimer] = useState(60);
     const [resendVisible, setResendVisible] = useState(false);
@@ -94,6 +95,11 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                         .map((_, index) => (
                             <input
                                 key={index}
+                                id={`otp-input-${index}`}
+                                aria-label={`رقم ${index + 1} کد تایید`}
+                                autoComplete="one-time-code"
+                                aria-invalid={otpError}
+                                aria-describedby={otpError ? "otp-error" : undefined}
                                 type="text"
                                 inputMode="numeric"
                                 maxLength={1}
@@ -108,18 +114,21 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                 </div>
 
                 {otpError && (
-                    <p className="text-red-500 text-sm text-center mt-2">
+                    <p id="otp-error" className="text-red-500 text-sm text-center mt-2" role="alert">
                         کد تأیید نامعتبر است.
                     </p>
                 )}
 
-                <button
+                <Button
                     onClick={() => handleSubmit(getOtpValue())}
                     disabled={getOtpValue().length !== 5}
-                    className="w-full bg-melkingGold text-white py-3 rounded-xl font-bold text-base hover:bg-[#16243f] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    loading={loading}
+                    color="gold"
+                    size="medium"
+                    className="w-full h-12 rounded-xl text-base"
                 >
                     ورود به سامانه
-                </button>
+                </Button>
 
                 <div className="text-center text-sm text-gray-500">
                     {timer > 0 ? (

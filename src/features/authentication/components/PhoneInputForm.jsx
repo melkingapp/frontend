@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { ArrowLeftCircle } from "lucide-react";
+import Button from "../../../shared/components/shared/feedback/Button";
 
 const phoneSchema = yup.object().shape({
     phone: yup
@@ -10,7 +11,7 @@ const phoneSchema = yup.object().shape({
         .matches(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
 });
 
-export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role }) {
+export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role, loading }) {
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: { phone },
         resolver: yupResolver(phoneSchema),
@@ -45,12 +46,15 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
                     {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
 
                     <div className="space-y-3 pt-4 flex flex-col">
-                        <button
+                        <Button
                             type="submit"
-                            className="w-full bg-melkingGold text-melkingVeryDark py-3 rounded-xl font-bold text-base hover:bg-[#c6a952] transition"
+                            loading={loading}
+                            color="gold"
+                            size="medium"
+                            className="w-full h-12 rounded-xl text-base"
                         >
                             دریافت کد تأیید
-                        </button>
+                        </Button>
 
                         <button
                             type="button"
