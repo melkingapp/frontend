@@ -1,11 +1,20 @@
 const authMiddleware = (store) => (next) => (action) => {
     const result = next(action);
 
-    const { auth } = store.getState();
-
     // فقط برای login و logout
     if (action.type.startsWith("auth/")) {
-        localStorage.setItem("auth", JSON.stringify(auth));
+        const { auth } = store.getState();
+
+        // 🛡️ SECURITY: Only persist essential auth data to prevent data leakage.
+        // We explicitly whitelist fields to ensure no sensitive future additions
+        // (like payment tokens, PII, or temporary states like 'loading') are stored insecurely.
+        const safeAuth = {
+            user: auth.user,
+            tokens: auth.tokens,
+            isAuthenticated: auth.isAuthenticated
+        };
+
+        localStorage.setItem("auth", JSON.stringify(safeAuth));
     }
 
     return result;
