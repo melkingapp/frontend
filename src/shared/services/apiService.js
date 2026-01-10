@@ -102,27 +102,29 @@ client.interceptors.request.use(
             const authToken = config.headers.Authorization;
             const hasAuthToken = !!authToken && authToken.startsWith('Bearer ');
             
-            console.log('📋 FormData Request Details:', {
-                url: config.url,
-                method: config.method,
-                keys: formDataKeys,
-                hasFile: hasFile,
-                headers: {
-                    'Content-Type': config.headers['Content-Type'] || 'multipart/form-data (auto-set by axios)',
-                    'Authorization': hasAuthToken ? `Bearer ${authToken.substring(7, 20)}...` : '❌ MISSING',
-                    'Has-Auth-Token': hasAuthToken ? '✅ Yes' : '❌ No'
-                },
-                formDataEntries: [...config.data.entries()].map(([key, value]) => [
-                    key,
-                    value instanceof File || value instanceof Blob 
-                        ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
-                        : value
-                ])
-            });
-            
-            // هشدار در صورت نبودن token
-            if (!hasAuthToken) {
-                console.error('❌ WARNING: Authorization token is missing!');
+            if (import.meta.env.DEV) {
+                console.log('📋 FormData Request Details:', {
+                    url: config.url,
+                    method: config.method,
+                    keys: formDataKeys,
+                    hasFile: hasFile,
+                    headers: {
+                        'Content-Type': config.headers['Content-Type'] || 'multipart/form-data (auto-set by axios)',
+                        'Authorization': hasAuthToken ? `Bearer ${authToken.substring(7, 20)}...` : '❌ MISSING',
+                        'Has-Auth-Token': hasAuthToken ? '✅ Yes' : '❌ No'
+                    },
+                    formDataEntries: [...config.data.entries()].map(([key, value]) => [
+                        key,
+                        value instanceof File || value instanceof Blob
+                            ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
+                            : value
+                    ])
+                });
+
+                // هشدار در صورت نبودن token
+                if (!hasAuthToken) {
+                    console.error('❌ WARNING: Authorization token is missing!');
+                }
             }
             
             // هشدار در صورت تنظیم دستی Content-Type
@@ -330,36 +332,42 @@ export const get = async (url, config = {}) => {
 
 export const post = async (url, data = {}, config = {}) => {
     try {
-        // Log request details for debugging
-        if (data instanceof FormData) {
-            // برای FormData، فقط اطلاعات کلی را لاگ می‌کنیم
-            const formDataKeys = Array.from(data.keys());
-            const fileInfo = {};
-            formDataKeys.forEach(key => {
-                const value = data.get(key);
-                if (value instanceof File || value instanceof Blob) {
-                    fileInfo[key] = {
-                        name: value.name,
-                        size: value.size,
-                        type: value.type
-                    };
-                }
-            });
-            console.log(`📤 POST ${url} (FormData)`, {
-                keys: formDataKeys,
-                files: Object.keys(fileInfo).length > 0 ? fileInfo : 'none',
-                timeout: config.timeout,
-                hasFiles: Object.keys(fileInfo).length > 0
-            });
-        } else {
-            console.log(`📤 POST ${url}`, {
-                data: data,
-                config: config
-            });
+        if (import.meta.env.DEV) {
+            // Log request details for debugging
+            if (data instanceof FormData) {
+                // برای FormData، فقط اطلاعات کلی را لاگ می‌کنیم
+                const formDataKeys = Array.from(data.keys());
+                const fileInfo = {};
+                formDataKeys.forEach(key => {
+                    const value = data.get(key);
+                    if (value instanceof File || value instanceof Blob) {
+                        fileInfo[key] = {
+                            name: value.name,
+                            size: value.size,
+                            type: value.type
+                        };
+                    }
+                });
+                console.log(`📤 POST ${url} (FormData)`, {
+                    keys: formDataKeys,
+                    files: Object.keys(fileInfo).length > 0 ? fileInfo : 'none',
+                    timeout: config.timeout,
+                    hasFiles: Object.keys(fileInfo).length > 0
+                });
+            } else {
+                console.log(`📤 POST ${url}`, {
+                    data: data,
+                    config: config
+                });
+            }
         }
         
         const response = await client.post(url, data, config);
-        console.log(`✅ POST ${url} success:`, response.data);
+
+        if (import.meta.env.DEV) {
+            console.log(`✅ POST ${url} success:`, response.data);
+        }
+
         return response.data;
     } catch (error) {
         // Fallback to localhost for /resident page on network/CORS errors
