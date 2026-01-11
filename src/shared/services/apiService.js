@@ -4,6 +4,80 @@ import { getApiBaseUrl } from '../utils/apiConfig';
 // Configuration
 const baseURL = getApiBaseUrl();
 
+// Helper function to redact sensitive data from logs
+const redactSensitiveData = (data) => {
+    if (!data) return data;
+    if (typeof data !== 'object') return data;
+
+    // List of keys to redact (exact match or common patterns)
+    const SENSITIVE_KEYS_EXACT = new Set([
+        'password',
+        'password_confirm',
+        'current_password',
+        'new_password',
+        'otp',
+        'token',
+        'access_token',
+        'refresh_token',
+        'authorization',
+        'auth_token',
+        'secret',
+        'client_secret',
+        'signature'
+    ]);
+
+    // Check if a key is sensitive based on refined logic
+    const isSensitiveKey = (key, value) => {
+        const lowerKey = key.toLowerCase();
+
+        // Check for exact matches
+        if (SENSITIVE_KEYS_EXACT.has(lowerKey)) return true;
+
+        // Specific checks for ambiguous keys
+        // "refresh" is often used for refresh tokens in this app
+        if (lowerKey === 'refresh' && typeof value === 'string') return true;
+
+        // "access" could be access token or accessibility
+        // If it's a long string, it's likely a token
+        if (lowerKey === 'access' && typeof value === 'string' && value.length > 20) return true;
+
+        // Check for patterns but exclude common false positives
+        // Matches keys ending in "token", "password", "secret", "key"
+        // But NOT "access" (accessibility), "code" (zip_code, error_code), "id"
+        if (lowerKey.endsWith('password')) return true;
+        if (lowerKey.endsWith('token') && !lowerKey.includes('device_token')) return true; // device_token might be safe to log? Keeping it safe just in case.
+        if (lowerKey.endsWith('_secret')) return true;
+
+        // "code" is dangerous to match broadly. Only match specific OTP-like codes if needed,
+        // usually they are named "otp" or "verification_code".
+        if (lowerKey === 'code' || lowerKey === 'verification_code') return true;
+
+        return false;
+    };
+
+    // Deep copy to avoid modifying original data
+    try {
+        const copy = JSON.parse(JSON.stringify(data));
+
+        const redactObject = (obj) => {
+            if (!obj || typeof obj !== 'object') return;
+
+            Object.keys(obj).forEach(key => {
+                if (isSensitiveKey(key, obj[key])) {
+                    obj[key] = '[REDACTED]';
+                } else if (typeof obj[key] === 'object') {
+                    redactObject(obj[key]);
+                }
+            });
+        };
+
+        redactObject(copy);
+        return copy;
+    } catch (e) {
+        return '[Error redacting data]';
+    }
+};
+
 // Helper function to extract error message from HTML response
 const extractErrorMessage = (error) => {
     // If we have a proper JSON error response
@@ -353,13 +427,19 @@ export const post = async (url, data = {}, config = {}) => {
             });
         } else {
             console.log(`📤 POST ${url}`, {
-                data: data,
+                data: redactSensitiveData(data),
                 config: config
             });
         }
         
         const response = await client.post(url, data, config);
-        console.log(`✅ POST ${url} success:`, response.data);
+        // Don't log full response data for security, especially for auth endpoints
+        const isAuthEndpoint = url.includes('/login') || url.includes('/register') || url.includes('/refresh') || url.includes('/otp');
+        if (isAuthEndpoint) {
+            console.log(`✅ POST ${url} success: [Response Redacted for Security]`);
+        } else {
+            console.log(`✅ POST ${url} success:`, response.data);
+        }
         return response.data;
     } catch (error) {
         // Fallback to localhost for /resident page on network/CORS errors
@@ -429,7 +509,8 @@ export const post = async (url, data = {}, config = {}) => {
                 console.error(`HTML Response Preview (first 500 chars):`, 
                     error.response.data.substring(0, 500));
             } else {
-                console.error(`Error Response Data:`, error.response.data);
+                // Also redact error response data if needed
+                console.error(`Error Response Data:`, redactSensitiveData(error.response.data));
             }
         } else if (error.request) {
             console.error(`No response received. Request:`, error.request);
