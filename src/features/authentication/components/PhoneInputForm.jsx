@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { ArrowLeftCircle } from "lucide-react";
+import Button from "../../../shared/components/shared/feedback/Button";
 
 const phoneSchema = yup.object().shape({
     phone: yup
@@ -10,7 +11,7 @@ const phoneSchema = yup.object().shape({
         .matches(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
 });
 
-export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role }) {
+export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role, loading, error }) {
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: { phone },
         resolver: yupResolver(phoneSchema),
@@ -18,9 +19,8 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
     });
 
     const handleFormSubmit = (data) => {
-        console.log('Form submitted with phone:', data.phone);
         setPhone(data.phone);
-        onSubmit(data.phone); // پاس دادن شماره به والد
+        onSubmit(data.phone);
     };
 
     return (
@@ -34,23 +34,32 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
                 </div>
 
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">شماره موبایل</label>
+                    <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700">شماره موبایل</label>
                     <input
+                        id="phone-input"
                         type="tel"
                         {...register("phone")}
                         placeholder="مثلاً 09121234567"
+                        aria-invalid={!!errors.phone}
+                        aria-describedby={errors.phone ? "phone-error" : undefined}
                         className={`w-full border rounded-xl px-4 py-2 text-sm shadow-sm focus:outline-none transition 
                             ${errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:border-melkingGold focus:ring-2 focus:ring-melkingGold"}`}
                     />
-                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
+                    {errors.phone && (
+                        <p id="phone-error" className="text-red-500 text-sm mt-1">
+                            {errors.phone.message}
+                        </p>
+                    )}
 
                     <div className="space-y-3 pt-4 flex flex-col">
-                        <button
+                        <Button
                             type="submit"
-                            className="w-full bg-melkingGold text-melkingVeryDark py-3 rounded-xl font-bold text-base hover:bg-[#c6a952] transition"
+                            loading={loading}
+                            color="gold"
+                            className="w-full text-melkingVeryDark font-bold hover:bg-[#c6a952]"
                         >
                             دریافت کد تأیید
-                        </button>
+                        </Button>
 
                         <button
                             type="button"
