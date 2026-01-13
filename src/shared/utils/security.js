@@ -48,7 +48,61 @@ export const sanitizeString = (input) => {
     return DOMPurify.sanitize(input);
 };
 
+/**
+ * Redacts sensitive keys from an object for safe logging.
+ * Recursively masks keys like password, token, otp, secret, etc.
+ *
+ * @param {Object} data - The object to sanitize
+ * @returns {Object} - A new object with sensitive keys redacted
+ */
+export const redactSensitiveData = (data) => {
+    if (!data) return data;
+    if (typeof data !== 'object') return data;
+
+    if (Array.isArray(data)) {
+        return data.map(item => redactSensitiveData(item));
+    }
+
+    // Handle specific object types we don't want to traverse deeply
+    if (data instanceof Date) return data;
+    if (data instanceof RegExp) return data;
+    if ((typeof File !== 'undefined' && data instanceof File) ||
+        (typeof Blob !== 'undefined' && data instanceof Blob)) {
+        return '[File/Blob]';
+    }
+
+    const sensitiveKeys = [
+        'password',
+        'token',
+        'access',
+        'refresh',
+        'otp',
+        'secret',
+        'authorization',
+        'cookie',
+        'cvv',
+        'credit_card'
+    ];
+
+    const redacted = {};
+
+    for (const key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+            const lowerKey = key.toLowerCase();
+            const value = data[key];
+
+            if (sensitiveKeys.some(k => lowerKey.includes(k))) {
+                redacted[key] = '[REDACTED]';
+            } else {
+                redacted[key] = redactSensitiveData(value);
+            }
+        }
+    }
+    return redacted;
+};
+
 export default {
     sanitizeUser,
-    sanitizeString
+    sanitizeString,
+    redactSensitiveData
 };

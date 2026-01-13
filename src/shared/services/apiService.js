@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '../utils/apiConfig';
+import { redactSensitiveData } from '../utils/security';
 
 // Configuration
 const baseURL = getApiBaseUrl();
@@ -352,14 +353,20 @@ export const post = async (url, data = {}, config = {}) => {
                 hasFiles: Object.keys(fileInfo).length > 0
             });
         } else {
+            // Create a safe config object by redacting headers if they exist
+            const safeConfig = config ? {
+                ...config,
+                headers: config.headers ? redactSensitiveData(config.headers) : undefined
+            } : config;
+
             console.log(`📤 POST ${url}`, {
-                data: data,
-                config: config
+                data: redactSensitiveData(data),
+                config: safeConfig
             });
         }
         
         const response = await client.post(url, data, config);
-        console.log(`✅ POST ${url} success:`, response.data);
+        console.log(`✅ POST ${url} success:`, redactSensitiveData(response.data));
         return response.data;
     } catch (error) {
         // Fallback to localhost for /resident page on network/CORS errors
@@ -429,7 +436,7 @@ export const post = async (url, data = {}, config = {}) => {
                 console.error(`HTML Response Preview (first 500 chars):`, 
                     error.response.data.substring(0, 500));
             } else {
-                console.error(`Error Response Data:`, error.response.data);
+                console.error(`Error Response Data:`, redactSensitiveData(error.response.data));
             }
         } else if (error.request) {
             console.error(`No response received. Request:`, error.request);
