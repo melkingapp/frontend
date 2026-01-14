@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '../utils/apiConfig';
+import { redactSensitiveData } from '../utils/security';
 
 // Configuration
 const baseURL = getApiBaseUrl();
@@ -116,7 +117,7 @@ client.interceptors.request.use(
                     key,
                     value instanceof File || value instanceof Blob 
                         ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
-                        : value
+                        : (['password', 'otp', 'token', 'secret', 'access', 'refresh'].some(s => key.toLowerCase().includes(s)) ? '***REDACTED***' : value)
                 ])
             });
             
@@ -353,13 +354,13 @@ export const post = async (url, data = {}, config = {}) => {
             });
         } else {
             console.log(`📤 POST ${url}`, {
-                data: data,
-                config: config
+                data: redactSensitiveData(data),
+                config: redactSensitiveData(config)
             });
         }
         
         const response = await client.post(url, data, config);
-        console.log(`✅ POST ${url} success:`, response.data);
+        console.log(`✅ POST ${url} success:`, redactSensitiveData(response.data));
         return response.data;
     } catch (error) {
         // Fallback to localhost for /resident page on network/CORS errors
