@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '../utils/apiConfig';
+import { redactSensitiveData } from '../utils/security';
 
 // Configuration
 const baseURL = getApiBaseUrl();
@@ -112,12 +113,22 @@ client.interceptors.request.use(
                     'Authorization': hasAuthToken ? `Bearer ${authToken.substring(7, 20)}...` : '❌ MISSING',
                     'Has-Auth-Token': hasAuthToken ? '✅ Yes' : '❌ No'
                 },
-                formDataEntries: [...config.data.entries()].map(([key, value]) => [
-                    key,
-                    value instanceof File || value instanceof Blob 
-                        ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
-                        : value
-                ])
+                formDataEntries: [...config.data.entries()].map(([key, value]) => {
+                    // Check if key is sensitive
+                    const isSensitive = ['password', 'otp', 'token', 'secret', 'access', 'refresh', 'credit_card']
+                        .some(sensitive => key.toLowerCase().includes(sensitive));
+
+                    if (isSensitive) {
+                        return [key, '***REDACTED***'];
+                    }
+
+                    return [
+                        key,
+                        value instanceof File || value instanceof Blob
+                            ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
+                            : value
+                    ];
+                })
             });
             
             // هشدار در صورت نبودن token
@@ -353,13 +364,13 @@ export const post = async (url, data = {}, config = {}) => {
             });
         } else {
             console.log(`📤 POST ${url}`, {
-                data: data,
+                data: redactSensitiveData(data),
                 config: config
             });
         }
         
         const response = await client.post(url, data, config);
-        console.log(`✅ POST ${url} success:`, response.data);
+        console.log(`✅ POST ${url} success:`, redactSensitiveData(response.data));
         return response.data;
     } catch (error) {
         // Fallback to localhost for /resident page on network/CORS errors
