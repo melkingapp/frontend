@@ -17,8 +17,10 @@ import SettingsInput from '../../shared/components/settings/SettingsInput';
 import NotificationToggle from '../../shared/components/settings/NotificationToggle';
 import { 
   fetchNotificationSettings, 
-  updateNotificationSettings 
+  updateNotificationSettings,
+  updateUnitResidentCount,
 } from '../../features/settings/settingsSlice';
+import SettingsService from '../../shared/services/settingsService';
 
 const ResidentSettings = () => {
   const dispatch = useDispatch();
@@ -27,12 +29,14 @@ const ResidentSettings = () => {
   
   const [formData, setFormData] = useState({
     // Notification settings
-    email_notifications: true,
-    sms_notifications: true,
-    push_notifications: true,
+    telegram_enabled: true,
+    sms_enabled: true,
+    email_enabled: true,
+    app_notification_enabled: true,
+    payment_notifications: true,
     maintenance_notifications: true,
-    financial_notifications: true,
-    emergency_notifications: true,
+    meeting_notifications: true,
+    general_notifications: true,
     
     // Unit settings
     resident_count: 1,
@@ -42,10 +46,27 @@ const ResidentSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
+  const [telegramStatus, setTelegramStatus] = useState(null);
+  const [telegramCodeInfo, setTelegramCodeInfo] = useState(null);
+  const [telegramLoading, setTelegramLoading] = useState(false);
+
   // Load initial data
   useEffect(() => {
     if (selectedResidentBuilding) {
       dispatch(fetchNotificationSettings());
+      // Telegram connection status
+      (async () => {
+        try {
+          setTelegramLoading(true);
+          const res = await SettingsService.getTelegramConnectionStatus();
+          setTelegramStatus(res?.data || null);
+        } catch (e) {
+          // ignore (e.g., not configured)
+          setTelegramStatus(null);
+        } finally {
+          setTelegramLoading(false);
+        }
+      })();
     }
   }, [dispatch, selectedResidentBuilding]);
 
@@ -106,13 +127,74 @@ const ResidentSettings = () => {
 
     setIsSaving(true);
     try {
-      await dispatch(updateNotificationSettings(formData)).unwrap();
+      // Only send fields supported by backend serializer
+      const notificationPayload = {
+        telegram_enabled: formData.telegram_enabled,
+        sms_enabled: formData.sms_enabled,
+        email_enabled: formData.email_enabled,
+        app_notification_enabled: formData.app_notification_enabled,
+        payment_notifications: formData.payment_notifications,
+        maintenance_notifications: formData.maintenance_notifications,
+        meeting_notifications: formData.meeting_notifications,
+        general_notifications: formData.general_notifications,
+      };
+
+      await dispatch(updateNotificationSettings(notificationPayload)).unwrap();
+
+      // Update resident count if we can resolve building/unit identifiers
+      const buildingId =
+        selectedResidentBuilding?.building_id ??
+        selectedResidentBuilding?.buildingId ??
+        selectedResidentBuilding?.building?.building_id;
+      const unitId =
+        selectedResidentBuilding?.units_id ??
+        selectedResidentBuilding?.unit_id ??
+        selectedResidentBuilding?.unitId ??
+        selectedResidentBuilding?.unit?.units_id;
+
+      if (buildingId && unitId) {
+        await dispatch(
+          updateUnitResidentCount({
+            buildingId,
+            unitId,
+            data: { resident_count: formData.resident_count },
+          })
+        ).unwrap();
+      }
       setHasUnsavedChanges(false);
       toast.success('تنظیمات با موفقیت ذخیره شد');
     } catch (error) {
       toast.error('خطا در ذخیره تنظیمات');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleGetTelegramConnectionCode = async () => {
+    try {
+      setTelegramLoading(true);
+      const res = await SettingsService.getTelegramConnectionCode();
+      setTelegramCodeInfo(res?.data || null);
+      toast.success('کد اتصال ساخته شد');
+    } catch (e) {
+      toast.error('خطا در دریافت کد اتصال تلگرام');
+    } finally {
+      setTelegramLoading(false);
+    }
+  };
+
+  const handleDisconnectTelegram = async () => {
+    try {
+      setTelegramLoading(true);
+      await SettingsService.disconnectTelegram();
+      const res = await SettingsService.getTelegramConnectionStatus();
+      setTelegramStatus(res?.data || null);
+      setTelegramCodeInfo(null);
+      toast.success('اتصال تلگرام قطع شد');
+    } catch (e) {
+      toast.error('خطا در قطع اتصال تلگرام');
+    } finally {
+      setTelegramLoading(false);
     }
   };
 
@@ -168,52 +250,140 @@ const ResidentSettings = () => {
           >
             <div className="space-y-4">
               <NotificationToggle
-                id="email_notifications"
+                id="telegram_enabled"
+                label="اعلان‌های تلگرام"
+                description="دریافت اعلان‌ها از طریق بات تلگرام"
+                checked={!!formData.telegram_enabled}
+                onChange={(e) => handleInputChange('telegram_enabled', e.target.checked)}
+              />
+
+              <NotificationToggle
+                id="email_enabled"
                 label="اعلان‌های ایمیل"
                 description="دریافت اطلاعیه‌ها از طریق ایمیل"
-                checked={formData.email_notifications}
-                onChange={(e) => handleInputChange('email_notifications', e.target.checked)}
+                checked={!!formData.email_enabled}
+                onChange={(e) => handleInputChange('email_enabled', e.target.checked)}
               />
               
               <NotificationToggle
-                id="sms_notifications"
+                id="sms_enabled"
                 label="اعلان‌های پیامک"
                 description="دریافت اطلاعیه‌ها از طریق پیامک"
-                checked={formData.sms_notifications}
-                onChange={(e) => handleInputChange('sms_notifications', e.target.checked)}
+                checked={!!formData.sms_enabled}
+                onChange={(e) => handleInputChange('sms_enabled', e.target.checked)}
               />
               
               <NotificationToggle
-                id="push_notifications"
+                id="app_notification_enabled"
                 label="اعلان‌های Push"
                 description="دریافت اعلان‌های فوری در اپلیکیشن"
-                checked={formData.push_notifications}
-                onChange={(e) => handleInputChange('push_notifications', e.target.checked)}
+                checked={!!formData.app_notification_enabled}
+                onChange={(e) => handleInputChange('app_notification_enabled', e.target.checked)}
               />
               
               <NotificationToggle
                 id="maintenance_notifications"
                 label="اعلان‌های تعمیرات"
                 description="اطلاع از برنامه‌های تعمیرات و نگهداری"
-                checked={formData.maintenance_notifications}
+                checked={!!formData.maintenance_notifications}
                 onChange={(e) => handleInputChange('maintenance_notifications', e.target.checked)}
               />
               
               <NotificationToggle
-                id="financial_notifications"
-                label="اعلان‌های مالی"
-                description="اطلاع از مسائل مالی و شارژ ساختمان"
-                checked={formData.financial_notifications}
-                onChange={(e) => handleInputChange('financial_notifications', e.target.checked)}
+                id="payment_notifications"
+                label="اعلان‌های پرداخت"
+                description="اطلاع از وضعیت پرداخت‌ها و شارژ"
+                checked={!!formData.payment_notifications}
+                onChange={(e) => handleInputChange('payment_notifications', e.target.checked)}
               />
-              
+
               <NotificationToggle
-                id="emergency_notifications"
-                label="اعلان‌های اضطراری"
-                description="اطلاع از شرایط اضطراری و مهم"
-                checked={formData.emergency_notifications}
-                onChange={(e) => handleInputChange('emergency_notifications', e.target.checked)}
+                id="meeting_notifications"
+                label="اعلان‌های جلسات"
+                description="اطلاع از جلسات و نظرسنجی‌ها"
+                checked={!!formData.meeting_notifications}
+                onChange={(e) => handleInputChange('meeting_notifications', e.target.checked)}
               />
+
+              <NotificationToggle
+                id="general_notifications"
+                label="اعلان‌های عمومی"
+                description="اطلاعیه‌های عمومی مدیریت ساختمان"
+                checked={!!formData.general_notifications}
+                onChange={(e) => handleInputChange('general_notifications', e.target.checked)}
+              />
+            </div>
+          </SettingsSection>
+
+          {/* Telegram Connection */}
+          <SettingsSection
+            title="اتصال تلگرام"
+            description="اتصال حساب شما به بات برای دریافت اعلان‌ها و استفاده از امکانات داخل تلگرام"
+            icon={Bell}
+          >
+            <div className="space-y-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-gray-900">وضعیت اتصال</div>
+                    <div className="text-sm text-gray-600">
+                      {telegramLoading
+                        ? 'در حال بررسی...'
+                        : telegramStatus?.connected
+                          ? `✅ متصل (@${telegramStatus?.username || '—'})`
+                          : '❌ متصل نیست'}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {telegramStatus?.connected ? (
+                      <button
+                        type="button"
+                        onClick={handleDisconnectTelegram}
+                        disabled={telegramLoading}
+                        className="px-4 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        قطع اتصال
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleGetTelegramConnectionCode}
+                        disabled={telegramLoading}
+                        className="px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-50"
+                      >
+                        دریافت کد اتصال
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {!telegramStatus?.connected && telegramCodeInfo?.connection_code && (
+                  <div className="mt-4 space-y-2">
+                    <div className="text-sm text-gray-700">
+                      ۱) در تلگرام وارد بات شوید: <span className="font-mono">@{telegramCodeInfo.bot_username}</span>
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      ۲) این دستور را بزنید:
+                      <div className="mt-2 rounded-lg bg-gray-50 border border-gray-200 p-3 font-mono text-sm">
+                        /start {telegramCodeInfo.connection_code}
+                      </div>
+                    </div>
+                    <a
+                      href={`https://t.me/${telegramCodeInfo.bot_username}?start=${telegramCodeInfo.connection_code}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-indigo-700 hover:text-indigo-800 text-sm font-semibold"
+                    >
+                      باز کردن بات در تلگرام
+                    </a>
+                    {telegramCodeInfo.expires_at && (
+                      <div className="text-xs text-gray-500">
+                        انقضا: {new Date(telegramCodeInfo.expires_at).toLocaleString('fa-IR')}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </SettingsSection>
 

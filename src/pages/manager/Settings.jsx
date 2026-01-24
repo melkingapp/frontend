@@ -11,6 +11,7 @@ import DocumentUploader from '../../shared/components/settings/DocumentUploader'
 import NotificationToggle from '../../shared/components/settings/NotificationToggle';
 import ShebaInputGroupSettings from '../../shared/components/shared/inputs/ShebaInputGroupSettings';
 import BankCardInputSettings from '../../shared/components/shared/inputs/BankCardInputSettings';
+import SettingsService from '../../shared/services/settingsService';
 import {
     fetchBuildingSettings,
     updateBuildingSettings,
@@ -44,6 +45,10 @@ const ManagerSettings = () => {
     const [validationErrors, setValidationErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
 
+    const [telegramStatus, setTelegramStatus] = useState(null);
+    const [telegramCodeInfo, setTelegramCodeInfo] = useState(null);
+    const [telegramLoading, setTelegramLoading] = useState(false);
+
     // Find selected building from buildings list
     const selectedBuilding = buildings.find(b => b.building_id === selectedBuildingId);
 
@@ -53,8 +58,48 @@ const ManagerSettings = () => {
             dispatch(fetchBuildingDocuments(selectedBuildingId));
             dispatch(fetchNotificationSettings());
             dispatch(fetchFinancialVisibilitySettings(selectedBuildingId));
+
+            (async () => {
+                try {
+                    setTelegramLoading(true);
+                    const res = await SettingsService.getTelegramConnectionStatus();
+                    setTelegramStatus(res?.data || null);
+                } catch (e) {
+                    setTelegramStatus(null);
+                } finally {
+                    setTelegramLoading(false);
+                }
+            })();
         }
     }, [dispatch, selectedBuildingId]);
+
+    const handleGetTelegramConnectionCode = async () => {
+        try {
+            setTelegramLoading(true);
+            const res = await SettingsService.getTelegramConnectionCode();
+            setTelegramCodeInfo(res?.data || null);
+            toast.success('کد اتصال ساخته شد');
+        } catch (e) {
+            toast.error('خطا در دریافت کد اتصال تلگرام');
+        } finally {
+            setTelegramLoading(false);
+        }
+    };
+
+    const handleDisconnectTelegram = async () => {
+        try {
+            setTelegramLoading(true);
+            await SettingsService.disconnectTelegram();
+            const res = await SettingsService.getTelegramConnectionStatus();
+            setTelegramStatus(res?.data || null);
+            setTelegramCodeInfo(null);
+            toast.success('اتصال تلگرام قطع شد');
+        } catch (e) {
+            toast.error('خطا در قطع اتصال تلگرام');
+        } finally {
+            setTelegramLoading(false);
+        }
+    };
 
     useEffect(() => {
         // First try to load from buildingSettings (from API)
@@ -531,6 +576,13 @@ const ManagerSettings = () => {
                                 description="تنظیمات مربوط به روش‌های دریافت اعلان و نوع اطلاعیه‌ها"
                             >
                     <NotificationToggle
+                        id="telegram_enabled"
+                        label="اعلان تلگرام"
+                        description="دریافت اعلان‌ها از طریق بات تلگرام"
+                        checked={!!notificationSettings.telegram_enabled}
+                        onChange={(e) => handleNotificationChange('telegram_enabled', e.target.checked)}
+                    />
+                    <NotificationToggle
                         id="sms_enabled"
                         label="اعلان پیامکی"
                         description="دریافت اعلان‌ها از طریق پیامک"
@@ -551,6 +603,66 @@ const ManagerSettings = () => {
                         checked={notificationSettings.app_notification_enabled}
                         onChange={(e) => handleNotificationChange('app_notification_enabled', e.target.checked)}
                     />
+                    <div className="border-t border-gray-200 pt-4 mt-4">
+                        <h3 className="text-md font-medium text-gray-800 mb-2">اتصال تلگرام:</h3>
+                        <div className="rounded-lg border border-gray-200 bg-white p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <div className="font-semibold text-gray-900">وضعیت اتصال</div>
+                                    <div className="text-sm text-gray-600">
+                                        {telegramLoading
+                                            ? 'در حال بررسی...'
+                                            : telegramStatus?.connected
+                                                ? `✅ متصل (@${telegramStatus?.username || '—'})`
+                                                : '❌ متصل نیست'}
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    {telegramStatus?.connected ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleDisconnectTelegram}
+                                            disabled={telegramLoading}
+                                            className="px-4 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50"
+                                        >
+                                            قطع اتصال
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleGetTelegramConnectionCode}
+                                            disabled={telegramLoading}
+                                            className="px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-50"
+                                        >
+                                            دریافت کد اتصال
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {!telegramStatus?.connected && telegramCodeInfo?.connection_code && (
+                                <div className="mt-4 space-y-2">
+                                    <div className="text-sm text-gray-700">
+                                        ۱) بات: <span className="font-mono">@{telegramCodeInfo.bot_username}</span>
+                                    </div>
+                                    <div className="text-sm text-gray-700">
+                                        ۲) دستور:
+                                        <div className="mt-2 rounded-lg bg-gray-50 border border-gray-200 p-3 font-mono text-sm">
+                                            /start {telegramCodeInfo.connection_code}
+                                        </div>
+                                    </div>
+                                    <a
+                                        href={`https://t.me/${telegramCodeInfo.bot_username}?start=${telegramCodeInfo.connection_code}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 text-indigo-700 hover:text-indigo-800 text-sm font-semibold"
+                                    >
+                                        باز کردن بات در تلگرام
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <div className="border-t border-gray-200 pt-4 mt-4">
                         <h3 className="text-md font-medium text-gray-800 mb-2">نوع اعلان‌ها:</h3>
                         <NotificationToggle
