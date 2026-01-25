@@ -44,6 +44,11 @@ export const API_CONFIG = {
         BUILDING_DOCUMENTS_DELETE: (buildingId, documentId) => `/buildings/${buildingId}/documents/${documentId}/delete/`,
         NOTIFICATION_SETTINGS: '/notification/settings/',
         NOTIFICATION_SETTINGS_UPDATE: '/notification/settings/update/',
+        // Telegram
+        TELEGRAM_CONNECTION_CODE: '/telegram/connection-code/',
+        TELEGRAM_CONNECTION_STATUS: '/telegram/connection-status/',
+        TELEGRAM_DISCONNECT: '/telegram/disconnect/',
+        TELEGRAM_LOGS: '/telegram/logs/',
         UNIT_RESIDENT_COUNT_UPDATE: (buildingId, unitId) => `/buildings/${buildingId}/units/${unitId}/update-resident-count/`,
         
         // Billing

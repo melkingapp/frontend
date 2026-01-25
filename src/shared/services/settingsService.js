@@ -29,6 +29,21 @@ const SettingsService = {
         return ApiService.put(API_CONFIG.ENDPOINTS.NOTIFICATION_SETTINGS_UPDATE, data);
     },
 
+    // Telegram Settings / Connection
+    getTelegramConnectionCode: async () => {
+        return ApiService.get(API_CONFIG.ENDPOINTS.TELEGRAM_CONNECTION_CODE);
+    },
+    getTelegramConnectionStatus: async () => {
+        return ApiService.get(API_CONFIG.ENDPOINTS.TELEGRAM_CONNECTION_STATUS);
+    },
+    disconnectTelegram: async () => {
+        return ApiService.delete(API_CONFIG.ENDPOINTS.TELEGRAM_DISCONNECT);
+    },
+    getTelegramLogs: async (params = {}) => {
+        // params: { limit, offset }
+        return ApiService.get(API_CONFIG.ENDPOINTS.TELEGRAM_LOGS, { params });
+    },
+
     // Unit Resident Count
     updateUnitResidentCount: async (buildingId, unitId, data) => {
         return ApiService.patch(API_CONFIG.ENDPOINTS.UNIT_RESIDENT_COUNT_UPDATE(buildingId, unitId), data);
