@@ -6,6 +6,7 @@ export const navItemsResident = [
         icon: <CreditCard size={20} />,
         to: "/resident/finance",
         children: [
+            { label: "هزینه‌های من", to: "/resident/finance/expenses" },
             { label: "گردش مالی", to: "finance-reports" },
             { label: "بیلان مالی", to: "finance/balance" },
             { label: "درخواست‌های پرداخت اضافی", to: "/resident/finance/extra-payment-requests" },
