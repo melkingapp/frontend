@@ -2,6 +2,8 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { ArrowLeftCircle } from "lucide-react";
+import Button from "../../../shared/components/shared/feedback/Button";
+import InputField from "../../../shared/components/shared/inputs/InputField";
 
 const phoneSchema = yup.object().shape({
     phone: yup
@@ -10,7 +12,7 @@ const phoneSchema = yup.object().shape({
         .matches(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
 });
 
-export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role }) {
+export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role, loading }) {
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: { phone },
         resolver: yupResolver(phoneSchema),
@@ -33,24 +35,26 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
                     <p className="text-sm text-gray-500">لطفاً شماره موبایل خود را وارد کنید:</p>
                 </div>
 
-                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">شماره موبایل</label>
-                    <input
+                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+                    <InputField
+                        label="شماره موبایل"
                         type="tel"
                         {...register("phone")}
                         placeholder="مثلاً 09121234567"
-                        className={`w-full border rounded-xl px-4 py-2 text-sm shadow-sm focus:outline-none transition 
-                            ${errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:border-melkingGold focus:ring-2 focus:ring-melkingGold"}`}
+                        error={errors.phone?.message}
+                        inputClassName="rounded-xl"
                     />
-                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
 
                     <div className="space-y-3 pt-4 flex flex-col">
-                        <button
+                        <Button
                             type="submit"
-                            className="w-full bg-melkingGold text-melkingVeryDark py-3 rounded-xl font-bold text-base hover:bg-[#c6a952] transition"
+                            loading={loading}
+                            variant="solid"
+                            color="gold"
+                            className="w-full py-3 rounded-xl font-bold text-base text-melkingVeryDark hover:bg-[#c6a952]"
                         >
                             دریافت کد تأیید
-                        </button>
+                        </Button>
 
                         <button
                             type="button"

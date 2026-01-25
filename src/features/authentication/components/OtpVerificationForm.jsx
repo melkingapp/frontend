@@ -1,8 +1,9 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useRef, useState } from "react";
 import { RefreshCcw, Edit3 } from "lucide-react";
+import Button from "../../../shared/components/shared/feedback/Button";
 
-export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
+export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack, loading }) {
     const inputsRef = useRef([]);
     const [timer, setTimer] = useState(60);
     const [resendVisible, setResendVisible] = useState(false);
@@ -97,6 +98,8 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                                 type="text"
                                 inputMode="numeric"
                                 maxLength={1}
+                                autoComplete={index === 0 ? "one-time-code" : undefined}
+                                aria-label={`Digit ${index + 1}`}
                                 className={`w-12 h-12 border rounded-xl text-center text-lg font-bold shadow-sm focus:outline-none transition
                                 ${otpError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-melkingGold"}
                                 `}
@@ -113,13 +116,16 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                     </p>
                 )}
 
-                <button
+                <Button
                     onClick={() => handleSubmit(getOtpValue())}
                     disabled={getOtpValue().length !== 5}
-                    className="w-full bg-melkingGold text-white py-3 rounded-xl font-bold text-base hover:bg-[#16243f] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    loading={loading}
+                    variant="solid"
+                    color="gold"
+                    className="w-full py-3 rounded-xl font-bold text-base text-white hover:bg-[#16243f]"
                 >
                     ورود به سامانه
-                </button>
+                </Button>
 
                 <div className="text-center text-sm text-gray-500">
                     {timer > 0 ? (
