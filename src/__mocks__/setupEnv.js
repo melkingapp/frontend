@@ -11,14 +11,3 @@ global.import = {
 const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
-
-// Mock window.location for tests
-delete global.window.location;
-global.window.location = {
-  hostname: 'localhost',
-  protocol: 'http:',
-  host: 'localhost:5173',
-  pathname: '/',
-  search: '',
-  hash: '',
-};
