@@ -1,5 +1,6 @@
-export default {
+module.exports = {
   testEnvironment: 'jsdom',
+  setupFiles: ['<rootDir>/src/__mocks__/setupEnv.js'],
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -21,5 +22,5 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  extensionsToTreatAsEsm: ['.jsx', '.js'],
+  extensionsToTreatAsEsm: ['.jsx'],
 };
