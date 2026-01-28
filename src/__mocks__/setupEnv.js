@@ -13,12 +13,6 @@ global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
 // Mock window.location for tests
-delete global.window.location;
-global.window.location = {
-  hostname: 'localhost',
-  protocol: 'http:',
-  host: 'localhost:5173',
-  pathname: '/',
-  search: '',
-  hash: '',
-};
+// In JSDOM/Jest 30+, window.location is read-only.
+// If specific tests need to mock location, they should do it individually
+// or use Object.defineProperty on window (if allowed) or use JSDOM configuration.
