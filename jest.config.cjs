@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   moduleNameMapper: {
@@ -20,6 +20,5 @@ export default {
     '!src/**/__tests__/**',
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  extensionsToTreatAsEsm: ['.jsx', '.js'],
+  coverageReporters: ['text', 'lcov', 'html']
 };
