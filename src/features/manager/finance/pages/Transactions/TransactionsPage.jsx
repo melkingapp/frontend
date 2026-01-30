@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Plus, Coins } from "lucide-react";
@@ -212,15 +212,15 @@ export default function FinanceTransactions() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSubmitting, activeModal]);
 
-  const handleEditExpense = (expense) => {
+  const handleEditExpense = useCallback((expense) => {
     setEditingExpense(expense);
     setActiveModal("expense");
-  };
+  }, []);
 
-  const handleDeleteExpense = (expense) => {
+  const handleDeleteExpense = useCallback((expense) => {
     setExpenseToDelete(expense);
     setDeleteWarning(null); // Reset warning when opening delete modal
-  };
+  }, []);
 
   const confirmDeleteExpense = async () => {
     if (!expenseToDelete) return;

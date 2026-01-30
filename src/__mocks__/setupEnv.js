@@ -13,12 +13,18 @@ global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
 // Mock window.location for tests
-delete global.window.location;
-global.window.location = {
-  hostname: 'localhost',
-  protocol: 'http:',
-  host: 'localhost:5173',
-  pathname: '/',
-  search: '',
-  hash: '',
-};
+// Object.defineProperty(window, 'location', {
+//   value: {
+//     hostname: 'localhost',
+//     protocol: 'http:',
+//     host: 'localhost:5173',
+//     pathname: '/',
+//     search: '',
+//     hash: '',
+//     href: 'http://localhost:5173/',
+//     assign: jest.fn(),
+//     replace: jest.fn(),
+//     reload: jest.fn(),
+//   },
+//   writable: true,
+// });
