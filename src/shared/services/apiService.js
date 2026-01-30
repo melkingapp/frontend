@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '../utils/apiConfig';
+import { redactSensitiveData } from '../utils/security';
 
 // Configuration
 const baseURL = getApiBaseUrl();
@@ -353,7 +354,7 @@ export const post = async (url, data = {}, config = {}) => {
             });
         } else {
             console.log(`📤 POST ${url}`, {
-                data: data,
+                data: redactSensitiveData(data),
                 config: config
             });
         }
