@@ -18,12 +18,51 @@ import membershipReducer from "../features/membership/membershipSlice";
 import profileReducer from "../features/profile/profileSlice";
 import settingsReducer from "../features/settings/settingsSlice";
 
-// مقدار اولیه از localStorage بخونه
-const savedAuth = localStorage.getItem("auth");
+// Load initial state from localStorage
+const savedAuthStr = localStorage.getItem("auth");
+const accessToken = localStorage.getItem("access_token");
+const refreshToken = localStorage.getItem("refresh_token");
 
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
-    : undefined;
+let preloadedState;
+
+if (savedAuthStr) {
+    try {
+        const savedAuth = JSON.parse(savedAuthStr);
+
+        // Reconstruct auth state by merging saved user data with tokens
+        // This ensures we don't need to store tokens in the 'auth' object in localStorage
+        preloadedState = {
+            auth: {
+                ...savedAuth,
+                tokens: {
+                    access: accessToken,
+                    refresh: refreshToken
+                },
+                // Ensure isAuthenticated is consistent with token presence
+                isAuthenticated: !!accessToken,
+                loading: false,
+                error: null
+            }
+        };
+    } catch (e) {
+        console.error("Failed to parse saved auth state:", e);
+    }
+} else if (accessToken) {
+    // Fallback: If no auth object but tokens exist (e.g. migration or cleared cache)
+    // We restore the tokens so the user stays logged in (profile might need fetching)
+    preloadedState = {
+        auth: {
+            user: {}, // Will need to be fetched
+            tokens: {
+                access: accessToken,
+                refresh: refreshToken
+            },
+            isAuthenticated: true,
+            loading: false,
+            error: null
+        }
+    };
+}
 
 const store = configureStore({
     reducer: {
