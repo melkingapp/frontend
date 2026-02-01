@@ -1,0 +1,3 @@
+## 2024-05-23 - Transaction List Optimization
+**Learning:** `TransactionList` components (`BuildingTransactionsView`, `UnitTransactionsView`) render `FinanceTableRow` inside a map. The parent pages (`TransactionsPage`, `FinanceTransactions`) were passing unstable handler functions (created on every render) for `onEdit`, `onDelete`, and `onSelectUnitInvoice`. This caused all rows to re-render whenever the parent re-rendered, even if the data was unchanged.
+**Action:** Always memoize handler functions passed to list items using `useCallback`, and wrap list item components in `React.memo` to ensure list virtualization/windowing (if added later) or simple rendering remains efficient.

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -113,10 +113,10 @@ export default function FinanceTransactions() {
     }
   };
 
-  const handleSelectUnitInvoice = (tx) => {
+  const handleSelectUnitInvoice = useCallback((tx) => {
     setSelectedUnitInvoice(tx);
     setShowUnitFinancialModal(true);
-  };
+  }, []);
 
   const handleResetFilters = () => {
     resetFilters();
