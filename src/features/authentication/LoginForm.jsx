@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { login } from "../authentication/authSlice";
 import { sendOtp, verifyOtp, login as authLogin } from "../../shared/services/authService";
-import { sanitizeUser } from "../../shared/utils/security";
+import { sanitizeUser, redactSensitiveData } from "../../shared/utils/security";
 
 import PhoneInputForm from "./components/PhoneInputForm";
 import OtpVerificationForm from "./components/OtpVerificationForm";
@@ -50,12 +50,9 @@ export default function LoginForm() {
         
         try {
             const data = await sendOtp(phoneNumber, role);
-            console.log('Send OTP Response:', data);
+            console.log('Send OTP Response:', redactSensitiveData(data));
             
-            console.log('کد ارسال شد:', data.otp); // فقط برای توسعه
-            if (data.otp) {
-                console.log(`🔐 کد تایید: ${data.otp}`); // نمایش در کنسول
-            }
+            console.log('کد ارسال شد'); // فقط برای توسعه
             setStep(2);
             setError('');
         } catch (error) {
@@ -78,10 +75,10 @@ export default function LoginForm() {
         setError('');
 
         try {
-            console.log('Verifying OTP:', { phone_number: phone, role: role, otp: codeToVerify });
+            console.log('Verifying OTP:', { phone_number: phone, role: role, otp: '***REDACTED***' });
             
             const data = await verifyOtp(phone, role, codeToVerify);
-            console.log('Verify response:', data);
+            console.log('Verify response:', redactSensitiveData(data));
             
             // ذخیره توکن در localStorage
             localStorage.setItem('access_token', data.tokens.access);
