@@ -18,12 +18,37 @@ import membershipReducer from "../features/membership/membershipSlice";
 import profileReducer from "../features/profile/profileSlice";
 import settingsReducer from "../features/settings/settingsSlice";
 
-// مقدار اولیه از localStorage بخونه
-const savedAuth = localStorage.getItem("auth");
+// Rehydrate auth state safely
+const getPreloadedState = () => {
+    try {
+        const savedAuth = localStorage.getItem("auth");
+        const accessToken = localStorage.getItem("access_token");
+        const refreshToken = localStorage.getItem("refresh_token");
 
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
-    : undefined;
+        if (savedAuth) {
+            const parsedAuth = JSON.parse(savedAuth);
+
+            // Tokens are now stored separately, so we inject them back into the state
+            // This handles the case where authMiddleware strips them from 'auth' key
+            return {
+                auth: {
+                    ...parsedAuth,
+                    tokens: {
+                        access: accessToken || null,
+                        refresh: refreshToken || null,
+                    },
+                    // Ensure isAuthenticated reflects token presence
+                    isAuthenticated: !!accessToken && parsedAuth.isAuthenticated
+                }
+            };
+        }
+    } catch (error) {
+        console.error("Error rehydrating auth state:", error);
+    }
+    return undefined;
+};
+
+const preloadedState = getPreloadedState();
 
 const store = configureStore({
     reducer: {
