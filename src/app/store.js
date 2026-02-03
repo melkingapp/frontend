@@ -18,11 +18,40 @@ import membershipReducer from "../features/membership/membershipSlice";
 import profileReducer from "../features/profile/profileSlice";
 import settingsReducer from "../features/settings/settingsSlice";
 
-// مقدار اولیه از localStorage بخونه
-const savedAuth = localStorage.getItem("auth");
+// Load auth state from localStorage
+const savedAuthStr = localStorage.getItem("auth");
+let savedAuth = savedAuthStr ? JSON.parse(savedAuthStr) : null;
+
+// Load tokens from localStorage (they are stored separately for security)
+const accessToken = localStorage.getItem("access_token");
+const refreshToken = localStorage.getItem("refresh_token");
+
+// Merge tokens back into auth state
+if (savedAuth) {
+    savedAuth = {
+        ...savedAuth,
+        tokens: {
+            access: accessToken,
+            refresh: refreshToken
+        }
+    };
+} else if (accessToken) {
+    // Fallback: If auth blob is missing but token exists (e.g. legacy or cleared storage)
+    // Reconstruct minimal authenticated state
+    savedAuth = {
+        user: {}, // Profile will likely be fetched on mount
+        tokens: {
+            access: accessToken,
+            refresh: refreshToken
+        },
+        isAuthenticated: true,
+        loading: false,
+        error: null
+    };
+}
 
 const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
+    ? { auth: savedAuth }
     : undefined;
 
 const store = configureStore({
