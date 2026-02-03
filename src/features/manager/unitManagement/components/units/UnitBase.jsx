@@ -1,6 +1,6 @@
 import { HomeIcon, HousePlus, Loader2, RefreshCw, Upload, FileText, Download } from "lucide-react";
 import UnitItem from "./UnitItem";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import CreateUnitModal from "./CreateUnitModal";
 import UnitDetailsModal from "./UnitDetailsModal";
@@ -24,8 +24,11 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
     const [isExporting, setIsExporting] = useState(false);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = (reduxUnits || []).filter(unit => unit != null);
-    const displayedUnits = limit ? dataSource.slice(0, limit) : dataSource;
+    // ⚡ Bolt: Memoize dataSource to avoid re-filtering on every render
+    const dataSource = useMemo(() => (reduxUnits || []).filter(unit => unit != null), [reduxUnits]);
+
+    // ⚡ Bolt: Memoize displayedUnits to avoid slicing on every render
+    const displayedUnits = useMemo(() => limit ? dataSource.slice(0, limit) : dataSource, [dataSource, limit]);
 
     useEffect(() => {
         console.log("🔥 UnitBase - Fetching units for buildingId:", buildingId);
@@ -83,6 +86,45 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
             setIsExporting(false);
         }
     };
+
+    // ⚡ Bolt: Memoize the grouped units calculation to avoid expensive processing on every render
+    const finalUnits = useMemo(() => {
+        // گروه‌بندی واحدها: واحدهای owner و tenant مرتبط
+        const ownerUnits = new Map();
+        const tenantUnits = [];
+
+        displayedUnits.forEach((unit) => {
+            if (!unit) return;
+
+            if (unit.role === 'tenant') {
+                // واحدهای tenant را جدا نگه دار
+                tenantUnits.push(unit);
+            } else if (unit.role === 'owner' || !unit.role) {
+                // واحدهای owner را با شماره واحد به عنوان کلید نگه دار
+                const key = unit.unit_number || unit.units_id;
+                ownerUnits.set(key, unit);
+            }
+        });
+
+        // نمایش واحدها: ابتدا owner ها (با tenant اگر داشته باشند)، سپس tenant های جداگانه
+        const result = [];
+
+        // واحدهای owner را اضافه کن
+        ownerUnits.forEach((ownerUnit) => {
+            result.push(ownerUnit);
+        });
+
+        // واحدهای tenant جداگانه را اضافه کن (که owner ندارند)
+        tenantUnits.forEach((tenantUnit) => {
+            const ownerUnitKey = tenantUnit.unit_number || tenantUnit.units_id;
+            // اگر owner برای این tenant وجود ندارد، آن را اضافه کن
+            if (!ownerUnits.has(ownerUnitKey)) {
+                result.push(tenantUnit);
+            }
+        });
+
+        return result;
+    }, [displayedUnits]);
 
     return (
         <div className="p-6 bg-white rounded-xl shadow border border-gray-100">
@@ -153,50 +195,14 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
                 <p className="text-gray-400 text-sm text-center py-8">واحدی موجود نیست.</p>
             ) : (
                 <div className="space-y-4">
-                    {(() => {
-                        // گروه‌بندی واحدها: واحدهای owner و tenant مرتبط
-                        const ownerUnits = new Map();
-                        const tenantUnits = [];
-                        
-                        displayedUnits.forEach((unit) => {
-                            if (!unit) return;
-                            
-                            if (unit.role === 'tenant') {
-                                // واحدهای tenant را جدا نگه دار
-                                tenantUnits.push(unit);
-                            } else if (unit.role === 'owner' || !unit.role) {
-                                // واحدهای owner را با شماره واحد به عنوان کلید نگه دار
-                                const key = unit.unit_number || unit.units_id;
-                                ownerUnits.set(key, unit);
-                            }
-                        });
-                        
-                        // نمایش واحدها: ابتدا owner ها (با tenant اگر داشته باشند)، سپس tenant های جداگانه
-                        const result = [];
-                        
-                        // واحدهای owner را اضافه کن
-                        ownerUnits.forEach((ownerUnit) => {
-                            result.push(ownerUnit);
-                        });
-                        
-                        // واحدهای tenant جداگانه را اضافه کن (که owner ندارند)
-                        tenantUnits.forEach((tenantUnit) => {
-                            const ownerUnitKey = tenantUnit.unit_number || tenantUnit.units_id;
-                            // اگر owner برای این tenant وجود ندارد، آن را اضافه کن
-                            if (!ownerUnits.has(ownerUnitKey)) {
-                                result.push(tenantUnit);
-                            }
-                        });
-                        
-                        return result.map((unit, index) => {
-                            if (!unit) return null;
-                            return (
-                                <UnitItem key={unit.units_id || unit.id || index} unit={unit}
-                                    onSelect={setSelectedUnit}
-                                    onEdit={handleEdit} />
-                            );
-                        });
-                    })()}
+                    {finalUnits.map((unit, index) => {
+                        if (!unit) return null;
+                        return (
+                            <UnitItem key={unit.units_id || unit.id || index} unit={unit}
+                                onSelect={setSelectedUnit}
+                                onEdit={handleEdit} />
+                        );
+                    })}
                 </div>
             )}
 
