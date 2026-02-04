@@ -17,13 +17,9 @@ import buildingResidentsReducer from "../features/manager/building/slices/buildi
 import membershipReducer from "../features/membership/membershipSlice";
 import profileReducer from "../features/profile/profileSlice";
 import settingsReducer from "../features/settings/settingsSlice";
+import { getPreloadedState } from "./storeUtils";
 
-// مقدار اولیه از localStorage بخونه
-const savedAuth = localStorage.getItem("auth");
-
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
-    : undefined;
+const preloadedState = getPreloadedState();
 
 const store = configureStore({
     reducer: {
