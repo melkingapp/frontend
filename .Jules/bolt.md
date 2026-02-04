@@ -1,0 +1,3 @@
+## 2024-05-23 - Lockfile Desynchronization in CI
+**Learning:** `npm ci` fails if `package-lock.json` is out of sync with `package.json`, even if dependencies are semantically satisfied. In this project, `package.json` had testing dependencies (`jest`, etc.) that were missing from `package-lock.json` (likely due to pnpm usage locally or bad previous commits), causing CI failures.
+**Action:** Always verify `package-lock.json` integrity. If CI fails with "Missing from lock file", run `npm install --package-lock-only` to synchronize without touching `node_modules` or `package.json`. Do not interpret this as "adding new dependencies" if they are already in the manifest.
