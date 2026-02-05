@@ -1,0 +1,3 @@
+## 2025-02-18 - Jest Import.Meta.Env Optimization
+**Learning:** The memory bank suggested using `new Function('try { return import.meta.env.DEV; } catch (e) { return false; }')()` to fix Jest tests failing on `import.meta.env` (CJS environment). However, Code Review flagged this as a security risk (`unsafe-eval`) and performance hit for production code.
+**Action:** Do NOT modify application source code to fix test runner limitations using runtime hacks like `new Function`. Fix the test runner configuration instead (e.g., using `babel-plugin-transform-import-meta` or mocking `import.meta` in Jest config/setup). If modifying source is unavoidable, ensure it's done via a build-time replacement (e.g. `define` in Vite) rather than runtime evaluation.
