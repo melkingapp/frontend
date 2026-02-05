@@ -20,10 +20,24 @@ import settingsReducer from "../features/settings/settingsSlice";
 
 // مقدار اولیه از localStorage بخونه
 const savedAuth = localStorage.getItem("auth");
+const accessToken = localStorage.getItem("access_token");
+const refreshToken = localStorage.getItem("refresh_token");
 
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
-    : undefined;
+let preloadedState = undefined;
+
+if (savedAuth) {
+    try {
+        const auth = JSON.parse(savedAuth);
+        // Rehydrate tokens from independent storage (apiService) since they are stripped from auth blob
+        auth.tokens = {
+            access: accessToken || (auth.tokens?.access) || null,
+            refresh: refreshToken || (auth.tokens?.refresh) || null
+        };
+        preloadedState = { auth };
+    } catch (error) {
+        console.error('Error parsing auth state from localStorage:', error);
+    }
+}
 
 const store = configureStore({
     reducer: {
