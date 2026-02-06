@@ -20,9 +20,21 @@ import settingsReducer from "../features/settings/settingsSlice";
 
 // مقدار اولیه از localStorage بخونه
 const savedAuth = localStorage.getItem("auth");
+const accessToken = localStorage.getItem("access_token");
+const refreshToken = localStorage.getItem("refresh_token");
 
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
+let preloadedAuth = savedAuth ? JSON.parse(savedAuth) : undefined;
+
+if (preloadedAuth) {
+    // Re-hydrate tokens from their specific keys because they are stripped from the 'auth' blob
+    preloadedAuth.tokens = {
+        access: accessToken,
+        refresh: refreshToken
+    };
+}
+
+const preloadedState = preloadedAuth
+    ? { auth: preloadedAuth }
     : undefined;
 
 const store = configureStore({
