@@ -48,7 +48,79 @@ export const sanitizeString = (input) => {
     return DOMPurify.sanitize(input);
 };
 
+/**
+ * Checks if a key is considered sensitive.
+ * @param {string} key - The key to check
+ * @returns {boolean} - True if the key is sensitive
+ */
+export const isSensitiveKey = (key) => {
+    if (!key || typeof key !== 'string') return false;
+    const lowerKey = key.toLowerCase();
+    const sensitiveTerms = [
+        'password',
+        'token',
+        'secret',
+        'auth',
+        'credit',
+        'card',
+        'cvv',
+        'mobile',
+        'phone',
+        'email',
+        'otp'
+    ];
+    return sensitiveTerms.some(term => lowerKey.includes(term));
+};
+
+/**
+ * Recursively redacts sensitive data from an object or array.
+ * @param {any} data - The data to redact
+ * @returns {any} - The redacted data
+ */
+export const redactSensitiveData = (data) => {
+    if (!data) return data;
+
+    if (Array.isArray(data)) {
+        return data.map(item => redactSensitiveData(item));
+    }
+
+    if (typeof data === 'object') {
+        // Handle FormData (not directly serializable, but often logged)
+        if (typeof FormData !== 'undefined' && data instanceof FormData) {
+            return '[FormData]';
+        }
+
+        const redacted = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (isSensitiveKey(key)) {
+                redacted[key] = '***REDACTED***';
+            } else {
+                redacted[key] = redactSensitiveData(value);
+            }
+        }
+        return redacted;
+    }
+
+    // Handle JSON strings (sometimes logged as strings)
+    if (typeof data === 'string') {
+         try {
+            // Only try to parse if it looks like an object/array
+            if ((data.trim().startsWith('{') && data.trim().endsWith('}')) ||
+                (data.trim().startsWith('[') && data.trim().endsWith(']'))) {
+                const parsed = JSON.parse(data);
+                return JSON.stringify(redactSensitiveData(parsed));
+            }
+        } catch (e) {
+            // Not JSON, ignore
+        }
+    }
+
+    return data;
+};
+
 export default {
     sanitizeUser,
-    sanitizeString
+    sanitizeString,
+    isSensitiveKey,
+    redactSensitiveData
 };
