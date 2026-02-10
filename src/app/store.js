@@ -20,9 +20,25 @@ import settingsReducer from "../features/settings/settingsSlice";
 
 // مقدار اولیه از localStorage بخونه
 const savedAuth = localStorage.getItem("auth");
+const accessToken = localStorage.getItem("access_token");
+const refreshToken = localStorage.getItem("refresh_token");
 
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
+let preloadedAuth = savedAuth ? JSON.parse(savedAuth) : undefined;
+
+// اگر auth وجود داشت، توکن‌ها را از storage جداگانه هم می‌خوانیم
+// این به ما اجازه می‌دهد که توکن‌ها را از آبجکت auth در localStorage حذف کنیم (برای امنیت)
+if (preloadedAuth) {
+    preloadedAuth = {
+        ...preloadedAuth,
+        tokens: {
+            access: accessToken || preloadedAuth.tokens?.access || null,
+            refresh: refreshToken || preloadedAuth.tokens?.refresh || null,
+        }
+    };
+}
+
+const preloadedState = preloadedAuth
+    ? { auth: preloadedAuth }
     : undefined;
 
 const store = configureStore({
