@@ -48,7 +48,71 @@ export const sanitizeString = (input) => {
     return DOMPurify.sanitize(input);
 };
 
+// List of keys that contain sensitive data
+const SENSITIVE_KEYS = [
+    'password',
+    'token',
+    'access',
+    'refresh',
+    'otp',
+    'secret',
+    'credit_card',
+    'cvv',
+    'ssn',
+    'auth',
+    'authorization',
+    'api_key'
+];
+
+/**
+ * Checks if a key is sensitive.
+ * @param {string} key
+ * @returns {boolean}
+ */
+export const isSensitiveKey = (key) => {
+    if (!key || typeof key !== 'string') return false;
+    const lowerKey = key.toLowerCase();
+    return SENSITIVE_KEYS.some(k => lowerKey.includes(k));
+};
+
+/**
+ * Recursively redacts sensitive data from an object or array.
+ * @param {any} data
+ * @returns {any} - The redacted data
+ */
+export const redactSensitiveData = (data) => {
+    if (!data) return data;
+
+    // Handle arrays
+    if (Array.isArray(data)) {
+        return data.map(item => redactSensitiveData(item));
+    }
+
+    // Handle objects
+    if (typeof data === 'object') {
+        // Skip File/Blob objects
+        if (typeof File !== 'undefined' && data instanceof File) return data;
+        if (typeof Blob !== 'undefined' && data instanceof Blob) return data;
+
+        const redacted = {};
+        for (const key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                if (isSensitiveKey(key)) {
+                    redacted[key] = '[REDACTED]';
+                } else {
+                    redacted[key] = redactSensitiveData(data[key]);
+                }
+            }
+        }
+        return redacted;
+    }
+
+    return data;
+};
+
 export default {
     sanitizeUser,
-    sanitizeString
+    sanitizeString,
+    redactSensitiveData,
+    isSensitiveKey
 };
