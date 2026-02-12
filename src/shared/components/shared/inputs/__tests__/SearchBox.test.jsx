@@ -7,6 +7,8 @@ jest.mock('lucide-react', () => ({
   Search: () => <div data-testid="search-icon" />,
 }));
 
+/* global jest, describe, beforeEach, test, expect, window */
+
 describe('SearchBox Component', () => {
   const mockSetSearchTerm = jest.fn();
 
