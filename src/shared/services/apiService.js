@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '../utils/apiConfig';
+import { redactSensitiveData, isSensitiveKey } from '../utils/security';
 
 // Configuration
 const baseURL = getApiBaseUrl();
@@ -116,7 +117,7 @@ client.interceptors.request.use(
                     key,
                     value instanceof File || value instanceof Blob 
                         ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
-                        : value
+                        : (isSensitiveKey(key) ? '[REDACTED]' : value)
                 ])
             });
             
@@ -165,7 +166,7 @@ client.interceptors.response.use(
                     statusText: error.response.statusText,
                     url: originalRequest?.url,
                     method: originalRequest?.method,
-                    data: error.response.data
+                    data: redactSensitiveData(error.response.data)
                 });
             }
         }
@@ -353,13 +354,13 @@ export const post = async (url, data = {}, config = {}) => {
             });
         } else {
             console.log(`📤 POST ${url}`, {
-                data: data,
+                data: redactSensitiveData(data),
                 config: config
             });
         }
         
         const response = await client.post(url, data, config);
-        console.log(`✅ POST ${url} success:`, response.data);
+        console.log(`✅ POST ${url} success:`, redactSensitiveData(response.data));
         return response.data;
     } catch (error) {
         // Fallback to localhost for /resident page on network/CORS errors
@@ -429,7 +430,7 @@ export const post = async (url, data = {}, config = {}) => {
                 console.error(`HTML Response Preview (first 500 chars):`, 
                     error.response.data.substring(0, 500));
             } else {
-                console.error(`Error Response Data:`, error.response.data);
+                console.error(`Error Response Data:`, redactSensitiveData(error.response.data));
             }
         } else if (error.request) {
             console.error(`No response received. Request:`, error.request);

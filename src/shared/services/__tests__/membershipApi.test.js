@@ -1,3 +1,4 @@
+/* global describe, it, expect, jest, beforeEach */
 import membershipApi from '../membershipApi';
 
 // Mock axios
