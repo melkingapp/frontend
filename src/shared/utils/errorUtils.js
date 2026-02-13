@@ -57,8 +57,9 @@ export function extractErrorMessage(error) {
  * @param {Error|string|object} error - خطای دریافتی
  * @param {object} options - گزینه‌های اضافی برای toast
  */
+import { toast } from 'sonner';
+
 export function showErrorToast(error, options = {}) {
-  const { toast } = require('sonner');
   const errorMessage = extractErrorMessage(error);
   
   return toast.error(errorMessage, {

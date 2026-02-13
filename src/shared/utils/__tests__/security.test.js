@@ -1,3 +1,4 @@
+/* global describe, it, expect */
 import { redactSensitiveData, isSensitiveKey } from '../security';
 
 describe('Security Utils', () => {
