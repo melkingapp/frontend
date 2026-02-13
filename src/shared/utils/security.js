@@ -48,7 +48,70 @@ export const sanitizeString = (input) => {
     return DOMPurify.sanitize(input);
 };
 
+/**
+ * Checks if a key is considered sensitive.
+ * @param {string} key - The key to check
+ * @returns {boolean} - True if sensitive, false otherwise
+ */
+export const isSensitiveKey = (key) => {
+    if (!key || typeof key !== 'string') return false;
+    const lowerKey = key.toLowerCase();
+    const sensitiveTerms = [
+        'password',
+        'token',
+        'otp',
+        'secret',
+        'credit_card',
+        'ssn',
+        'auth',
+        'access',
+        'refresh',
+        'cvv',
+        'pin'
+    ];
+    return sensitiveTerms.some(term => lowerKey.includes(term));
+};
+
+/**
+ * Redacts sensitive data from an object or array.
+ * handles circular references.
+ * @param {any} data - The data to redact
+ * @param {WeakSet} seen - Set of seen objects to handle circular references
+ * @returns {any} - The redacted data
+ */
+export const redactSensitiveData = (data, seen = new WeakSet()) => {
+    if (data === null || data === undefined) return data;
+
+    // Handle primitives
+    if (typeof data !== 'object') return data;
+
+    // Handle circular references
+    if (seen.has(data)) return '[Circular Reference]';
+    seen.add(data);
+
+    // Handle Arrays
+    if (Array.isArray(data)) {
+        return data.map(item => redactSensitiveData(item, seen));
+    }
+
+    // Handle Objects
+    const redacted = {};
+    for (const key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+            if (isSensitiveKey(key)) {
+                redacted[key] = '[REDACTED]';
+            } else {
+                redacted[key] = redactSensitiveData(data[key], seen);
+            }
+        }
+    }
+
+    return redacted;
+};
+
 export default {
     sanitizeUser,
-    sanitizeString
+    sanitizeString,
+    isSensitiveKey,
+    redactSensitiveData
 };
