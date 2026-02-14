@@ -1,3 +1,3 @@
-## 2024-05-24 - Accessibility improvements for Form Inputs
-**Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
-**Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2025-05-23 - Building Selection Accessibility
+**Learning:** Converting interactive `div` elements to `<button>` elements significantly improves accessibility by providing native keyboard support and screen reader recognition.
+**Action:** When creating list-based selection interfaces, always use `<button>` for items instead of `div`s with `onClick`, and use `aria-pressed` or `aria-current` to indicate state.
