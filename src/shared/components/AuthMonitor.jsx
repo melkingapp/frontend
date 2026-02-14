@@ -15,14 +15,6 @@ const AuthMonitor = () => {
             const accessToken = localStorage.getItem('access_token');
             const refreshToken = localStorage.getItem('refresh_token');
             
-            console.log('🔍 Auth status check:', {
-                isAuthenticated,
-                hasAccessToken: !!accessToken,
-                hasRefreshToken: !!refreshToken,
-                user: user?.username,
-                currentPath: location.pathname
-            });
-
             // If user should be authenticated but tokens are missing
             if (isAuthenticated && (!accessToken || !refreshToken)) {
                 console.log('⚠️ User marked as authenticated but tokens missing, force logging out...');
