@@ -83,20 +83,17 @@ export default function LoginForm() {
             const data = await verifyOtp(phone, role, codeToVerify);
             console.log('Verify response:', data);
             
-            // ذخیره توکن در localStorage
-            localStorage.setItem('access_token', data.tokens.access);
-            localStorage.setItem('refresh_token', data.tokens.refresh);
-            
             const sanitizedUser = sanitizeUser(data.user);
 
+            // ذخیره در authService (که توکن‌ها را هم ذخیره می‌کند)
+            await authLogin(data.tokens.access, data.tokens.refresh, sanitizedUser);
+
+            // بروزرسانی Redux
             dispatch(login({ 
                 phone: data.user.phone_number, 
                 role: data.user.role,
                 user: sanitizedUser
             }));
-            
-            // ذخیره در authService
-            await authLogin(data.tokens.access, data.tokens.refresh, sanitizedUser);
             
             // هدایت بر اساس نقش کاربر و صفحه قبلی
             const from = location.state?.from?.pathname || '/';

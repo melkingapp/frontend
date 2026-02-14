@@ -16,9 +16,9 @@ const LegalAI = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Load chats from localStorage on component mount
+  // Load chats from sessionStorage on component mount
   useEffect(() => {
-    const savedChats = localStorage.getItem('legalAI_chats');
+    const savedChats = sessionStorage.getItem('legalAI_chats');
     if (savedChats) {
       try {
         const parsedChats = JSON.parse(savedChats);
@@ -42,10 +42,10 @@ const LegalAI = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Save chats to localStorage whenever chats change
+  // Save chats to sessionStorage whenever chats change
   useEffect(() => {
     if (chats.length > 0) {
-      localStorage.setItem('legalAI_chats', JSON.stringify(chats));
+      sessionStorage.setItem('legalAI_chats', JSON.stringify(chats));
     }
   }, [chats]);
 

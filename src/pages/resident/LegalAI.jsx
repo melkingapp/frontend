@@ -26,9 +26,9 @@ const ResidentLegalAI = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const inputRef = useRef(null);
 
-  // Load chats from localStorage
+  // Load chats from sessionStorage
   useEffect(() => {
-    const savedChats = localStorage.getItem('resident_legalAI_chats');
+    const savedChats = sessionStorage.getItem('resident_legalAI_chats');
     if (savedChats) {
       try {
         const parsedChats = JSON.parse(savedChats);
@@ -39,15 +39,15 @@ const ResidentLegalAI = () => {
         }
       } catch (error) {
         console.error('Error loading chats:', error);
-        localStorage.removeItem('resident_legalAI_chats');
+        sessionStorage.removeItem('resident_legalAI_chats');
       }
     }
   }, []);
 
-  // Save chats to localStorage
+  // Save chats to sessionStorage
   useEffect(() => {
     if (chats.length > 0) {
-      localStorage.setItem('resident_legalAI_chats', JSON.stringify(chats));
+      sessionStorage.setItem('resident_legalAI_chats', JSON.stringify(chats));
     }
   }, [chats]);
 
