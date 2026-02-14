@@ -1,13 +1,36 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { logout, forceLogout } from '../../features/authentication/authSlice';
+import { logout, forceLogout, fetchUserProfile } from '../../features/authentication/authSlice';
 
 const AuthMonitor = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const location = useLocation();
     const { isAuthenticated, user } = useSelector(state => state.auth);
+    // Use a ref to track if we've already verified the session on mount
+    const hasVerifiedSession = useRef(false);
+
+    // Verify session with server on initial mount if authenticated
+    useEffect(() => {
+        const verifySession = async () => {
+            if (isAuthenticated && !hasVerifiedSession.current) {
+                console.log('🛡️ Sentinel: Verifying hydrated session with server...');
+                hasVerifiedSession.current = true;
+                try {
+                    // Try to fetch user profile to verify token is valid on server
+                    await dispatch(fetchUserProfile()).unwrap();
+                    console.log('✅ Sentinel: Session verified with server');
+                } catch (error) {
+                    console.warn('❌ Sentinel: Session invalid on server (Fake Auth or Expired), logging out...', error);
+                    dispatch(forceLogout());
+                    navigate('/login', { replace: true });
+                }
+            }
+        };
+
+        verifySession();
+    }, [dispatch, navigate, isAuthenticated]);
 
     useEffect(() => {
         const checkAuthStatus = () => {
@@ -15,13 +38,11 @@ const AuthMonitor = () => {
             const accessToken = localStorage.getItem('access_token');
             const refreshToken = localStorage.getItem('refresh_token');
             
-            console.log('🔍 Auth status check:', {
-                isAuthenticated,
-                hasAccessToken: !!accessToken,
-                hasRefreshToken: !!refreshToken,
-                user: user?.username,
-                currentPath: location.pathname
-            });
+            // Only log if something is interesting to avoid console spam
+            if (!isAuthenticated && accessToken && refreshToken) {
+                 console.log('🔄 User not authenticated but has tokens, checking token validity...');
+                 validateToken(accessToken);
+            }
 
             // If user should be authenticated but tokens are missing
             if (isAuthenticated && (!accessToken || !refreshToken)) {
@@ -29,12 +50,6 @@ const AuthMonitor = () => {
                 dispatch(forceLogout());
                 navigate('/login', { replace: true });
                 return;
-            }
-
-            // If user is not authenticated but has tokens, try to validate
-            if (!isAuthenticated && accessToken && refreshToken) {
-                console.log('🔄 User not authenticated but has tokens, checking token validity...');
-                validateToken(accessToken);
             }
         };
 
@@ -49,10 +64,7 @@ const AuthMonitor = () => {
                     dispatch(forceLogout());
                     navigate('/login', { replace: true });
                 } else {
-                    console.log('✅ Token is valid');
-                    // Token is valid but user is not authenticated in Redux
-                    // This might happen after page refresh
-                    // We could dispatch a re-authentication action here if needed
+                    // console.log('✅ Token is valid structure');
                 }
             } catch (error) {
                 console.error('❌ Invalid token format:', error);
