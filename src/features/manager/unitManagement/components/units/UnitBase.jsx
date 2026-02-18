@@ -1,6 +1,6 @@
 import { HomeIcon, HousePlus, Loader2, RefreshCw, Upload, FileText, Download } from "lucide-react";
 import UnitItem from "./UnitItem";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import CreateUnitModal from "./CreateUnitModal";
 import UnitDetailsModal from "./UnitDetailsModal";
@@ -24,19 +24,14 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
     const [isExporting, setIsExporting] = useState(false);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = (reduxUnits || []).filter(unit => unit != null);
-    const displayedUnits = limit ? dataSource.slice(0, limit) : dataSource;
+    const dataSource = useMemo(() => (reduxUnits || []).filter(unit => unit != null), [reduxUnits]);
+    const displayedUnits = useMemo(() => limit ? dataSource.slice(0, limit) : dataSource, [dataSource, limit]);
 
     useEffect(() => {
-        console.log("🔥 UnitBase - Fetching units for buildingId:", buildingId);
         if (buildingId) {
             dispatch(fetchUnits(buildingId))
-                .then((result) => {
-                    console.log("🔥 UnitBase - Fetch units result:", result);
-                    console.log("🔥 UnitBase - Units in result:", result.payload);
-                })
                 .catch((error) => {
-                    console.error("🔥 UnitBase - Fetch units error:", error);
+                    console.error("UnitBase - Fetch units error:", error);
                 });
         }
     }, [dispatch, buildingId]);
@@ -153,7 +148,7 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
                 <p className="text-gray-400 text-sm text-center py-8">واحدی موجود نیست.</p>
             ) : (
                 <div className="space-y-4">
-                    {(() => {
+                    {useMemo(() => {
                         // گروه‌بندی واحدها: واحدهای owner و tenant مرتبط
                         const ownerUnits = new Map();
                         const tenantUnits = [];
@@ -196,7 +191,7 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
                                     onEdit={handleEdit} />
                             );
                         });
-                    })()}
+                    }, [displayedUnits, handleEdit])}
                 </div>
             )}
 
