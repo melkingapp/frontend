@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from '../utils/apiConfig';
+import { redactSensitiveData } from '../utils/security';
 
 // API Base URL Configuration
 const API_BASE_URL = getApiBaseUrl();
@@ -166,7 +167,7 @@ class ApiService {
           console.error('API Error Response:', {
             status: response.status,
             statusText: response.statusText,
-            data: data,
+            data: redactSensitiveData(data),
             url: url
           });
         }
@@ -417,7 +418,7 @@ class ApiService {
           console.error('File Upload Error Response:', {
             status: response.status,
             statusText: response.statusText,
-            data: data,
+            data: redactSensitiveData(data),
             url: url
           });
         }
