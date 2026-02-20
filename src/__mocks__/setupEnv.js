@@ -13,12 +13,5 @@ global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
 // Mock window.location for tests
-delete global.window.location;
-global.window.location = {
-  hostname: 'localhost',
-  protocol: 'http:',
-  host: 'localhost:5173',
-  pathname: '/',
-  search: '',
-  hash: '',
-};
+// Note: modifying window.location in JSDOM is restricted.
+// We rely on default JSDOM location or use Object.defineProperty in specific tests if needed.
