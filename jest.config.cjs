@@ -1,6 +1,12 @@
-export default {
+module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
+  setupFiles: ['<rootDir>/src/__mocks__/setupEnv.js'],
+  globals: {
+    'import.meta.env': {
+      VITE_API_BASE_URL: 'http://127.0.0.1:8000/api/v1',
+    },
+  },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
@@ -8,6 +14,9 @@ export default {
   transform: {
     '^.+\\.(js|jsx)$': 'babel-jest',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!react-router-dom|@remix-run)',
+  ],
   moduleFileExtensions: ['js', 'jsx', 'json'],
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.(js|jsx)',
@@ -21,5 +30,5 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  extensionsToTreatAsEsm: ['.jsx', '.js'],
+  extensionsToTreatAsEsm: ['.jsx'],
 };
