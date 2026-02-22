@@ -13,12 +13,15 @@ global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
 // Mock window.location for tests
-delete global.window.location;
-global.window.location = {
-  hostname: 'localhost',
-  protocol: 'http:',
-  host: 'localhost:5173',
-  pathname: '/',
-  search: '',
-  hash: '',
-};
+// JSDOM 26+ does not allow deleting or overwriting window.location easily.
+// Navigating via assignment to window.location causes "Not implemented: navigation" error.
+// We should rely on JSDOM's default location or use specific navigation mocks if needed.
+// delete global.window.location;
+// global.window.location = {
+//   hostname: 'localhost',
+//   protocol: 'http:',
+//   host: 'localhost:5173',
+//   pathname: '/',
+//   search: '',
+//   hash: '',
+// };
