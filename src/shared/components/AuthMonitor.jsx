@@ -15,17 +15,9 @@ const AuthMonitor = () => {
             const accessToken = localStorage.getItem('access_token');
             const refreshToken = localStorage.getItem('refresh_token');
             
-            console.log('🔍 Auth status check:', {
-                isAuthenticated,
-                hasAccessToken: !!accessToken,
-                hasRefreshToken: !!refreshToken,
-                user: user?.username,
-                currentPath: location.pathname
-            });
 
             // If user should be authenticated but tokens are missing
             if (isAuthenticated && (!accessToken || !refreshToken)) {
-                console.log('⚠️ User marked as authenticated but tokens missing, force logging out...');
                 dispatch(forceLogout());
                 navigate('/login', { replace: true });
                 return;
@@ -33,7 +25,6 @@ const AuthMonitor = () => {
 
             // If user is not authenticated but has tokens, try to validate
             if (!isAuthenticated && accessToken && refreshToken) {
-                console.log('🔄 User not authenticated but has tokens, checking token validity...');
                 validateToken(accessToken);
             }
         };
@@ -45,11 +36,9 @@ const AuthMonitor = () => {
                 const now = Date.now();
                 
                 if (exp < now) {
-                    console.log('❌ Token expired, force logging out...');
                     dispatch(forceLogout());
                     navigate('/login', { replace: true });
                 } else {
-                    console.log('✅ Token is valid');
                     // Token is valid but user is not authenticated in Redux
                     // This might happen after page refresh
                     // We could dispatch a re-authentication action here if needed
@@ -82,7 +71,6 @@ const AuthMonitor = () => {
     useEffect(() => {
         const handleUnauthorized = (event) => {
             if (event.detail && event.detail.status === 401) {
-                console.log('🚨 401 Unauthorized detected, force logging out...');
                 dispatch(forceLogout());
                 navigate('/login', { replace: true });
             }

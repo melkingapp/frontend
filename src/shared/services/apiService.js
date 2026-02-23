@@ -102,23 +102,7 @@ client.interceptors.request.use(
             const authToken = config.headers.Authorization;
             const hasAuthToken = !!authToken && authToken.startsWith('Bearer ');
             
-            console.log('📋 FormData Request Details:', {
-                url: config.url,
-                method: config.method,
-                keys: formDataKeys,
-                hasFile: hasFile,
-                headers: {
-                    'Content-Type': config.headers['Content-Type'] || 'multipart/form-data (auto-set by axios)',
-                    'Authorization': hasAuthToken ? `Bearer ${authToken.substring(7, 20)}...` : '❌ MISSING',
-                    'Has-Auth-Token': hasAuthToken ? '✅ Yes' : '❌ No'
-                },
-                formDataEntries: [...config.data.entries()].map(([key, value]) => [
-                    key,
-                    value instanceof File || value instanceof Blob 
-                        ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
-                        : value
-                ])
-            });
+            // FormData logging removed for security
             
             // هشدار در صورت نبودن token
             if (!hasAuthToken) {
@@ -157,7 +141,7 @@ client.interceptors.response.use(
                     statusText: error.response.statusText,
                     url: originalRequest?.url,
                     method: originalRequest?.method,
-                    dataPreview: error.response.data.substring(0, 200) + '...'
+                    // dataPreview removed
                 });
             } else {
                 console.error('🚨 JSON Error Response:', {
@@ -165,7 +149,7 @@ client.interceptors.response.use(
                     statusText: error.response.statusText,
                     url: originalRequest?.url,
                     method: originalRequest?.method,
-                    data: error.response.data
+                    // data removed
                 });
             }
         }
@@ -330,36 +314,17 @@ export const get = async (url, config = {}) => {
 
 export const post = async (url, data = {}, config = {}) => {
     try {
-        // Log request details for debugging
+        // Log request details for debugging (Sensitive logging removed)
+        /*
         if (data instanceof FormData) {
-            // برای FormData، فقط اطلاعات کلی را لاگ می‌کنیم
-            const formDataKeys = Array.from(data.keys());
-            const fileInfo = {};
-            formDataKeys.forEach(key => {
-                const value = data.get(key);
-                if (value instanceof File || value instanceof Blob) {
-                    fileInfo[key] = {
-                        name: value.name,
-                        size: value.size,
-                        type: value.type
-                    };
-                }
-            });
-            console.log(`📤 POST ${url} (FormData)`, {
-                keys: formDataKeys,
-                files: Object.keys(fileInfo).length > 0 ? fileInfo : 'none',
-                timeout: config.timeout,
-                hasFiles: Object.keys(fileInfo).length > 0
-            });
+            // ...
         } else {
-            console.log(`📤 POST ${url}`, {
-                data: data,
-                config: config
-            });
+            // ...
         }
+        */
         
         const response = await client.post(url, data, config);
-        console.log(`✅ POST ${url} success:`, response.data);
+        // console.log(`✅ POST ${url} success:`, response.data);
         return response.data;
     } catch (error) {
         // Fallback to localhost for /resident page on network/CORS errors
@@ -413,24 +378,12 @@ export const post = async (url, data = {}, config = {}) => {
         
         console.error(`❌ POST ${url} error:`, {
             message: errorMessage,
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            dataType: typeof error.response?.data,
-            isHtml: typeof error.response?.data === 'string' && 
-                   (error.response?.data?.trim().startsWith('<!DOCTYPE') || 
-                    error.response?.data?.trim().startsWith('<html'))
+            status: error.response?.status
         });
         
         if (error.response) {
-            // If it's HTML, log a preview
-            if (typeof error.response.data === 'string' && 
-                (error.response.data.trim().startsWith('<!DOCTYPE') || 
-                 error.response.data.trim().startsWith('<html'))) {
-                console.error(`HTML Response Preview (first 500 chars):`, 
-                    error.response.data.substring(0, 500));
-            } else {
-                console.error(`Error Response Data:`, error.response.data);
-            }
+             // Details removed
+             console.error(`Error Response Status:`, error.response.status);
         } else if (error.request) {
             console.error(`No response received. Request:`, error.request);
         } else {
