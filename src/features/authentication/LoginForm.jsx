@@ -52,10 +52,6 @@ export default function LoginForm() {
             const data = await sendOtp(phoneNumber, role);
             console.log('Send OTP Response:', data);
             
-            console.log('کد ارسال شد:', data.otp); // فقط برای توسعه
-            if (data.otp) {
-                console.log(`🔐 کد تایید: ${data.otp}`); // نمایش در کنسول
-            }
             setStep(2);
             setError('');
         } catch (error) {
@@ -78,7 +74,7 @@ export default function LoginForm() {
         setError('');
 
         try {
-            console.log('Verifying OTP:', { phone_number: phone, role: role, otp: codeToVerify });
+            console.log('Verifying OTP for:', { phone_number: phone, role: role });
             
             const data = await verifyOtp(phone, role, codeToVerify);
             console.log('Verify response:', data);
