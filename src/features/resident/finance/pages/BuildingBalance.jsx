@@ -624,8 +624,8 @@ export default function BuildingBalance() {
               <div className="w-full">
                 <SearchBox
                   placeholder="جستجو در تراکنش‌ها..."
-                  value={searchTerm}
-                  onChange={setSearchTerm}
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
                 />
               </div>
             </div>
