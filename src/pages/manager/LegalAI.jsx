@@ -16,9 +16,24 @@ const LegalAI = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Load chats from localStorage on component mount
+  // Load chats from sessionStorage (with migration from localStorage) on component mount
   useEffect(() => {
-    const savedChats = localStorage.getItem('legalAI_chats');
+    // Migration: Check localStorage first
+    const localChats = localStorage.getItem('legalAI_chats');
+    if (localChats) {
+      try {
+        // Move to sessionStorage
+        sessionStorage.setItem('legalAI_chats', localChats);
+        // Clear from localStorage (sensitive data)
+        localStorage.removeItem('legalAI_chats');
+      } catch (e) {
+        console.error('Error migrating chats:', e);
+        // If error, try to clear anyway to be safe
+        localStorage.removeItem('legalAI_chats');
+      }
+    }
+
+    const savedChats = sessionStorage.getItem('legalAI_chats');
     if (savedChats) {
       try {
         const parsedChats = JSON.parse(savedChats);
@@ -42,10 +57,10 @@ const LegalAI = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Save chats to localStorage whenever chats change
+  // Save chats to sessionStorage whenever chats change
   useEffect(() => {
     if (chats.length > 0) {
-      localStorage.setItem('legalAI_chats', JSON.stringify(chats));
+      sessionStorage.setItem('legalAI_chats', JSON.stringify(chats));
     }
   }, [chats]);
 
