@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useEffect, useRef } from "react";

@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Plus, Building2, Sparkles, ArrowLeft, Info, CheckCircle2 } from "lucide-react";
