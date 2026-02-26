@@ -20,10 +20,6 @@ export default function LoginForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     
-    console.log("phone:", phone);
-    console.log("otp:", otp);
-    console.log("role:", role);
-
     useEffect(() => {
         if (role !== "manager" && role !== "resident") {
             navigate("/login", { replace: true });
@@ -49,13 +45,7 @@ export default function LoginForm() {
         setError('');
         
         try {
-            const data = await sendOtp(phoneNumber, role);
-            console.log('Send OTP Response:', data);
-            
-            console.log('کد ارسال شد:', data.otp); // فقط برای توسعه
-            if (data.otp) {
-                console.log(`🔐 کد تایید: ${data.otp}`); // نمایش در کنسول
-            }
+            await sendOtp(phoneNumber, role);
             setStep(2);
             setError('');
         } catch (error) {
@@ -78,10 +68,7 @@ export default function LoginForm() {
         setError('');
 
         try {
-            console.log('Verifying OTP:', { phone_number: phone, role: role, otp: codeToVerify });
-            
             const data = await verifyOtp(phone, role, codeToVerify);
-            console.log('Verify response:', data);
             
             // ذخیره توکن در localStorage
             localStorage.setItem('access_token', data.tokens.access);
