@@ -20,10 +20,56 @@ import settingsReducer from "../features/settings/settingsSlice";
 
 // مقدار اولیه از localStorage بخونه
 const savedAuth = localStorage.getItem("auth");
+const accessToken = localStorage.getItem("access_token");
+const refreshToken = localStorage.getItem("refresh_token");
 
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
-    : undefined;
+let preloadedState = undefined;
+
+if (savedAuth) {
+    try {
+        const parsedAuth = JSON.parse(savedAuth);
+
+        // Merge tokens from secure storage (or separate keys) if they are missing/null in the blob
+        // This handles the case where we strip tokens from the persisted 'auth' blob
+        if (parsedAuth) {
+            preloadedState = {
+                auth: {
+                    ...parsedAuth,
+                    tokens: {
+                        access: accessToken || parsedAuth.tokens?.access || null,
+                        refresh: refreshToken || parsedAuth.tokens?.refresh || null,
+                    }
+                }
+            };
+        }
+    } catch (e) {
+        console.error("Error parsing auth state from localStorage:", e);
+    }
+} else if (accessToken) {
+    // If no auth blob but we have tokens, we might want to at least set them
+    // though usually we need the user object too.
+     preloadedState = {
+        auth: {
+            user: {
+                id: null,
+                username: null,
+                email: null,
+                first_name: null,
+                last_name: null,
+                phone_number: null,
+                role: null,
+                is_active: false,
+            },
+            tokens: {
+                access: accessToken,
+                refresh: refreshToken,
+            },
+            isAuthenticated: !!accessToken, // Basic check, ideally verify token
+            loading: false,
+            error: null,
+        }
+    };
+}
 
 const store = configureStore({
     reducer: {
