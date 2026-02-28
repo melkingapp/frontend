@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -50,7 +50,7 @@ const formatDate = (dateString) => {
 // نمودار خطی برای روند موجودی
 export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
   // پردازش داده‌ها برای نمودار خطی
-  const processTrendData = () => {
+  const chartData = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
     // فیلتر بر اساس بازه زمانی
@@ -77,7 +77,7 @@ export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
 
     // محاسبه موجودی تجمعی
     let runningBalance = 0;
-    const chartData = sorted.map((transaction) => {
+    return sorted.map((transaction) => {
       runningBalance += transaction.amount || 0;
       return {
         date: transaction.date,
@@ -87,11 +87,7 @@ export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
         expense: transaction.amount < 0 ? Math.abs(transaction.amount) : 0
       };
     });
-
-    return chartData;
-  };
-
-  const chartData = processTrendData();
+  }, [transactions, dateRange]);
 
   if (isLoading) {
     return (
@@ -233,7 +229,7 @@ export function IncomeExpenseChart({ income, expenses, isLoading }) {
 // نمودار دایره‌ای برای تفکیک انواع هزینه‌ها
 export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
   // پردازش داده‌ها برای نمودار دایره‌ای
-  const processExpenseData = () => {
+  const chartData = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
     // فیلتر بر اساس بازه زمانی
@@ -268,15 +264,11 @@ export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
     });
 
     // تبدیل به آرایه و مرتب‌سازی
-    const expenseArray = Object.entries(expenseMap)
+    return Object.entries(expenseMap)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // فقط 8 نوع برتر
-
-    return expenseArray;
-  };
-
-  const chartData = processExpenseData();
+  }, [transactions, dateRange]);
 
   if (isLoading) {
     return (
