@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Home, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -21,43 +21,50 @@ export default function UnitsBase({ units: propUnits, limit }) {
     // Select building based on user role
     const selectedBuilding = user?.role === 'resident' ? residentBuilding : managerBuilding;
 
-    // Get approved membership requests for the current user
-    const approvedRequests = membershipRequests.filter(req => 
-        req.status === 'manager_approved' && req.user === user?.id
-    );
+    // Memoize membership units creation to avoid unnecessary recalculations on re-renders
+    const membershipUnits = useMemo(() => {
+        // Get approved membership requests for the current user
+        const approvedRequests = membershipRequests.filter(req =>
+            req.status === 'manager_approved' && req.user === user?.id
+        );
 
-    // Create units from approved membership requests
-    const membershipUnits = approvedRequests.map(request => ({
-        units_id: request.unit_id || `req_${request.request_id}`,
-        unit_number: request.unit_number,
-        floor: request.floor,
-        area: request.area,
-        full_name: user?.full_name || user?.first_name + ' ' + user?.last_name,
-        phone_number: user?.phone_number,
-        role: request.role,
-        owner_type: request.owner_type,
-        tenant_full_name: request.tenant_full_name,
-        tenant_phone_number: request.tenant_phone_number,
-        has_parking: request.has_parking,
-        parking_count: request.parking_count,
-        resident_count: request.resident_count,
-        building: {
-            building_id: request.building,
-            title: request.building_title
-        }
-    }));
+        // Create units from approved membership requests
+        return approvedRequests.map(request => ({
+            units_id: request.unit_id || `req_${request.request_id}`,
+            unit_number: request.unit_number,
+            floor: request.floor,
+            area: request.area,
+            full_name: user?.full_name || user?.first_name + ' ' + user?.last_name,
+            phone_number: user?.phone_number,
+            role: request.role,
+            owner_type: request.owner_type,
+            tenant_full_name: request.tenant_full_name,
+            tenant_phone_number: request.tenant_phone_number,
+            has_parking: request.has_parking,
+            parking_count: request.parking_count,
+            resident_count: request.resident_count,
+            building: {
+                building_id: request.building,
+                title: request.building_title
+            }
+        }));
+    }, [membershipRequests, user?.id, user?.full_name, user?.first_name, user?.last_name, user?.phone_number]);
 
     // اگر نقش کاربر ساکن است، فقط از درخواست‌های تایید شده خودش استفاده کن و هرگز همه واحدهای ساختمان را نشان نده
-    const dataSource = user?.role === 'resident'
-        ? membershipUnits
-        : (membershipUnits.length > 0 ? membershipUnits : (reduxUnits.length > 0 ? reduxUnits : (propUnits || [])));
+    const dataSource = useMemo(() => {
+        return user?.role === 'resident'
+            ? membershipUnits
+            : (membershipUnits.length > 0 ? membershipUnits : (reduxUnits.length > 0 ? reduxUnits : (propUnits || [])));
+    }, [user?.role, membershipUnits, reduxUnits, propUnits]);
     
-    // Sort by unit_number
-    const sorted = [...dataSource].sort((a, b) => {
-        return (a.unit_number || 0) - (b.unit_number || 0);
-    });
-    
-    const displayed = limit ? sorted.slice(0, limit) : sorted;
+    // Memoize sorted and displayed array
+    const displayed = useMemo(() => {
+        const sorted = [...dataSource].sort((a, b) => {
+            return (a.unit_number || 0) - (b.unit_number || 0);
+        });
+
+        return limit ? sorted.slice(0, limit) : sorted;
+    }, [dataSource, limit]);
 
     // Fetch units only for managers - reacts to building changes
     useEffect(() => {
