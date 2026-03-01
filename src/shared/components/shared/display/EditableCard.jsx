@@ -23,7 +23,7 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
             <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <User /> {title}
                 {!isEditing && (
-                    <button onClick={() => setIsEditing(true)} className="ml-auto text-gray-500 hover:text-gray-700">
+                    <button aria-label="ویرایش" onClick={() => setIsEditing(true)} className="ml-auto text-gray-500 hover:text-gray-700">
                         <Edit size={16} />
                     </button>
                 )}
