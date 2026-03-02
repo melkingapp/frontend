@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Eye, Search, Filter, Calendar, X } from "lucide-react";
 import moment from "moment-jalaali";
@@ -72,12 +72,15 @@ export default function BuildingBalanceTable() {
         }
     }, [dispatch, building?.building_id, dateRange, isResident, approvedBuildings.length]);
     
-    // Sort and filter transactions
-    const sortedData = [...transactions].sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
-    );
-    
-    const filteredData = sortedData.filter(item => {
+    // Optimization: Memoize filtered and sorted data to prevent expensive array operations on every render
+    const filteredData = useMemo(() => {
+        // Sort first
+        const sortedData = [...transactions].sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
+        );
+
+        // Then filter
+        return sortedData.filter(item => {
         let matchesFilter = false;
         
         if (filter === "all") {
@@ -144,6 +147,7 @@ export default function BuildingBalanceTable() {
 
         return matchesFilter && matchesSearch;
     });
+    }, [transactions, filter, searchTerm, categories]);
     
     // Calculate totals
     const totalCost = filteredData.reduce((sum, t) => sum + t.amount, 0);
