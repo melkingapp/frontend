@@ -1,3 +1,7 @@
 ## 2024-05-24 - Accessibility improvements for Form Inputs
 **Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
 **Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+
+## 2024-05-25 - Accessibility improvements for Custom Menus
+**Learning:** When building custom dropdowns or menus (like a Floating Action Button) that are hidden visually using `opacity-0` and `scale-90`, screen readers can still interact with them unless they are explicitly removed from the accessibility tree. However, using Tailwind's `invisible` instantly removes the element from the render tree, which can prematurely abort exit animations (like transitioning `opacity-0` and `scale-90`). Instead of `invisible`, relying on `aria-hidden={!open}` alongside `pointer-events-none` is a safer approach to keep exit animations intact while signaling to screen readers that the content is hidden.
+**Action:** Properly link the toggle button to the menu using `aria-controls` with a generated ID, `aria-expanded`, and `aria-haspopup="menu"`. Ensure the menu and its items have `role="menu"` and `role="menuitem"`, and use `aria-hidden={!open}` instead of `invisible` to avoid breaking exit transitions.
