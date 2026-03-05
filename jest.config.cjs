@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   moduleNameMapper: {
@@ -8,7 +8,7 @@ export default {
   transform: {
     '^.+\\.(js|jsx)$': 'babel-jest',
   },
-  moduleFileExtensions: ['js', 'jsx', 'json'],
+  extensionsToTreatAsEsm: ['.jsx'],
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.(js|jsx)',
     '<rootDir>/src/**/*.(test|spec).(js|jsx)'
@@ -20,6 +20,5 @@ export default {
     '!src/**/__tests__/**',
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  extensionsToTreatAsEsm: ['.jsx', '.js'],
+  coverageReporters: ['text', 'lcov', 'html']
 };
