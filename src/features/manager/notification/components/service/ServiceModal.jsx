@@ -21,6 +21,7 @@ export default function ServiceModal({ service, onClose }) {
                 <button
                     onClick={onClose}
                     aria-label="بستن"
+                    title="بستن"
                     className="absolute top-4 left-4 text-gray-400 hover:text-gray-700 transition"
                 >
                     <X size={24} />
