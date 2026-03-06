@@ -208,6 +208,8 @@ export default function SurveyModal({ survey, onClose, currentUser = "کاربر
                         <h2 className="text-xl font-bold text-melkingDarkBlue">{survey.title || survey.question}</h2>
                         <button
                             onClick={onClose}
+                            aria-label="بستن"
+                            title="بستن"
                             className="text-gray-500 hover:text-melkingDarkBlue transition mt-1 sm:mt-0"
                         >
                             <X size={24} />

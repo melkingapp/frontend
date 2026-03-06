@@ -87,6 +87,8 @@ export default function TransferManagementModal({ isOpen, onClose, building }) {
                   </div>
                   <button
                     onClick={handleClose}
+                    aria-label="بستن"
+                    title="بستن"
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <X size={20} className="text-gray-500" />
