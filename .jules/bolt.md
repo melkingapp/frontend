@@ -1,0 +1,3 @@
+## 2024-05-18 - [Avoid Inline Array Operations on Financial Datasets]
+**Learning:** Found an architectural anti-pattern in the finance module (`BalancePage.jsx`, `BalanceTable.jsx`) where computationally heavy array `.filter()` operations and string matching on potentially large transaction lists were executed directly in the component render loops.
+**Action:** When working with large datasets like transactions, particularly those populated directly from Redux states or API calls, derive views (like filtering by type, search matching, segregating into assets/liabilities) utilizing `useMemo`. This mitigates main-thread blocking during parent re-renders caused by modal toggles or state changes.
