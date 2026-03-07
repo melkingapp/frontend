@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   Eye, 
   ArrowUpRight, 
@@ -72,9 +72,20 @@ export default function BalanceTable({ transactions, onTransactionClick, isLoadi
     return typeColors[type] || typeColors['other'];
   };
 
-  // تفکیک تراکنش‌ها به دارایی و بدهی
-  const assetsTransactions = transactions.filter(t => (t.amount || 0) > 0); // واریزی‌ها و درآمدها
-  const liabilitiesTransactions = transactions.filter(t => (t.amount || 0) < 0); // برداشت‌ها و هزینه‌ها
+  // تفکیک تراکنش‌ها به دارایی و بدهی (بهبود عملکرد: Memoize و single pass)
+  const { assetsTransactions, liabilitiesTransactions } = useMemo(() => {
+    if (!transactions) return { assetsTransactions: [], liabilitiesTransactions: [] };
+
+    return transactions.reduce((acc, t) => {
+      const amount = t.amount || 0;
+      if (amount > 0) {
+        acc.assetsTransactions.push(t);
+      } else if (amount < 0) {
+        acc.liabilitiesTransactions.push(t);
+      }
+      return acc;
+    }, { assetsTransactions: [], liabilitiesTransactions: [] });
+  }, [transactions]);
 
   // کامپوننت برای رندر کردن یک ردیف جدول
   const renderTableRow = (transaction, index) => (
