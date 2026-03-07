@@ -90,7 +90,11 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, transaction, 
                 <Dialog.Title className="text-lg font-bold text-gray-900">
                   ثبت پرداخت
                 </Dialog.Title>
-                <button onClick={handleClose} className="text-gray-500 hover:text-red-500">
+                <button
+                  onClick={handleClose}
+                  className="text-gray-500 hover:text-red-500"
+                  aria-label="بستن"
+                >
                   <X size={20} />
                 </button>
               </div>
@@ -139,6 +143,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, transaction, 
                         <button
                           onClick={handleRemoveImage}
                           className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          aria-label="حذف عکس"
                         >
                           <X size={16} />
                         </button>
