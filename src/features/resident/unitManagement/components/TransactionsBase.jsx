@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CreditCard, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "sonner";
 import TransactionItem from "../../../manager/unitManagement/components/transactions/TransactionItem";
 import { fetchTransactions } from "../../../manager/unitManagement/slices/transactionsSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
@@ -13,16 +12,25 @@ export default function TransactionsBase({ transactions: propTransactions, limit
     const [selectedTransaction, setSelectedTransaction] = useState(null);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxTransactions.length > 0 ? reduxTransactions : (propTransactions || []);
+
+    // ⚡ Bolt Performance Optimization:
+    // Wrapped data selection, expensive array sorting, and slicing in useMemo hooks.
+    // Expected Impact: Prevents O(N log N) sorting from recalculating on every re-render,
+    // improving render speed when transactions list is large.
+    const dataSource = useMemo(() => {
+        return reduxTransactions.length > 0 ? reduxTransactions : (propTransactions || []);
+    }, [reduxTransactions, propTransactions]);
     
     // Sort by created_at (from API) or createdAt (from props)
-    const sorted = [...dataSource].sort((a, b) => {
-        const dateA = new Date(a.created_at || a.createdAt);
-        const dateB = new Date(b.created_at || b.createdAt);
-        return dateB - dateA;
-    });
+    const sorted = useMemo(() => {
+        return [...dataSource].sort((a, b) => {
+            const dateA = new Date(a.created_at || a.createdAt);
+            const dateB = new Date(b.created_at || b.createdAt);
+            return dateB - dateA;
+        });
+    }, [dataSource]);
     
-    const displayed = limit ? sorted.slice(0, limit) : sorted;
+    const displayed = useMemo(() => limit ? sorted.slice(0, limit) : sorted, [sorted, limit]);
 
     // Fetch transactions when component mounts
     useEffect(() => {
