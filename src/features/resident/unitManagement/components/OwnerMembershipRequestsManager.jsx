@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Building, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCircle, Home, Car, Users, Bug } from "lucide-react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMembershipRequests, approveMembershipRequestByOwner, rejectMembershipRequest } from "../../../membership/membershipSlice";
-import membershipApi from "../../../../shared/services/membershipApi";
 import moment from "moment-jalaali";
 
 moment.loadPersian({ dialect: "persian-modern" });
@@ -140,25 +139,35 @@ export default function OwnerMembershipRequestsManager() {
   
   // ابتدا ساختمان‌های مالک را از درخواست‌های خودش پیدا کن
   // مالک هم نقش resident دارد اما owner_type یا relationship متفاوت است
-  const ownerApprovedRequests = requests.filter(req => 
-    req.user === user?.id &&
-    (req.role === 'owner' || (req.role === 'resident' && req.owner_type && ['landlord', 'resident'].includes(req.owner_type)))
-  );
-  const ownerBuildingIds = ownerApprovedRequests.map(req => req.building);
+
+  // ⚡ Bolt Performance Optimization:
+  // Memoized multiple expensive array operations (.filter, .map, .includes) that were running on every render
+  // Expected Impact: Reduces main-thread blocking by caching derived state (ownerApprovedRequests, userBuildings, ownerRequests)
+  // O(N) operations now only run when raw requests or user data actually change.
+  const ownerApprovedRequests = useMemo(() => {
+    return requests.filter(req =>
+      req.user === user?.id &&
+      (req.role === 'owner' || (req.role === 'resident' && req.owner_type && ['landlord', 'resident'].includes(req.owner_type)))
+    );
+  }, [requests, user?.id]);
+
+  const ownerBuildingIds = useMemo(() => ownerApprovedRequests.map(req => req.building), [ownerApprovedRequests]);
   
   // اگر ساختمان‌های مالک از user.buildings موجود باشد، از آن استفاده کن
-  const userBuildings = user?.buildings || [];
-  const userBuildingIds = userBuildings.map(building => building.building_id || building.id);
+  const userBuildings = useMemo(() => user?.buildings || [], [user?.buildings]);
+  const userBuildingIds = useMemo(() => userBuildings.map(building => building.building_id || building.id), [userBuildings]);
   
   // ترکیب هر دو منبع
-  const allOwnerBuildingIds = [...new Set([...ownerBuildingIds, ...userBuildingIds])];
+  const allOwnerBuildingIds = useMemo(() => [...new Set([...ownerBuildingIds, ...userBuildingIds])], [ownerBuildingIds, userBuildingIds]);
   
   // فیلتر درخواست‌هایی که مالک باید ببیند
   // فقط درخواست‌های ساکنان تایید شده توسط مالک
-  const ownerRequests = requests.filter(request => {
-    // فقط درخواست‌های ساکنان که توسط این مالک تایید شده‌اند
-    return request.role === 'resident' && request.owner_approved_by === user?.id;
-  });
+  const ownerRequests = useMemo(() => {
+    return requests.filter(request => {
+      // فقط درخواست‌های ساکنان که توسط این مالک تایید شده‌اند
+      return request.role === 'resident' && request.owner_approved_by === user?.id;
+    });
+  }, [requests, user?.id]);
   
   // Debug log
   console.log("🔍 OwnerMembershipRequestsManager - user:", user);
