@@ -6,7 +6,6 @@ import useClickOutside from "../../../hooks/useClickOutside";
 const MenuButton = ({ icon, label, onClick }) => (
     <button
         onClick={onClick}
-        role="menuitem"
         className="flex items-center justify-center gap-1 w-[140px] bg-melkingDarkBlue text-white shadow px-3 py-2 rounded-md text-sm hover:bg-melkingGold hover:text-melkingDarkBlue transition whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold focus-visible:ring-offset-2"
     >
         {icon}
@@ -21,9 +20,8 @@ const Menu = ({ items, open, onSelect, id }) => {
     return (
         <div
             id={id}
-            role="menu"
             aria-hidden={!open}
-            className={`absolute left-12 flex flex-col gap-2 items-start transition-all duration-300 ${open ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none"}`}
+            className={`absolute left-12 flex flex-col gap-2 items-start transition-all duration-300 ${open ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none"} ${!open ? "invisible" : ""}`}
             style={{ top: open ? topOffset : -20 }}
         >
             {items.map(({ key, label, icon, onClick }) => (
@@ -54,7 +52,6 @@ export default function FloatingActionButton({ items = [], color = "bg-yellow-50
                 <button
                     onClick={() => setOpen((o) => !o)}
                     aria-expanded={open}
-                    aria-haspopup="menu"
                     aria-controls={menuId}
                     aria-label={open ? "بستن منو" : "باز کردن منو"}
                     className={`w-14 h-14 flex items-center justify-center ${color} text-white rounded-full shadow-lg hover:opacity-90 transition focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300`}
