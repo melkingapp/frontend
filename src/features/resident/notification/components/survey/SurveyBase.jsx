@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { BarChart3, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -15,16 +15,21 @@ export default function SurveyBase({ surveys: propSurveys, limit }) {
     const [selectedSurvey, setSelectedSurvey] = useState(null);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxSurveys.length > 0 ? reduxSurveys : (propSurveys || []);
+    const dataSource = useMemo(() =>
+        reduxSurveys.length > 0 ? reduxSurveys : (propSurveys || []),
+        [reduxSurveys, propSurveys]
+    );
     
     // Sort by created_at (from API) or createdAt (from props)
-    const sorted = [...dataSource].sort((a, b) => {
-        const dateA = new Date(a.created_at || a.createdAt);
-        const dateB = new Date(b.created_at || b.createdAt);
-        return dateB - dateA;
-    });
-    
-    const displayed = limit ? sorted.slice(0, limit) : sorted;
+    const displayed = useMemo(() => {
+        const sorted = [...dataSource].sort((a, b) => {
+            const dateA = new Date(a.created_at || a.createdAt);
+            const dateB = new Date(b.created_at || b.createdAt);
+            return dateB - dateA;
+        });
+
+        return limit ? sorted.slice(0, limit) : sorted;
+    }, [dataSource, limit]);
 
     const resolveBuildingId = () => {
         const raw = selectedBuilding?.building_id ?? selectedBuilding?.id;
