@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { 
   TrendingUp, 
@@ -427,7 +427,10 @@ export default function BuildingBalance() {
     }
   };
 
-  const filteredTransactions = balanceData.transactions.filter(transaction => {
+  // ⚡ Bolt: Wrap expensive transaction filtering in useMemo to prevent unnecessary re-renders on unrelated state changes
+  // Expected impact: Eliminates O(N) filtering recalculations when navigating UI or typing unrelated fields.
+  const filteredTransactions = useMemo(() => {
+    return balanceData.transactions.filter(transaction => {
     // Filter by transaction type
     let matchesFilter = true;
     if (filter !== "all") {
@@ -489,6 +492,7 @@ export default function BuildingBalance() {
     }
     return result;
   });
+  }, [balanceData.transactions, filter, searchTerm]);
   
   console.log(`🔥 Total transactions: ${balanceData.transactions.length}`);
   console.log(`🔥 Filtered transactions: ${filteredTransactions.length}`);

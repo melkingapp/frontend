@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import {
   TrendingUp,
@@ -80,7 +80,10 @@ export default function ResidentExpenses() {
     fetchExpenses();
   };
 
-  const filteredExpenses = expenses
+  // ⚡ Bolt: Wrap expensive expense filtering and sorting in useMemo to prevent unnecessary re-renders
+  // Expected impact: Eliminates sorting/filtering calculations (O(N log N)) when UI state changes.
+  const filteredExpenses = useMemo(() => {
+    return expenses
     .filter((expense) => {
       if (filterStatus === "all") return true;
       return expense.status === filterStatus;
@@ -93,6 +96,7 @@ export default function ResidentExpenses() {
       }
       return 0;
     });
+  }, [expenses, filterStatus, sortBy, selectedUnit]);
 
   const getStatusBadge = (status, isOverdue) => {
     if (isOverdue) {
