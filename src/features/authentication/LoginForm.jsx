@@ -92,7 +92,8 @@ export default function LoginForm() {
             dispatch(login({ 
                 phone: data.user.phone_number, 
                 role: data.user.role,
-                user: sanitizedUser
+                user: sanitizedUser,
+                tokens: data.tokens // Include tokens so Redux has them, but authMiddleware will strip them before saving to localStorage
             }));
             
             // ذخیره در authService
