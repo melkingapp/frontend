@@ -51,6 +51,8 @@ export default function DeleteConfirmModal({
                                 <button
                                     onClick={onClose}
                                     className="text-gray-400 hover:text-gray-600 transition"
+                                    aria-label="بستن"
+                                    title="بستن"
                                 >
                                     <X size={24} />
                                 </button>
