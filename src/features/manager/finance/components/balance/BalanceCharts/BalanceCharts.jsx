@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -50,7 +50,7 @@ const formatDate = (dateString) => {
 // نمودار خطی برای روند موجودی
 export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
   // پردازش داده‌ها برای نمودار خطی
-  const processTrendData = () => {
+  const chartData = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
     // فیلتر بر اساس بازه زمانی
@@ -77,7 +77,7 @@ export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
 
     // محاسبه موجودی تجمعی
     let runningBalance = 0;
-    const chartData = sorted.map((transaction) => {
+    const processedData = sorted.map((transaction) => {
       runningBalance += transaction.amount || 0;
       return {
         date: transaction.date,
@@ -88,10 +88,8 @@ export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
       };
     });
 
-    return chartData;
-  };
-
-  const chartData = processTrendData();
+    return processedData;
+  }, [transactions, dateRange]);
 
   if (isLoading) {
     return (
@@ -233,7 +231,7 @@ export function IncomeExpenseChart({ income, expenses, isLoading }) {
 // نمودار دایره‌ای برای تفکیک انواع هزینه‌ها
 export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
   // پردازش داده‌ها برای نمودار دایره‌ای
-  const processExpenseData = () => {
+  const chartData = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
     // فیلتر بر اساس بازه زمانی
@@ -274,9 +272,7 @@ export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
       .slice(0, 8); // فقط 8 نوع برتر
 
     return expenseArray;
-  };
-
-  const chartData = processExpenseData();
+  }, [transactions, dateRange]);
 
   if (isLoading) {
     return (
@@ -310,7 +306,7 @@ export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
           cx="50%"
           cy="50%"
           labelLine={false}
-          label={({ name, percent }) => {
+          label={({ _name, percent }) => {
             // نمایش فقط برای برش‌های بزرگ‌تر از 5%
             if (percent > 0.05) {
               return `${(percent * 100).toFixed(0)}%`;
