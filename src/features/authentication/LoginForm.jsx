@@ -92,7 +92,8 @@ export default function LoginForm() {
             dispatch(login({ 
                 phone: data.user.phone_number, 
                 role: data.user.role,
-                user: sanitizedUser
+                user: sanitizedUser,
+                tokens: data.tokens
             }));
             
             // ذخیره در authService

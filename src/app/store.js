@@ -20,9 +20,25 @@ import settingsReducer from "../features/settings/settingsSlice";
 
 // مقدار اولیه از localStorage بخونه
 const savedAuth = localStorage.getItem("auth");
+const accessToken = localStorage.getItem("access_token");
+const refreshToken = localStorage.getItem("refresh_token");
 
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
+let preloadedAuthState = undefined;
+
+if (savedAuth) {
+    const parsedAuth = JSON.parse(savedAuth);
+    preloadedAuthState = {
+        ...parsedAuth,
+        tokens: {
+            access: accessToken || null,
+            refresh: refreshToken || null,
+        },
+        isAuthenticated: !!accessToken,
+    };
+}
+
+const preloadedState = preloadedAuthState
+    ? { auth: preloadedAuthState }
     : undefined;
 
 const store = configureStore({
