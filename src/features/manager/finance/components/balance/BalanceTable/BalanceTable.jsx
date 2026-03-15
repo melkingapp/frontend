@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   Eye, 
   ArrowUpRight, 
@@ -58,23 +58,13 @@ export default function BalanceTable({ transactions, onTransactionClick, isLoadi
     return "bg-slate-50";
   };
 
-  const getTransactionTypeColor = (type) => {
-    const typeColors = {
-      'income': 'bg-green-100 text-green-800',
-      'expense': 'bg-red-100 text-red-800',
-      'transfer': 'bg-blue-100 text-blue-800',
-      'charge': 'bg-purple-100 text-purple-800',
-      'maintenance': 'bg-orange-100 text-orange-800',
-      'utility': 'bg-cyan-100 text-cyan-800',
-      'monthly': 'bg-indigo-100 text-indigo-800',
-      'other': 'bg-gray-100 text-gray-800'
-    };
-    return typeColors[type] || typeColors['other'];
-  };
-
   // تفکیک تراکنش‌ها به دارایی و بدهی
-  const assetsTransactions = transactions.filter(t => (t.amount || 0) > 0); // واریزی‌ها و درآمدها
-  const liabilitiesTransactions = transactions.filter(t => (t.amount || 0) < 0); // برداشت‌ها و هزینه‌ها
+  const { assetsTransactions, liabilitiesTransactions } = useMemo(() => {
+    return {
+      assetsTransactions: transactions.filter(t => (t.amount || 0) > 0),
+      liabilitiesTransactions: transactions.filter(t => (t.amount || 0) < 0)
+    };
+  }, [transactions]);
 
   // کامپوننت برای رندر کردن یک ردیف جدول
   const renderTableRow = (transaction, index) => (
