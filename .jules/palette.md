@@ -1,0 +1,3 @@
+## 2024-05-24 - [Accessibility improvement on `FloatingActionButton`]
+**Learning:** For floating action buttons displaying an interactive context menu (common in UI frameworks), it's important to not only attach `aria-label` functionality on the button itself but also link the opened menu via `aria-hidden` when closed. `role="menu"`, `aria-expanded`, and `useId` natively supported by this implementation pattern provide a robust accessibility foundation.
+**Action:** Ensure that all components implementing collapsible interactive pop-ups are completely removed from the accessibility tree when hidden (e.g., using `aria-hidden="true"`) to prevent screen readers from prematurely presenting or falsely grouping invisible interactive elements.
