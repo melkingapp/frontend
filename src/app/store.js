@@ -21,9 +21,24 @@ import settingsReducer from "../features/settings/settingsSlice";
 // مقدار اولیه از localStorage بخونه
 const savedAuth = localStorage.getItem("auth");
 
-const preloadedState = savedAuth
-    ? { auth: JSON.parse(savedAuth) }
-    : undefined;
+const getPreloadedState = () => {
+    if (!savedAuth) return undefined;
+
+    const parsedAuth = JSON.parse(savedAuth);
+
+    // Rehydrate tokens from dedicated secure storage since authMiddleware strips them
+    const accessToken = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token");
+
+    if (accessToken || refreshToken) {
+        parsedAuth.tokens = {
+            access: accessToken || null,
+            refresh: refreshToken || null
+        };
+    }
+
+    return { auth: parsedAuth };
+};
 
 const store = configureStore({
     reducer: {
@@ -47,7 +62,7 @@ const store = configureStore({
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(authMiddleware),
-    preloadedState,
+    preloadedState: getPreloadedState(),
 });
 
 export default store;
