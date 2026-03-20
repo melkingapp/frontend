@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useState, useEffect, useMemo } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -20,7 +19,6 @@ import PaymentModal from "../components/PaymentModal";
 moment.loadPersian({ dialect: "persian-modern" });
 
 export default function ResidentExpenses() {
-  const user = useSelector((state) => state.auth?.user);
   const [expenses, setExpenses] = useState([]);
   const [units, setUnits] = useState([]);
   const [summary, setSummary] = useState({
@@ -38,6 +36,7 @@ export default function ResidentExpenses() {
 
   useEffect(() => {
     fetchExpenses();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUnit]);
 
   const fetchExpenses = async () => {
@@ -71,6 +70,7 @@ export default function ResidentExpenses() {
     }
   };
 
+
   const handlePaymentClick = (expense) => {
     setSelectedInvoice(expense);
     setPaymentModalOpen(true);
@@ -80,19 +80,21 @@ export default function ResidentExpenses() {
     fetchExpenses();
   };
 
-  const filteredExpenses = expenses
-    .filter((expense) => {
-      if (filterStatus === "all") return true;
-      return expense.status === filterStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === "due_date") {
-        return new Date(b.due_date) - new Date(a.due_date);
-      } else if (sortBy === "amount") {
-        return b.amount - a.amount;
-      }
-      return 0;
-    });
+  const filteredExpenses = useMemo(() => {
+    return expenses
+      .filter((expense) => {
+        if (filterStatus === "all") return true;
+        return expense.status === filterStatus;
+      })
+      .sort((a, b) => {
+        if (sortBy === "due_date") {
+          return new Date(b.due_date) - new Date(a.due_date);
+        } else if (sortBy === "amount") {
+          return b.amount - a.amount;
+        }
+        return 0;
+      });
+  }, [expenses, filterStatus, sortBy]);
 
   const getStatusBadge = (status, isOverdue) => {
     if (isOverdue) {
