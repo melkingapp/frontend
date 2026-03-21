@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   CheckCircle, 
@@ -547,28 +547,40 @@ export default function OwnerMembershipApproval() {
   };
 
   // فیلتر درخواست‌ها بر اساس ساختمان‌های مالک
-  const ownerApprovedRequests = requests.filter(req => 
-    (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved') && 
-    req.role === 'owner' && 
-    req.user === user?.id
-  );
-  const ownerBuildingIds = ownerApprovedRequests.map(req => req.building);
-  
-  const userBuildings = user?.buildings || [];
-  const userBuildingIds = userBuildings.map(building => building.building_id);
-  
-  const allOwnerBuildingIds = [...new Set([...ownerBuildingIds, ...userBuildingIds])];
-  
+  const allOwnerBuildingIds = useMemo(() => {
+    const ownerApprovedRequests = requests.filter(req =>
+      (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved') &&
+      req.role === 'owner' &&
+      req.user === user?.id
+    );
+    const ownerBuildingIds = ownerApprovedRequests.map(req => req.building);
+    
+    const userBuildings = user?.buildings || [];
+    const userBuildingIds = userBuildings.map(building => building.building_id);
+    
+    return [...new Set([...ownerBuildingIds, ...userBuildingIds])];
+  }, [requests, user]);
+
   // فیلتر درخواست‌ها بر اساس وضعیت و ساختمان‌های مالک
-  const filteredRequests = requests.filter(request => {
-    // فیلتر بر اساس وضعیت
-    const statusMatch = statusFilter === 'all' || request.status === statusFilter;
-    
-    // فیلتر بر اساس ساختمان‌های مالک
-    const buildingMatch = allOwnerBuildingIds.includes(request.building);
-    
-    return statusMatch && buildingMatch;
-  });
+  const filteredRequests = useMemo(() => {
+    return requests.filter(request => {
+      // فیلتر بر اساس وضعیت
+      const statusMatch = statusFilter === 'all' || request.status === statusFilter;
+
+      // فیلتر بر اساس ساختمان‌های مالک
+      const buildingMatch = allOwnerBuildingIds.includes(request.building);
+
+      return statusMatch && buildingMatch;
+    });
+  }, [requests, statusFilter, allOwnerBuildingIds]);
+
+  // محاسبه تعداد درخواست‌ها برای هر وضعیت
+  const requestCounts = useMemo(() => {
+    return requests.reduce((acc, req) => {
+      acc[req.status] = (acc[req.status] || 0) + 1;
+      return acc;
+    }, {});
+  }, [requests]);
 
   return (
     <div className="space-y-6">
@@ -600,7 +612,7 @@ export default function OwnerMembershipApproval() {
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          در انتظار ({requests.filter(r => r.status === 'pending').length})
+          در انتظار ({requestCounts['pending'] || 0})
         </button>
         <button
           onClick={() => setStatusFilter('owner_approved')}
@@ -610,7 +622,7 @@ export default function OwnerMembershipApproval() {
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          تأیید شده ({requests.filter(r => r.status === 'owner_approved').length})
+          تأیید شده ({requestCounts['owner_approved'] || 0})
         </button>
         <button
           onClick={() => setStatusFilter('manager_approved')}
@@ -620,7 +632,7 @@ export default function OwnerMembershipApproval() {
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          تکمیل شده ({requests.filter(r => r.status === 'manager_approved').length})
+          تکمیل شده ({requestCounts['manager_approved'] || 0})
         </button>
       </div>
 
