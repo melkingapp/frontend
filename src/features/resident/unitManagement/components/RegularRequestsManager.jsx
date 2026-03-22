@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Building, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCircle, Home, Car, Users } from "lucide-react";
-import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMembershipRequests } from "../../../membership/membershipSlice";
 import moment from "moment-jalaali";
@@ -60,10 +59,9 @@ const RoleBadge = ({ role }) => {
 export default function RegularRequestsManager() {
   const dispatch = useDispatch();
   const { requests, loading, error } = useSelector(state => state.membership);
-  const { user } = useSelector(state => state.auth);
   
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
     // دریافت درخواست‌های عادی (غیر عضویت)
@@ -81,10 +79,21 @@ export default function RegularRequestsManager() {
   };
 
   // فیلتر درخواست‌های عادی (غیر عضویت)
-  const regularRequests = requests.filter(request => {
-    // درخواست‌های عضویت را حذف کن
-    return !request.building_code || request.building_code === '';
-  });
+  const regularRequests = useMemo(() => {
+    return requests.filter(request => {
+      // درخواست‌های عضویت را حذف کن
+      return !request.building_code || request.building_code === '';
+    });
+  }, [requests]);
+
+  // محاسبه آمار وضعیت‌ها
+  const requestStats = useMemo(() => {
+    return {
+      pending: regularRequests.filter(r => r.status === 'pending').length,
+      manager_approved: regularRequests.filter(r => r.status === 'manager_approved').length,
+      rejected: regularRequests.filter(r => r.status === 'rejected').length,
+    };
+  }, [regularRequests]);
 
   if (loading && requests.length === 0) {
     return (
@@ -124,7 +133,7 @@ export default function RegularRequestsManager() {
             <div>
               <p className="text-sm text-gray-600">در انتظار تایید</p>
               <p className="text-2xl font-bold text-gray-900">
-                {regularRequests.filter(r => r.status === 'pending').length}
+                {requestStats.pending}
               </p>
             </div>
           </div>
@@ -138,7 +147,7 @@ export default function RegularRequestsManager() {
             <div>
               <p className="text-sm text-gray-600">تایید شده</p>
               <p className="text-2xl font-bold text-gray-900">
-                {regularRequests.filter(r => r.status === 'manager_approved').length}
+                {requestStats.manager_approved}
               </p>
             </div>
           </div>
@@ -152,7 +161,7 @@ export default function RegularRequestsManager() {
             <div>
               <p className="text-sm text-gray-600">رد شده</p>
               <p className="text-2xl font-bold text-gray-900">
-                {regularRequests.filter(r => r.status === 'rejected').length}
+                {requestStats.rejected}
               </p>
             </div>
           </div>
