@@ -1,12 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Clock, CheckCircle, CheckCircle2, XCircle, Building2, Calendar, RefreshCw, Home, Users, Car } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { 
     setSelectedBuilding, 
     fetchApprovedBuildingsDetails,
-    selectResidentBuildingLoading,
-    selectResidentBuildingError
 } from "../residentBuildingSlice";
 import { 
     fetchMembershipRequests,
@@ -22,6 +20,53 @@ export default function BuildingRequestStatus() {
     const error = useSelector(selectMembershipError);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const previousRequestsRef = useRef([]);
+
+    const uniqueRequests = useMemo(() => {
+        // Filter out requests with unknown status
+        const validStatuses = ['pending', 'owner_approved', 'manager_approved', 'rejected', 'approved', 'suggested'];
+        const validRequests = requests.filter(req => {
+            const status = req.status;
+            return status && validStatuses.includes(status);
+        });
+
+        // Group requests by building_code and unit_number
+        const requestsByKey = {};
+        validRequests.forEach(req => {
+            const key = `${req.building_code}-${req.unit_number}`;
+            if (!requestsByKey[key]) {
+                requestsByKey[key] = [];
+            }
+            requestsByKey[key].push(req);
+        });
+
+        // For each group, keep only the best request:
+        // Priority: manager_approved > owner_approved > approved > pending > rejected > suggested
+        return Object.values(requestsByKey).map(group => {
+            const statusPriority = {
+                'manager_approved': 1,
+                'owner_approved': 2,
+                'approved': 3,
+                'pending': 4,
+                'suggested': 5,
+                'rejected': 6
+            };
+
+            // Sort by priority, then by date (most recent first)
+            group.sort((a, b) => {
+                const priorityA = statusPriority[a.status] || 999;
+                const priorityB = statusPriority[b.status] || 999;
+
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+
+                // Same priority, get most recent
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            return group[0]; // Return the best one
+        });
+    }, [requests]);
 
     useEffect(() => {
         // Always fetch requests when component mounts
@@ -43,7 +88,7 @@ export default function BuildingRequestStatus() {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            const result = await dispatch(fetchMembershipRequests()).unwrap();
+            await dispatch(fetchMembershipRequests()).unwrap();
         } catch (error) {
             console.error('Error refreshing requests:', error);
         } finally {
@@ -277,50 +322,7 @@ export default function BuildingRequestStatus() {
 
             <div className="p-6 space-y-4">
                 {(() => {
-                    // Filter out requests with unknown status
-                    const validStatuses = ['pending', 'owner_approved', 'manager_approved', 'rejected', 'approved', 'suggested'];
-                    const validRequests = requests.filter(req => {
-                        const status = req.status;
-                        return status && validStatuses.includes(status);
-                    });
-                    
-                    // Group requests by building_code and unit_number
-                    const requestsByKey = {};
-                    validRequests.forEach(req => {
-                        const key = `${req.building_code}-${req.unit_number}`;
-                        if (!requestsByKey[key]) {
-                            requestsByKey[key] = [];
-                        }
-                        requestsByKey[key].push(req);
-                    });
-                    
-                    // For each group, keep only the best request:
-                    // Priority: manager_approved > owner_approved > approved > pending > rejected > suggested
-                    const uniqueRequests = Object.values(requestsByKey).map(group => {
-                        const statusPriority = {
-                            'manager_approved': 1,
-                            'owner_approved': 2,
-                            'approved': 3,
-                            'pending': 4,
-                            'suggested': 5,
-                            'rejected': 6
-                        };
-                        
-                        // Sort by priority, then by date (most recent first)
-                        group.sort((a, b) => {
-                            const priorityA = statusPriority[a.status] || 999;
-                            const priorityB = statusPriority[b.status] || 999;
-                            
-                            if (priorityA !== priorityB) {
-                                return priorityA - priorityB;
-                            }
-                            
-                            // Same priority, get most recent
-                            return new Date(b.created_at) - new Date(a.created_at);
-                        });
-                        
-                        return group[0]; // Return the best one
-                    });
+
                     
                     return uniqueRequests.map((request, index) => {
                         const statusText = getStatusText(request.status);

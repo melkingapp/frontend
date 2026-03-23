@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { 
   TrendingUp, 
@@ -21,7 +21,6 @@ import { BalanceDetailsModal } from "../../../manager/finance/components/balance
 import BalanceCharts from "../../../manager/finance/components/balance/BalanceCharts";
 import SearchBox from "../../../../shared/components/shared/inputs/SearchBox";
 import { fetchBalanceSheet, fetchBalanceTransactions } from "../../../manager/finance/store/slices/financeSlice";
-import { getPersianType } from "../../../../shared/utils/typeUtils";
 import { exportBalanceSheet } from "../../../../shared/services/billingService";
 import moment from "moment-jalaali";
 
@@ -427,7 +426,8 @@ export default function BuildingBalance() {
     }
   };
 
-  const filteredTransactions = balanceData.transactions.filter(transaction => {
+  const filteredTransactions = useMemo(() => {
+    return balanceData.transactions.filter(transaction => {
     // Filter by transaction type
     let matchesFilter = true;
     if (filter !== "all") {
@@ -488,7 +488,8 @@ export default function BuildingBalance() {
       console.log(`🔥 Match result: ${result} (filter: ${matchesFilter}, search: ${matchesSearch})`);
     }
     return result;
-  });
+    });
+  }, [balanceData.transactions, filter, searchTerm]);
   
   console.log(`🔥 Total transactions: ${balanceData.transactions.length}`);
   console.log(`🔥 Filtered transactions: ${filteredTransactions.length}`);
