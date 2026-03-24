@@ -1,13 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
     setSelectedBuilding,
     fetchResidentRequests,
-    fetchApprovedBuildingsDetails,
 } from "../../../../features/resident/building/residentBuildingSlice";
 import { useResidentUnitData } from "../../../../features/resident/building/hooks/useResidentUnitData";
 import MelkingLogo from "../../../../assets/logo/Melking-fa.svg";
@@ -21,12 +20,11 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const dispatch = useDispatch();
 
     // Use hook for resident unit data (prevents duplicate fetches)
-    const { selectedBuilding, approvedBuildings, membershipRequests } = useResidentUnitData();
+    const { selectedBuilding, membershipRequests } = useResidentUnitData();
     const requests = useSelector(selectResidentRequests);
-    const { user } = useSelector(state => state.auth);
 
     // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
-    const getUserRole = () => {
+    const userRole = useMemo(() => {
         const approvedRequests = membershipRequests.filter(req => 
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
@@ -45,12 +43,8 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         }
         
         return 'resident'; // پیش‌فرض
-    };
+    }, [membershipRequests]);
 
-    const userRole = getUserRole();
-
-    // Get pending requests count for display
-    const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
 
     useEffect(() => {
         // Only fetch resident requests if we don't have them in Redux store
@@ -62,7 +56,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     // Get approved units from hook (already calculated in useResidentUnitData)
     // We need to recalculate here to match the exact format expected by the sidebar
-    const approvedUnits = (() => {
+    const approvedUnits = useMemo(() => {
         const approvedRequests = membershipRequests.filter(req => 
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
@@ -94,7 +88,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         });
         
         return uniqueUnits;
-    })();
+    }, [membershipRequests]);
 
     // Auto-select first approved unit if none is selected
     useEffect(() => {
@@ -169,18 +163,6 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
             }
         }
     }, [selectedBuilding, approvedUnits, dispatch]);
-
-    // Auto-refresh membership requests every 30 seconds for pending requests
-    useEffect(() => {
-        const hasPendingRequests = membershipRequests.some(req => req.status === 'pending');
-        if (!hasPendingRequests) return;
-
-        const interval = setInterval(() => {
-            dispatch(fetchMembershipRequests());
-        }, 30000); // 30 seconds
-
-        return () => clearInterval(interval);
-    }, [membershipRequests, dispatch]);
 
     const toggleMenu = (label) => {
         setOpenMenus((prev) => ({
@@ -437,7 +419,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                 <div className="absolute mt-2 w-full bg-white rounded-lg shadow-lg border text-sm max-h-60 overflow-y-auto z-50">
                     {approvedUnits.length > 0 ? (
                         <>
-                            {approvedUnits.map((request, index) => {
+                            {approvedUnits.map((request, _index) => {
                                 const unit = {
                                     id: `${request.building}-${request.unit_number}-${request.role}-${request.request_id}`,
                                     building_id: request.building,
@@ -493,9 +475,9 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                                     </div>
                                     {membershipRequests
                                         .filter(req => req.status === 'pending')
-                                        .map((request, index) => (
+                                        .map((request, _index) => (
                                             <div
-                                                key={request.request_id || index}
+                                                key={request.request_id || _index}
                                                 className="w-full text-right px-4 py-2 text-gray-600 bg-orange-50 border-r-4 border-orange-300"
                                             >
                                                 <div className="flex flex-col">
