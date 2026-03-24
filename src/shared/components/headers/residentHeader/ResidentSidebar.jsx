@@ -8,7 +8,6 @@ import {
     setSelectedBuilding,
     fetchResidentRequests,
 } from "../../../../features/resident/building/residentBuildingSlice";
-import { fetchMembershipRequests } from "../../../../features/resident/building/residentBuildingSlice";
 import { useResidentUnitData } from "../../../../features/resident/building/hooks/useResidentUnitData";
 import MelkingLogo from "../../../../assets/logo/Melking-fa.svg";
 
@@ -164,18 +163,6 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
             }
         }
     }, [selectedBuilding, approvedUnits, dispatch]);
-
-    // Auto-refresh membership requests every 30 seconds for pending requests
-    useEffect(() => {
-        const hasPendingRequests = membershipRequests.some(req => req.status === 'pending');
-        if (!hasPendingRequests) return;
-
-        const interval = setInterval(() => {
-            dispatch(fetchMembershipRequests());
-        }, 30000); // 30 seconds
-
-        return () => clearInterval(interval);
-    }, [membershipRequests, dispatch]);
 
     const toggleMenu = (label) => {
         setOpenMenus((prev) => ({
