@@ -3,9 +3,17 @@ import membershipApi from '../../shared/services/membershipApi';
 
 // Helper function to handle API errors consistently
 const handleApiError = (error, rejectWithValue) => {
-  if (import.meta.env.DEV) {
-    console.error("❌ API Error:", error.response || error);
+  try {
+    // Check if import.meta.env is available (it's not in Jest CommonJS environment)
+    // Using new Function to avoid syntax error in Jest
+    const isDev = new Function('try { return import.meta.env.DEV; } catch (e) { return false; }')();
+    if (isDev) {
+      console.error("❌ API Error:", error.response || error);
+    }
+  } catch (e) {
+    // Ignore error if import.meta.env access fails
   }
+
   const errorData = error.data || error.response?.data;
   if (errorData) {
     if (typeof errorData === 'object' && !errorData.error && !errorData.message && !errorData.detail) {

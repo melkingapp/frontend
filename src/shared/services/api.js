@@ -162,7 +162,9 @@ class ApiService {
         let errorMessage = data?.detail || data?.message || data?.error;
         
         // Log the full error response for debugging (only in development)
-        if (import.meta.env.DEV) {
+        // Check if import.meta.env is available (it's not in Jest CommonJS environment)
+        const isDev = new Function('try { return import.meta.env.DEV; } catch (e) { return false; }')();
+        if (isDev) {
           console.error('API Error Response:', {
             status: response.status,
             statusText: response.statusText,
@@ -413,7 +415,8 @@ class ApiService {
         let errorMessage = data?.detail || data?.message || data?.error;
         
         // Log the full error response for debugging (only in development)
-        if (import.meta.env.DEV) {
+        // Check if import.meta.env is available (it's not in Jest CommonJS environment)
+        if (isDev) {
           console.error('File Upload Error Response:', {
             status: response.status,
             statusText: response.statusText,

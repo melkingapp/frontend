@@ -6,15 +6,22 @@
  * @returns {string} Base URL for API requests
  */
 export const getApiBaseUrl = () => {
-  // در development، اولویت با localhost است
-  const envUrl = import.meta.env.VITE_API_BASE_URL;
-  if (envUrl) {
-    return envUrl;
-  }
-  
-  // اگر در development هستیم و متغیر محیطی تنظیم نشده، از localhost استفاده کن
-  if (import.meta.env.DEV) {
-    return 'http://localhost:8000/api/v1';
+  try {
+    // در development، اولویت با localhost است
+    // Safe access to import.meta.env for Jest environment
+    const env = new Function('try { return import.meta.env; } catch (e) { return {}; }')();
+
+    const envUrl = env.VITE_API_BASE_URL;
+    if (envUrl) {
+      return envUrl;
+    }
+
+    // اگر در development هستیم و متغیر محیطی تنظیم نشده، از localhost استفاده کن
+    if (env.DEV) {
+      return 'http://localhost:8000/api/v1';
+    }
+  } catch (e) {
+    // Fallback if something goes wrong
   }
   
   // در production از URL پیش‌فرض استفاده کن
@@ -27,19 +34,25 @@ export const getApiBaseUrl = () => {
  * @returns {string} Base URL for media files
  */
 export const getMediaBaseUrl = () => {
-  // اگر VITE_MEDIA_BASE_URL تنظیم شده باشد، از آن استفاده می‌کنیم
-  if (import.meta.env.VITE_MEDIA_BASE_URL) {
-    return import.meta.env.VITE_MEDIA_BASE_URL;
+  try {
+    const env = new Function('try { return import.meta.env; } catch (e) { return {}; }')();
+
+    // اگر VITE_MEDIA_BASE_URL تنظیم شده باشد، از آن استفاده می‌کنیم
+    if (env.VITE_MEDIA_BASE_URL) {
+      return env.VITE_MEDIA_BASE_URL;
+    }
+
+    // در غیر این صورت، از VITE_API_BASE_URL استفاده می‌کنیم و /api/v1 را حذف می‌کنیم
+    const apiBaseUrl = env.VITE_API_BASE_URL || 'https://melkingapp.ir/api/v1';
+    if (apiBaseUrl.endsWith('/api/v1')) {
+      return apiBaseUrl.replace('/api/v1', '');
+    }
+
+    // اگر /api/v1 نداشت، همان را برمی‌گردانیم
+    return apiBaseUrl;
+  } catch (e) {
+    return 'https://melkingapp.ir/api/v1';
   }
-  
-  // در غیر این صورت، از VITE_API_BASE_URL استفاده می‌کنیم و /api/v1 را حذف می‌کنیم
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://melkingapp.ir/api/v1';
-  if (apiBaseUrl.endsWith('/api/v1')) {
-    return apiBaseUrl.replace('/api/v1', '');
-  }
-  
-  // اگر /api/v1 نداشت، همان را برمی‌گردانیم
-  return apiBaseUrl;
 };
 
 /**
