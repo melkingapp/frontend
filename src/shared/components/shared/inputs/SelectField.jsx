@@ -1,11 +1,24 @@
+import { forwardRef } from "react";
 import { getPersianType } from "../../../utils/typeUtils";
 
-function ErrorMessage({ children }) {
+function ErrorMessage({ children, id }) {
     if (!children) return null;
-    return <p className="text-red-500 text-xs mb-3">{children}</p>;
+    return <p id={id} className="text-red-500 text-xs mb-3">{children}</p>;
 }
 
-export default function SelectField({ label, name, value, onChange, options, error, disabled = false }) {
+const SelectField = forwardRef(({
+    label,
+    name,
+    value,
+    onChange,
+    options,
+    error,
+    disabled = false,
+    required = false,
+    className,
+    inputClassName,
+    ...rest
+}, ref) => {
     // اگر value وجود دارد اما در options نیست، با getPersianType label آن را پیدا کن
     const selectedOption = options.find(opt => opt.value === value);
     const displayOptions = selectedOption 
@@ -14,18 +27,31 @@ export default function SelectField({ label, name, value, onChange, options, err
             ? [...options, { value, label: getPersianType(value) || value }] // Fallback: استفاده از getPersianType برای نمایش فارسی
             : options;
     
+    const errorId = error ? `${name}-error` : undefined;
+
     return (
-        <div className="mb-4">
-            <label htmlFor={name} className="block text-sm font-semibold text-gray-700 mb-2">
-                {label}
-            </label>
+        <div className={className || "mb-4"}>
+            {label && (
+                <label htmlFor={name} className="block text-sm font-semibold text-gray-700 mb-2">
+                    {label}
+                    {required && <span className="text-red-500 ms-1" aria-hidden="true">*</span>}
+                </label>
+            )}
             <select
+                ref={ref}
                 id={name}
                 name={name}
                 value={value}
                 onChange={onChange}
                 disabled={disabled}
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 ${error ? "border-red-500" : "border-gray-200"} ${disabled ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
+                required={required}
+                aria-required={required}
+                aria-invalid={!!error}
+                aria-describedby={errorId}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2C5A8C] transition ${
+                    error ? "border-red-500" : "border-gray-200"
+                } ${disabled ? "opacity-50 cursor-not-allowed bg-gray-100" : ""} ${inputClassName || ""}`}
+                {...rest}
             >
                 <option value="">انتخاب کنید</option>
                 {displayOptions.map(({ value: optVal, label: optLabel }, index) => (
@@ -34,7 +60,11 @@ export default function SelectField({ label, name, value, onChange, options, err
                     </option>
                 ))}
             </select>
-            <ErrorMessage>{error}</ErrorMessage>
+            <ErrorMessage id={errorId}>{error}</ErrorMessage>
         </div>
     );
-}
+});
+
+SelectField.displayName = "SelectField";
+
+export default SelectField;
