@@ -23,7 +23,12 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
             <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <User /> {title}
                 {!isEditing && (
-                    <button onClick={() => setIsEditing(true)} className="ml-auto text-gray-500 hover:text-gray-700">
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="ml-auto text-gray-500 hover:text-gray-700 focus-visible:ring-2 focus-visible:ring-blue-500 rounded p-1 outline-none transition-colors"
+                        aria-label={`ویرایش ${title}`}
+                        title={`ویرایش ${title}`}
+                    >
                         <Edit size={16} />
                     </button>
                 )}
