@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   moduleNameMapper: {
@@ -21,5 +21,5 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  extensionsToTreatAsEsm: ['.jsx', '.js'],
+  // extensionsToTreatAsEsm: ['.jsx', '.js'], // This might be needed or not, but usually with babel-jest it handles it.
 };
