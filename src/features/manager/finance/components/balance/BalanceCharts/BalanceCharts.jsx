@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -50,7 +50,7 @@ const formatDate = (dateString) => {
 // نمودار خطی برای روند موجودی
 export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
   // پردازش داده‌ها برای نمودار خطی
-  const processTrendData = () => {
+  const chartData = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
     // فیلتر بر اساس بازه زمانی
@@ -77,7 +77,7 @@ export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
 
     // محاسبه موجودی تجمعی
     let runningBalance = 0;
-    const chartData = sorted.map((transaction) => {
+    return sorted.map((transaction) => {
       runningBalance += transaction.amount || 0;
       return {
         date: transaction.date,
@@ -87,11 +87,7 @@ export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
         expense: transaction.amount < 0 ? Math.abs(transaction.amount) : 0
       };
     });
-
-    return chartData;
-  };
-
-  const chartData = processTrendData();
+  }, [transactions, dateRange]);
 
   if (isLoading) {
     return (
@@ -163,7 +159,7 @@ export function BalanceTrendChart({ transactions, isLoading, dateRange }) {
 
 // نمودار میله‌ای برای مقایسه درآمد و هزینه
 export function IncomeExpenseChart({ income, expenses, isLoading }) {
-  const chartData = [
+  const chartData = useMemo(() => [
     {
       name: 'درآمد',
       value: income || 0,
@@ -174,7 +170,7 @@ export function IncomeExpenseChart({ income, expenses, isLoading }) {
       value: expenses || 0,
       color: CHART_COLORS.expense
     }
-  ];
+  ], [income, expenses]);
 
   if (isLoading) {
     return (
@@ -233,7 +229,7 @@ export function IncomeExpenseChart({ income, expenses, isLoading }) {
 // نمودار دایره‌ای برای تفکیک انواع هزینه‌ها
 export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
   // پردازش داده‌ها برای نمودار دایره‌ای
-  const processExpenseData = () => {
+  const chartData = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
     // فیلتر بر اساس بازه زمانی
@@ -274,9 +270,7 @@ export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
       .slice(0, 8); // فقط 8 نوع برتر
 
     return expenseArray;
-  };
-
-  const chartData = processExpenseData();
+  }, [transactions, dateRange]);
 
   if (isLoading) {
     return (
@@ -310,7 +304,7 @@ export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
           cx="50%"
           cy="50%"
           labelLine={false}
-          label={({ name, percent }) => {
+          label={({ _name, percent }) => {
             // نمایش فقط برای برش‌های بزرگ‌تر از 5%
             if (percent > 0.05) {
               return `${(percent * 100).toFixed(0)}%`;
@@ -332,7 +326,7 @@ export function ExpenseBreakdownChart({ transactions, isLoading, dateRange }) {
             borderRadius: '8px',
             fontFamily: 'IranSansX'
           }}
-          formatter={(value, name) => [formatCurrency(value), name]}
+          formatter={(value, _name) => [formatCurrency(value), _name]}
         />
         <Legend 
           wrapperStyle={{ fontFamily: 'IranSansX', fontSize: '12px', paddingTop: '20px' }}
