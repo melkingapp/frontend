@@ -1,0 +1,3 @@
+## 2025-02-18 - Jest Configuration and ESM
+**Learning:** The project uses `type: module` but Jest configuration files (`jest.config.js`) are in CommonJS. This causes "Multiple configurations found" errors if both `.js` and `.cjs` exist, and `SyntaxError` for `import.meta.env` if the test environment isn't properly configured to transform ESM syntax or mock it.
+**Action:** When working with Jest in this ESM repo, avoid creating duplicate config files. Use `.cjs` for CommonJS config if needed, or rely on existing setup. Be aware that `import.meta.env` requires Babel transformation or mocking in tests.
