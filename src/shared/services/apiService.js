@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '../utils/apiConfig';
+import { redactSensitiveData, isSensitiveKey } from '../utils/security';
 
 // Configuration
 const baseURL = getApiBaseUrl();
@@ -116,7 +117,7 @@ client.interceptors.request.use(
                     key,
                     value instanceof File || value instanceof Blob 
                         ? `[File: ${value.name}, ${(value.size / 1024).toFixed(2)} KB]`
-                        : value
+                        : isSensitiveKey(key) ? '***REDACTED***' : value
                 ])
             });
             
@@ -353,7 +354,7 @@ export const post = async (url, data = {}, config = {}) => {
             });
         } else {
             console.log(`📤 POST ${url}`, {
-                data: data,
+                data: redactSensitiveData(data),
                 config: config
             });
         }

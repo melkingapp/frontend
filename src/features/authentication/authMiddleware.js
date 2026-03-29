@@ -1,3 +1,5 @@
+import { sanitizeUser } from "../../shared/utils/security";
+
 const authMiddleware = (store) => (next) => (action) => {
     const result = next(action);
 
@@ -5,7 +7,15 @@ const authMiddleware = (store) => (next) => (action) => {
 
     // فقط برای login و logout
     if (action.type.startsWith("auth/")) {
-        localStorage.setItem("auth", JSON.stringify(auth));
+        // Create a safe subset of auth state for persistence
+        // We strictly exclude 'tokens' to prevent them from being stored in the 'auth' key
+        // (apiService manages them separately in their own keys)
+        const safeAuth = {
+            isAuthenticated: auth.isAuthenticated,
+            user: sanitizeUser(auth.user),
+            // Explicitly exclude tokens, loading, error
+        };
+        localStorage.setItem("auth", JSON.stringify(safeAuth));
     }
 
     return result;
