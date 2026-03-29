@@ -1,7 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
+
+const clsx = (...args) => {
+    return args
+        .flat()
+        .filter((x) => typeof x === "string" && x.trim() !== "")
+        .join(" ");
+};
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
