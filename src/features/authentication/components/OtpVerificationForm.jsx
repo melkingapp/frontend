@@ -1,8 +1,9 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useRef, useState } from "react";
 import { RefreshCcw, Edit3 } from "lucide-react";
+import Button from "../../../shared/components/shared/feedback/Button";
 
-export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
+export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack, loading, error }) {
     const inputsRef = useRef([]);
     const [timer, setTimer] = useState(60);
     const [resendVisible, setResendVisible] = useState(false);
@@ -96,9 +97,12 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                                 key={index}
                                 type="text"
                                 inputMode="numeric"
+                                autoComplete={index === 0 ? "one-time-code" : undefined}
+                                aria-label={`رقم ${index + 1} کد تایید`}
+                                aria-invalid={!!otpError || !!error}
                                 maxLength={1}
                                 className={`w-12 h-12 border rounded-xl text-center text-lg font-bold shadow-sm focus:outline-none transition
-                                ${otpError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-melkingGold"}
+                                ${otpError || error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-melkingGold"}
                                 `}
                                 ref={(el) => (inputsRef.current[index] = el)}
                                 onChange={(e) => handleOtpInput(e, index)}
@@ -107,19 +111,21 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
                         ))}
                 </div>
 
-                {otpError && (
-                    <p className="text-red-500 text-sm text-center mt-2">
-                        کد تأیید نامعتبر است.
+                {(otpError || error) && (
+                    <p className="text-red-500 text-sm text-center mt-2" role="alert">
+                        {error || "کد تأیید نامعتبر است."}
                     </p>
                 )}
 
-                <button
+                <Button
                     onClick={() => handleSubmit(getOtpValue())}
-                    disabled={getOtpValue().length !== 5}
-                    className="w-full bg-melkingGold text-white py-3 rounded-xl font-bold text-base hover:bg-[#16243f] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={getOtpValue().length !== 5 || loading}
+                    loading={loading}
+                    color="gold"
+                    className="w-full text-base"
                 >
                     ورود به سامانه
-                </button>
+                </Button>
 
                 <div className="text-center text-sm text-gray-500">
                     {timer > 0 ? (
