@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Eye, Search, Filter, Calendar, X } from "lucide-react";
 import moment from "moment-jalaali";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
-import { fetchTransactions, selectCurrentFundBalance } from "../../../manager/finance/store/slices/financeSlice";
+import { fetchTransactions } from "../../../manager/finance/store/slices/financeSlice";
 import { FinanceTableRow } from "../../../manager/finance/components/transactions/TransactionList";
 import { FinanceDetailsModal } from "../../../manager/finance/components/transactions/TransactionDetails";
 import { TransactionFilter } from "../../../manager/finance/components/transactions/TransactionFilters";
@@ -28,7 +28,6 @@ const getStartOfYear = () => {
 export default function BuildingBalanceTable() {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth?.user);
-    const isManager = user?.role === 'manager';
     const isResident = user?.role === 'resident';
 
     // Use resident unit data hook for resident-specific information
@@ -38,7 +37,6 @@ export default function BuildingBalanceTable() {
     // Select building based on role - residents get unit-specific data, managers get building data
     const building = isResident ? residentBuilding : managerBuilding;
 
-    const currentFundBalance = useSelector(selectCurrentFundBalance);
     const categories = useCategories();
     
     const [selected, setSelected] = useState(null);
@@ -52,7 +50,7 @@ export default function BuildingBalanceTable() {
     
     // Get transactions from Redux state
     const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    const transactions = useMemo(() => Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []), [transactionsData]);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
@@ -73,134 +71,84 @@ export default function BuildingBalanceTable() {
     }, [dispatch, building?.building_id, dateRange, isResident, approvedBuildings.length]);
     
     // Sort and filter transactions
-    const sortedData = [...transactions].sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
-    );
-    
-    const filteredData = sortedData.filter(item => {
-        let matchesFilter = false;
+    const filteredData = useMemo(() => {
+        const sortedData = [...transactions].sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
+        );
         
-        if (filter === "all") {
-            matchesFilter = true;
-        } else if (filter === "purchases") {
-            matchesFilter = item.title && item.title.startsWith("اقلام خریدنی");
-        } else if (filter.startsWith("custom_")) {
-            const customType = filter.replace("custom_", "").replace(/_/g, " ");
-            matchesFilter = item.title === customType || 
-                           item.bill_type === customType ||
-                           (item.bill_type === 'other' && item.description === customType);
-        } else {
-            // Map expense type filters to actual data
-            const filterMapping = {
-                'water_bill': 'قبض آب',
-                'electricity_bill': 'قبض برق',
-                'gas': 'قبض گاز',
-                'maintenance': 'تعمیرات',
-                'cleaning': 'نظافت',
-                'security': 'امنیت',
-                'camera': 'دوربین',
-                'parking': 'پارکینگ',
-                'charge': 'شارژ',
-                'repair': 'تعمیرات',
-                'rent': 'اجاره',
-                'service': 'خدمات',
-                'other': 'سایر'
-            };
+        return sortedData.filter(item => {
+            let matchesFilter = false;
             
-            const expectedTitle = filterMapping[filter];
-            
-            const billTypeMapping = {
-                'water_bill': 'water',
-                'electricity_bill': 'electricity',
-                'gas': 'gas',
-                'maintenance': 'maintenance',
-                'cleaning': 'cleaning',
-                'security': 'security',
-                'camera': 'camera',
-                'parking': 'parking',
-                'charge': 'charge',
-                'repair': 'maintenance',
-                'rent': 'other',
-                'service': 'other',
-                'other': 'other'
-            };
-            
-            const expectedBillType = billTypeMapping[filter];
-            const filterLabel = categories.find(cat => cat.value === filter)?.label;
-            
-            matchesFilter = item.title === expectedTitle || 
-                           (item.bill_type && item.bill_type === expectedBillType) ||
-                           (item.category && item.category === filter) ||
-                           (item.title && item.title === filterLabel);
-        }
-        
-        const search = searchTerm.trim().toLowerCase();
-        const matchesSearch =
-            search === "" ||
-            item.title.toLowerCase().includes(search) ||
-            item.status.toLowerCase().includes(search) ||
-            item.date.toLowerCase().includes(search) ||
-            item.amount.toString().includes(search);
+            if (filter === "all") {
+                matchesFilter = true;
+            } else if (filter === "purchases") {
+                matchesFilter = item.title && item.title.startsWith("اقلام خریدنی");
+            } else if (filter.startsWith("custom_")) {
+                const customType = filter.replace("custom_", "").replace(/_/g, " ");
+                matchesFilter = item.title === customType ||
+                               item.bill_type === customType ||
+                               (item.bill_type === 'other' && item.description === customType);
+            } else {
+                // Map expense type filters to actual data
+                const filterMapping = {
+                    'water_bill': 'قبض آب',
+                    'electricity_bill': 'قبض برق',
+                    'gas': 'قبض گاز',
+                    'maintenance': 'تعمیرات',
+                    'cleaning': 'نظافت',
+                    'security': 'امنیت',
+                    'camera': 'دوربین',
+                    'parking': 'پارکینگ',
+                    'charge': 'شارژ',
+                    'repair': 'تعمیرات',
+                    'rent': 'اجاره',
+                    'service': 'خدمات',
+                    'other': 'سایر'
+                };
 
-        return matchesFilter && matchesSearch;
-    });
+                const expectedTitle = filterMapping[filter];
+
+                const billTypeMapping = {
+                    'water_bill': 'water',
+                    'electricity_bill': 'electricity',
+                    'gas': 'gas',
+                    'maintenance': 'maintenance',
+                    'cleaning': 'cleaning',
+                    'security': 'security',
+                    'camera': 'camera',
+                    'parking': 'parking',
+                    'charge': 'charge',
+                    'repair': 'maintenance',
+                    'rent': 'other',
+                    'service': 'other',
+                    'other': 'other'
+                };
+
+                const expectedBillType = billTypeMapping[filter];
+                const filterLabel = categories.find(cat => cat.value === filter)?.label;
+
+                matchesFilter = item.title === expectedTitle ||
+                               (item.bill_type && item.bill_type === expectedBillType) ||
+                               (item.category && item.category === filter) ||
+                               (item.title && item.title === filterLabel);
+            }
+            
+            const search = searchTerm.trim().toLowerCase();
+            const matchesSearch =
+                search === "" ||
+                item.title.toLowerCase().includes(search) ||
+                item.status.toLowerCase().includes(search) ||
+                item.date.toLowerCase().includes(search) ||
+                item.amount.toString().includes(search);
+
+            return matchesFilter && matchesSearch;
+        });
+    }, [transactions, filter, searchTerm, categories]);
     
     // Calculate totals
     const totalCost = filteredData.reduce((sum, t) => sum + t.amount, 0);
     const newestDate = filteredData.length > 0 ? filteredData[filteredData.length - 1].date : "-";
     const oldestDate = filteredData.length > 0 ? filteredData[0].date : "-";
-
-    // Helper function to format date
-    const formatDate = (date) => {
-        return date.toISOString().split('T')[0];
-    };
-
-    // Helper function to get start/end of week
-    const getWeekRange = () => {
-        const today = new Date();
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        return {
-            from: formatDate(startOfWeek),
-            to: formatDate(endOfWeek)
-        };
-    };
-
-    // Helper function to get start/end of month
-    const getMonthRange = () => {
-        const today = new Date();
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        return {
-            from: formatDate(startOfMonth),
-            to: formatDate(endOfMonth)
-        };
-    };
-
-    // Helper function to get start/end of year
-    const getYearRange = () => {
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
-        const endOfYear = new Date(today.getFullYear(), 11, 31);
-        return {
-            from: formatDate(startOfYear),
-            to: formatDate(endOfYear)
-        };
-    };
-
-    // Helper function to get last month range
-    const getLastMonthRange = () => {
-        const today = new Date();
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-        return {
-            from: formatDate(lastMonth),
-            to: formatDate(endOfLastMonth)
-        };
-    };
-
 
     
     return (
