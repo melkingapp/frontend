@@ -5,7 +5,13 @@ const authMiddleware = (store) => (next) => (action) => {
 
     // فقط برای login و logout
     if (action.type.startsWith("auth/")) {
-        localStorage.setItem("auth", JSON.stringify(auth));
+        // Only persist essential data to prevent leaks (e.g. error messages with PII)
+        const safeAuth = {
+            user: auth.user,
+            tokens: auth.tokens,
+            isAuthenticated: auth.isAuthenticated
+        };
+        localStorage.setItem("auth", JSON.stringify(safeAuth));
     }
 
     return result;
