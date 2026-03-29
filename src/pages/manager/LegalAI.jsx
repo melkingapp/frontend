@@ -16,9 +16,16 @@ const LegalAI = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Load chats from localStorage on component mount
+  // Load chats from sessionStorage on component mount
   useEffect(() => {
-    const savedChats = localStorage.getItem('legalAI_chats');
+    // Migration: Move existing data from localStorage to sessionStorage if needed
+    const oldSavedChats = localStorage.getItem('legalAI_chats');
+    if (oldSavedChats) {
+      sessionStorage.setItem('legalAI_chats', oldSavedChats);
+      localStorage.removeItem('legalAI_chats');
+    }
+
+    const savedChats = sessionStorage.getItem('legalAI_chats');
     if (savedChats) {
       try {
         const parsedChats = JSON.parse(savedChats);
@@ -33,6 +40,7 @@ const LegalAI = () => {
       } catch (error) {
         console.error('Error loading chats:', error);
         toast.error('خطا در بارگذاری چت‌ها');
+        sessionStorage.removeItem('legalAI_chats');
       }
     }
   }, []);
@@ -42,10 +50,10 @@ const LegalAI = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Save chats to localStorage whenever chats change
+  // Save chats to sessionStorage whenever chats change
   useEffect(() => {
     if (chats.length > 0) {
-      localStorage.setItem('legalAI_chats', JSON.stringify(chats));
+      sessionStorage.setItem('legalAI_chats', JSON.stringify(chats));
     }
   }, [chats]);
 

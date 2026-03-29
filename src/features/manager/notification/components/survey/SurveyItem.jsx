@@ -1,5 +1,4 @@
 import { Vote, Calendar, Clock, Trash2 } from "lucide-react";
-import clsx from "clsx";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
@@ -154,12 +153,7 @@ export default function SurveyItem({ survey, onSelect, selectedBuilding: propSel
 
             <div
                 onClick={handleSurveyClick}
-                className={clsx(
-                    "flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl shadow-sm cursor-pointer transition-all duration-200 bg-white border",
-                    borderColor,
-                    rightBorderColor,
-                    "hover:shadow-md"
-                )}
+                className={`flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl shadow-sm cursor-pointer transition-all duration-200 bg-white border hover:shadow-md ${borderColor || ""} ${rightBorderColor || ""}`.trim()}
             >
                 {/* ستون ۱: اطلاعات سوال */}
                 <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 w-full">
@@ -174,10 +168,7 @@ export default function SurveyItem({ survey, onSelect, selectedBuilding: propSel
                     {/* ستون ۲: وضعیت */}
                     <div>
                         <span
-                            className={clsx(
-                                "inline-block px-3 py-1 rounded-full text-xs font-medium",
-                                status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                            )}
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700" || ""}`.trim()}
                         >
                             {status === "active" ? "در حال انجام" : "پایان یافته"}
                         </span>
