@@ -1,12 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Clock, CheckCircle, CheckCircle2, XCircle, Building2, Calendar, RefreshCw, Home, Users, Car } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { 
     setSelectedBuilding, 
-    fetchApprovedBuildingsDetails,
-    selectResidentBuildingLoading,
-    selectResidentBuildingError
+    fetchApprovedBuildingsDetails
 } from "../residentBuildingSlice";
 import { 
     fetchMembershipRequests,
@@ -43,7 +41,7 @@ export default function BuildingRequestStatus() {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            const result = await dispatch(fetchMembershipRequests()).unwrap();
+            await dispatch(fetchMembershipRequests()).unwrap();
         } catch (error) {
             console.error('Error refreshing requests:', error);
         } finally {
@@ -103,7 +101,10 @@ export default function BuildingRequestStatus() {
                     console.error('Error fetching building details:', error);
                 });
         }
-    }, [requests.length, dispatch]); // Only depend on requests length, not the full requests array
+        // We only want this to run when the *number* of requests changes
+        // to avoid infinite loops if the requests array reference changes but the content doesn't
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [requests.length, dispatch]);
 
 
     const getStatusIcon = (status) => {
@@ -170,6 +171,53 @@ export default function BuildingRequestStatus() {
             minute: '2-digit'
         });
     };
+
+    const uniqueRequests = useMemo(() => {
+        // Filter out requests with unknown status
+        const validStatuses = ['pending', 'owner_approved', 'manager_approved', 'rejected', 'approved', 'suggested'];
+        const validRequests = requests.filter(req => {
+            const status = req.status;
+            return status && validStatuses.includes(status);
+        });
+
+        // Group requests by building_code and unit_number
+        const requestsByKey = {};
+        validRequests.forEach(req => {
+            const key = `${req.building_code}-${req.unit_number}`;
+            if (!requestsByKey[key]) {
+                requestsByKey[key] = [];
+            }
+            requestsByKey[key].push(req);
+        });
+
+        // For each group, keep only the best request:
+        // Priority: manager_approved > owner_approved > approved > pending > rejected > suggested
+        return Object.values(requestsByKey).map(group => {
+            const statusPriority = {
+                'manager_approved': 1,
+                'owner_approved': 2,
+                'approved': 3,
+                'pending': 4,
+                'suggested': 5,
+                'rejected': 6
+            };
+
+            // Sort by priority, then by date (most recent first)
+            group.sort((a, b) => {
+                const priorityA = statusPriority[a.status] || 999;
+                const priorityB = statusPriority[b.status] || 999;
+
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+
+                // Same priority, get most recent
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            return group[0]; // Return the best one
+        });
+    }, [requests]);
 
     if (loading) {
         return (
@@ -276,63 +324,17 @@ export default function BuildingRequestStatus() {
             </div>
 
             <div className="p-6 space-y-4">
-                {(() => {
-                    // Filter out requests with unknown status
-                    const validStatuses = ['pending', 'owner_approved', 'manager_approved', 'rejected', 'approved', 'suggested'];
-                    const validRequests = requests.filter(req => {
-                        const status = req.status;
-                        return status && validStatuses.includes(status);
-                    });
+                {uniqueRequests.map((request, index) => {
+                    const statusText = getStatusText(request.status);
+                    // Skip if status is unknown (shouldn't happen after filtering, but just in case)
+                    if (!statusText) return null;
                     
-                    // Group requests by building_code and unit_number
-                    const requestsByKey = {};
-                    validRequests.forEach(req => {
-                        const key = `${req.building_code}-${req.unit_number}`;
-                        if (!requestsByKey[key]) {
-                            requestsByKey[key] = [];
-                        }
-                        requestsByKey[key].push(req);
-                    });
-                    
-                    // For each group, keep only the best request:
-                    // Priority: manager_approved > owner_approved > approved > pending > rejected > suggested
-                    const uniqueRequests = Object.values(requestsByKey).map(group => {
-                        const statusPriority = {
-                            'manager_approved': 1,
-                            'owner_approved': 2,
-                            'approved': 3,
-                            'pending': 4,
-                            'suggested': 5,
-                            'rejected': 6
-                        };
-                        
-                        // Sort by priority, then by date (most recent first)
-                        group.sort((a, b) => {
-                            const priorityA = statusPriority[a.status] || 999;
-                            const priorityB = statusPriority[b.status] || 999;
-                            
-                            if (priorityA !== priorityB) {
-                                return priorityA - priorityB;
-                            }
-                            
-                            // Same priority, get most recent
-                            return new Date(b.created_at) - new Date(a.created_at);
-                        });
-                        
-                        return group[0]; // Return the best one
-                    });
-                    
-                    return uniqueRequests.map((request, index) => {
-                        const statusText = getStatusText(request.status);
-                        // Skip if status is unknown (shouldn't happen after filtering, but just in case)
-                        if (!statusText) return null;
-                        
-                        return (
-                    <div 
-                        key={request.request_id} 
-                        className="group border-2 border-gray-200 hover:border-indigo-300 rounded-xl p-5 bg-gradient-to-br from-white to-gray-50/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                    >
+                    return (
+                        <div
+                            key={request.request_id}
+                            className="group border-2 border-gray-200 hover:border-indigo-300 rounded-xl p-5 bg-gradient-to-br from-white to-gray-50/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                        >
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                             <div className="flex items-start gap-4 flex-1">
                                 <div className="p-2.5 bg-white rounded-lg shadow-sm border border-gray-100">
@@ -401,18 +403,17 @@ export default function BuildingRequestStatus() {
                             </div>
                         )}
 
-                        {request.status === 'rejected' && (
-                            <div className="mt-4 p-4 bg-gradient-to-r from-red-50 to-rose-50 border-r-4 border-red-500 rounded-lg shadow-sm">
-                                <p className="text-sm font-medium text-red-800 flex items-center gap-2">
-                                    <XCircle size={18} className="text-red-600" />
-                                    متأسفانه درخواست شما رد شد. در صورت نیاز با مدیر ساختمان تماس بگیرید.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                        );
-                    }).filter(Boolean); // Remove null entries
-                })()}
+                            {request.status === 'rejected' && (
+                                <div className="mt-4 p-4 bg-gradient-to-r from-red-50 to-rose-50 border-r-4 border-red-500 rounded-lg shadow-sm">
+                                    <p className="text-sm font-medium text-red-800 flex items-center gap-2">
+                                        <XCircle size={18} className="text-red-600" />
+                                        متأسفانه درخواست شما رد شد. در صورت نیاز با مدیر ساختمان تماس بگیرید.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    );
+                }).filter(Boolean)}
             </div>
         </div>
     );
