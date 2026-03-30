@@ -1,5 +1,19 @@
 import { getApiBaseUrl } from '../utils/apiConfig';
 
+// Helper to check for DEV environment safely
+const isDev = () => {
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+    return false;
+  }
+
+  try {
+    const metaEnv = new Function('return import.meta.env')();
+    return metaEnv.DEV;
+  } catch (e) {
+    return false;
+  }
+};
+
 // API Base URL Configuration
 const API_BASE_URL = getApiBaseUrl();
 
@@ -162,7 +176,7 @@ class ApiService {
         let errorMessage = data?.detail || data?.message || data?.error;
         
         // Log the full error response for debugging (only in development)
-        if (import.meta.env.DEV) {
+        if (isDev()) {
           console.error('API Error Response:', {
             status: response.status,
             statusText: response.statusText,
@@ -413,7 +427,7 @@ class ApiService {
         let errorMessage = data?.detail || data?.message || data?.error;
         
         // Log the full error response for debugging (only in development)
-        if (import.meta.env.DEV) {
+        if (isDev()) {
           console.error('File Upload Error Response:', {
             status: response.status,
             statusText: response.statusText,

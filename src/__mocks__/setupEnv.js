@@ -1,24 +1,18 @@
-// Mock import.meta
-global.import = {
-  meta: {
-    env: {
-      VITE_API_BASE_URL: 'http://127.0.0.1:8000/api/v1',
-    },
-  },
-};
 
-// Polyfill TextEncoder and TextDecoder for react-router-dom
-const { TextEncoder, TextDecoder } = require('util');
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+// This file runs before any test file, setting up the environment
+// We mock import.meta.env manually because Jest + Babel doesn't support it natively in this setup
 
-// Mock window.location for tests
-delete global.window.location;
-global.window.location = {
-  hostname: 'localhost',
-  protocol: 'http:',
-  host: 'localhost:5173',
-  pathname: '/',
-  search: '',
-  hash: '',
-};
+// Create a proxy to handle import.meta.env
+// Note: This is a hack because Babel transform for import.meta is not standard in jest environment
+// However, since we are using babel-jest, we might need a babel plugin for this.
+// A simpler way is to use babel-plugin-transform-import-meta
+
+// But let's try to see if we can just avoid importing this file in tests or mock it.
+// The file is imported by apiService.js which is imported by slices.
+
+// The best way to fix "SyntaxError: Cannot use 'import.meta' outside a module" in Jest
+// is to use a babel plugin to transform it.
+
+// But wait, the previous attempts deleted babel.config.js
+// Let's modify babel.config.cjs to include the plugin if needed, OR
+// we can mock the module `src/shared/utils/apiConfig.js` entirely in the test setup or test file.

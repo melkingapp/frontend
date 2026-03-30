@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
 // Polyfill TextEncoder and TextDecoder for react-router-dom
-const { TextEncoder, TextDecoder } = require('util');
+import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
