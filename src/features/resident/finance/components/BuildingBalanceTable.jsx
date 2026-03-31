@@ -160,6 +160,62 @@ export default function BuildingBalanceTable() {
         return { totalCost, newestDate, oldestDate };
     }, [filteredData]);
 
+    // Helper function to format date
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+
+    // Helper function to get start/end of week
+    // eslint-disable-next-line no-unused-vars
+    const getWeekRange = () => {
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        return {
+            from: formatDate(startOfWeek),
+            to: formatDate(endOfWeek)
+        };
+    };
+
+    // Helper function to get start/end of month
+    // eslint-disable-next-line no-unused-vars
+    const getMonthRange = () => {
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        return {
+            from: formatDate(startOfMonth),
+            to: formatDate(endOfMonth)
+        };
+    };
+
+    // Helper function to get start/end of year
+    // eslint-disable-next-line no-unused-vars
+    const getYearRange = () => {
+        const today = new Date();
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        const endOfYear = new Date(today.getFullYear(), 11, 31);
+        return {
+            from: formatDate(startOfYear),
+            to: formatDate(endOfYear)
+        };
+    };
+
+    // Helper function to get last month range
+    // eslint-disable-next-line no-unused-vars
+    const getLastMonthRange = () => {
+        const today = new Date();
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+        return {
+            from: formatDate(lastMonth),
+            to: formatDate(endOfLastMonth)
+        };
+    };
+
+
     return (
         <div className="space-y-6">
             {/* Financial Summary */}
