@@ -8,9 +8,11 @@ import { getPersianType } from "../../../../shared/utils";
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
   // Get transactions from Redux state
   const transactionsData = useSelector(state => state.finance.transactions || []);
-  const transactions = Array.isArray(transactionsData) 
-    ? transactionsData 
-    : (transactionsData?.transactions || []);
+  const transactions = useMemo(() => {
+    return Array.isArray(transactionsData)
+      ? transactionsData
+      : (transactionsData?.transactions || []);
+  }, [transactionsData]);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {
