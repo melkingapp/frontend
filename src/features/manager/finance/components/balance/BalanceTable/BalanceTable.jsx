@@ -169,6 +169,8 @@ export default function BalanceTable({ transactions, onTransactionClick, isLoadi
             onTransactionClick(transaction);
           }}
           className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
+          aria-label="مشاهده تراکنش"
+          title="مشاهده تراکنش"
         >
           <Eye size={18} />
         </button>
