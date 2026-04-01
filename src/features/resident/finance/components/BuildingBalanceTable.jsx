@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Eye, Search, Filter, Calendar, X } from "lucide-react";
 import moment from "moment-jalaali";
@@ -52,7 +52,11 @@ export default function BuildingBalanceTable() {
     
     // Get transactions from Redux state
     const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+
+    // Ensure transactions are stable for useMemo
+    const stableTransactions = useMemo(() => {
+        return Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    }, [transactionsData]);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
@@ -71,13 +75,13 @@ export default function BuildingBalanceTable() {
                 .finally(() => setLoading(false));
         }
     }, [dispatch, building?.building_id, dateRange, isResident, approvedBuildings.length]);
-    
+
     // Sort and filter transactions
-    const sortedData = [...transactions].sort(
+    const sortedData = useMemo(() => [...stableTransactions].sort(
         (a, b) => new Date(b.date) - new Date(a.date)
-    );
+    ), [stableTransactions]);
     
-    const filteredData = sortedData.filter(item => {
+    const filteredData = useMemo(() => sortedData.filter(item => {
         let matchesFilter = false;
         
         if (filter === "all") {
@@ -143,10 +147,10 @@ export default function BuildingBalanceTable() {
             item.amount.toString().includes(search);
 
         return matchesFilter && matchesSearch;
-    });
+    }), [sortedData, filter, categories, searchTerm]);
     
     // Calculate totals
-    const totalCost = filteredData.reduce((sum, t) => sum + t.amount, 0);
+    const totalCost = useMemo(() => filteredData.reduce((sum, t) => sum + t.amount, 0), [filteredData]);
     const newestDate = filteredData.length > 0 ? filteredData[filteredData.length - 1].date : "-";
     const oldestDate = filteredData.length > 0 ? filteredData[0].date : "-";
 
