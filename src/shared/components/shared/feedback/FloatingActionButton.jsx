@@ -64,7 +64,7 @@ export default function FloatingActionButton({ items = [], color = "bg-yellow-50
                     aria-expanded={open}
                     aria-controls={menuId}
                     aria-haspopup="menu"
-                    className={`w-14 h-14 flex items-center justify-center ${color} text-white rounded-full shadow-lg hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-${color.replace('bg-', '')}`}
+                    className={`w-14 h-14 flex items-center justify-center ${color} text-white rounded-full shadow-lg hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-melkingDarkBlue`}
                 >
                     <Plus className={`w-6 h-6 transform transition-transform duration-300 ${open ? "rotate-45" : "rotate-0"}`} />
                 </button>
