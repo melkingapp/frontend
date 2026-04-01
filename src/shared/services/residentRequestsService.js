@@ -58,9 +58,7 @@ export const getApprovedBuildings = async () => {
 // Get building details
 export const getBuildingDetails = async (buildingId) => {
     try {
-        console.log('Fetching building details for ID:', buildingId);
         const response = await get(`/buildings/${buildingId}/`);
-        console.log('Building details response:', response);
         return response;
     } catch (error) {
         console.error('Get building details error:', error);
