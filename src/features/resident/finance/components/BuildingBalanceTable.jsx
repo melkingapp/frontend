@@ -53,7 +53,6 @@ export default function BuildingBalanceTable() {
     // Get transactions from Redux state
     const transactionsData = useSelector(state => state.finance.transactions || []);
 
-    // Ensure transactions are stable for useMemo
     const stableTransactions = useMemo(() => {
         return Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
     }, [transactionsData]);
@@ -147,7 +146,7 @@ export default function BuildingBalanceTable() {
             item.amount.toString().includes(search);
 
         return matchesFilter && matchesSearch;
-    }), [sortedData, filter, categories, searchTerm]);
+    }), [sortedData, filter, searchTerm, categories]);
     
     // Calculate totals
     const totalCost = useMemo(() => filteredData.reduce((sum, t) => sum + t.amount, 0), [filteredData]);
