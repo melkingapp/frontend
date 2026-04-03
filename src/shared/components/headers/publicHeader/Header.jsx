@@ -54,7 +54,7 @@ export default function Header() {
 
                 {/* ----------------- Mobile Layout ------------------ */}
                 <div className="flex w-full items-center justify-between md:hidden">
-                    <button onClick={() => setMenuOpen(true)} className="text-gray-700">
+                    <button onClick={() => setMenuOpen(true)} className="text-gray-700" aria-label="باز کردن منو">
                         <Menu className="w-6 h-6" />
                     </button>
 
