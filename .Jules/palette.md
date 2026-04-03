@@ -1,3 +1,6 @@
 ## 2024-05-24 - Accessibility improvements for Form Inputs
 **Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
 **Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2024-04-03 - Floating Action Button Menu Accessibility
+**Learning:** Using `opacity-0` to hide dropdown menus can cause "ghost focus" steps for keyboard users because elements remain in the DOM and are still focusable. Adding `tabIndex={-1}` to focusable items inside the hidden menu along with `aria-hidden={true}` solves this issue. Also, ensuring custom dropdowns have `role="menu"`, `role="menuitem"`, and `aria-expanded` is critical for screen reader compatibility.
+**Action:** Next time when hiding elements visually using CSS transition classes like `opacity`, make sure to toggle `tabIndex` dynamically to maintain keyboard accessibility, and ensure correct ARIA roles for custom toggle menus.
