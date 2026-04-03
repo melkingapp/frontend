@@ -1,6 +1,8 @@
 import { Vote, Calendar, Clock, Trash2 } from "lucide-react";
-import clsx from "clsx";
 import { useState } from "react";
+
+// Helper function to replace clsx
+const classNames = (...classes) => classes.filter(Boolean).join(' ');
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSurveyDetails, deleteSurvey, fetchBuildingSurveys } from "../../slices/surveysSlice";
@@ -154,7 +156,7 @@ export default function SurveyItem({ survey, onSelect, selectedBuilding: propSel
 
             <div
                 onClick={handleSurveyClick}
-                className={clsx(
+                className={classNames(
                     "flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl shadow-sm cursor-pointer transition-all duration-200 bg-white border",
                     borderColor,
                     rightBorderColor,
@@ -174,7 +176,7 @@ export default function SurveyItem({ survey, onSelect, selectedBuilding: propSel
                     {/* ستون ۲: وضعیت */}
                     <div>
                         <span
-                            className={clsx(
+                            className={classNames(
                                 "inline-block px-3 py-1 rounded-full text-xs font-medium",
                                 status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                             )}

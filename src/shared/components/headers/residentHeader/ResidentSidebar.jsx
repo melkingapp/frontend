@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
+
+// Helper function to replace clsx
+const classNames = (...classes) => classes.filter(Boolean).join(' ');
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
@@ -222,7 +224,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
             return (
                 <div key={index} className="w-full">
                     <div
-                        className={clsx(
+                        className={classNames(
                             "flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 select-none",
                             isActive
                                 ? isMobile
@@ -268,7 +270,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
                     {hasChildren && isOpen && !isCollapsed && (
                         <div
-                            className={clsx(
+                            className={classNames(
                                 "pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"
                             )}
                         >
@@ -276,7 +278,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                                 <Link
                                     key={index}
                                     to={child.to}
-                                    className={clsx(
+                                    className={classNames(
                                         "block text-sm px-3 py-1.5 rounded-lg transition-colors duration-200 select-none",
                                         pathname === child.to
                                             ? isMobile
@@ -407,7 +409,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         <div className="relative z-50">
             <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={clsx(
+                className={classNames(
                     "text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition",
                     isMobile
                         ? "bg-yellow-100 text-yellow-800"
@@ -458,7 +460,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                                     <button
                                         key={unit.id}
                                         onClick={() => handleSelectBuilding(unit)}
-                                        className={clsx(
+                                        className={classNames(
                                             "w-full text-right px-4 py-2 hover:bg-yellow-50 text-gray-800 transition-colors",
                                             selectedBuilding?.id === unit.id ||
                                             (selectedBuilding?.building_id === unit.building_id && 
@@ -529,7 +531,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         <>
             {/* Desktop Sidebar */}
             <aside
-                className={clsx(
+                className={classNames(
                     "hidden md:flex flex-col shadow-lg space-y-3 overflow-y-auto rounded-l-3xl transition-all duration-300 relative",
                     isCollapsed
                         ? "w-20 items-center bg-gradient-to-b from-[#1C2E4E] to-[#12355B] p-3"
