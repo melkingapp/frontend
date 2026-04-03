@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Plus, Building2, Sparkles, ArrowLeft, Info, CheckCircle2 } from "lucide-react";
 import MembershipRequestForm from "../../features/membership/components/MembershipRequestForm";
@@ -45,17 +45,11 @@ export default function ResidentDashboard() {
   const { user } = useSelector((state) => state.auth);
   // Use hook to get membership requests (prevents duplicate fetches)
   const { membershipRequests } = useResidentUnitData();
-  const approvedRequests = useMemo(() => {
-    return membershipRequests.filter(req =>
-      req.status === 'approved' ||
-      req.status === 'owner_approved' ||
-      req.status === 'manager_approved'
-    );
-  }, [membershipRequests]);
-
-  const pendingRequestsCount = useMemo(() => {
-    return membershipRequests.filter(req => req.status === 'pending').length;
-  }, [membershipRequests]);
+  const approvedRequests = membershipRequests.filter(req =>
+    req.status === 'approved' ||
+    req.status === 'owner_approved' ||
+    req.status === 'manager_approved'
+  );
 
   // Load suggested requests when component mounts
   useEffect(() => {
@@ -94,10 +88,10 @@ export default function ResidentDashboard() {
                     {approvedRequests.length} ساختمان فعال
                   </span>
                 </div>
-                {pendingRequestsCount > 0 && (
+                {membershipRequests.some(req => req.status === 'pending') && (
                   <div className="flex items-center gap-2 bg-yellow-500/30 backdrop-blur-sm rounded-lg px-4 py-2">
                     <span className="text-sm font-medium">
-                      {pendingRequestsCount} درخواست در انتظار
+                      {membershipRequests.filter(req => req.status === 'pending').length} درخواست در انتظار
                     </span>
                   </div>
                 )}
