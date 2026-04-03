@@ -9,9 +9,9 @@ This folder hosts the automation for the standalone `melkingapp/frontend` reposi
 Main pipeline triggered on pushes & pull requests for `main` and `develop`.
 
 Steps:
-1. **Install & Cache** Node 20 dependencies (`npm ci`)
+1. **Install & Cache** Node 20 dependencies using pnpm v9 (`pnpm install --frozen-lockfile`)
 2. **Lint** with ESLint
-3. **Build** production bundle (`npm run build`) with `VITE_API_BASE_URL` injected from secrets
+3. **Build** production bundle (`pnpm run build`) with `VITE_API_BASE_URL` injected from secrets
 4. **Deploy** (pushes to `main` only):
    - Ship `dist/` via SSH to `/var/www/melking/frontend-new`
    - Switch the `current` symlink and reload Nginx
@@ -31,7 +31,7 @@ See `../SECRETS_SETUP.md` for the full description. Minimum set:
 
 ## 🧪 Tips
 
-- Keep `npm run lint` & `npm run build` green before pushing to `main`
+- Keep `pnpm run lint` & `pnpm run build` green before pushing to `main`
 - To rerun a failed job, use "Re-run jobs" in the Actions tab – no need to push dummy commits
 - Update `DEPLOY_PATH` / `NGINX_SERVICE` in the workflow if the server layout changes
 
