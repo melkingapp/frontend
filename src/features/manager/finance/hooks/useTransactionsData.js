@@ -2,15 +2,25 @@ import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { getPersianType } from "../../../../shared/utils";
 
+// ⚡ Bolt: Provide a stable reference for empty arrays to prevent
+// useSelector from allocating a new [] on every unrelated Redux state change
+// when transactions are falsy. This prevents downstream useMemo invalidation.
+const EMPTY_ARRAY = [];
+
 /**
  * Hook برای پردازش و نرمال‌سازی داده‌های تراکنش‌ها
  */
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
-  // Get transactions from Redux state
-  const transactionsData = useSelector(state => state.finance.transactions || []);
-  const transactions = Array.isArray(transactionsData) 
-    ? transactionsData 
-    : (transactionsData?.transactions || []);
+  // ⚡ Bolt: Use stable EMPTY_ARRAY reference instead of inline || []
+  const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+
+  // ⚡ Bolt: Memoize the derived transactions array to prevent creating a new array
+  // reference on every render when transactionsData isn't an array itself.
+  const transactions = useMemo(() => {
+    return Array.isArray(transactionsData)
+      ? transactionsData
+      : (transactionsData?.transactions || EMPTY_ARRAY);
+  }, [transactionsData]);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {
