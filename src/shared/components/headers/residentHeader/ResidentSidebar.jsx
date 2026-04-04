@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
     setSelectedBuilding,
     fetchResidentRequests,
-    fetchApprovedBuildingsDetails,
+    fetchMembershipRequests,
 } from "../../../../features/resident/building/residentBuildingSlice";
 import { useResidentUnitData } from "../../../../features/resident/building/hooks/useResidentUnitData";
 import MelkingLogo from "../../../../assets/logo/Melking-fa.svg";
@@ -21,18 +21,23 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const dispatch = useDispatch();
 
     // Use hook for resident unit data (prevents duplicate fetches)
-    const { selectedBuilding, approvedBuildings, membershipRequests } = useResidentUnitData();
+    const { selectedBuilding, membershipRequests } = useResidentUnitData();
     const requests = useSelector(selectResidentRequests);
-    const { user } = useSelector(state => state.auth);
 
-    // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
-    const getUserRole = () => {
-        const approvedRequests = membershipRequests.filter(req => 
+    const approvedRequests = useMemo(() => {
+        return membershipRequests.filter(req =>
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
             req.status === 'manager_approved'
         );
-        
+    }, [membershipRequests]);
+
+    const pendingMembershipRequests = useMemo(() => {
+        return membershipRequests.filter(req => req.status === 'pending');
+    }, [membershipRequests]);
+
+    // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
+    const userRole = useMemo(() => {
         const hasOwnerRole = approvedRequests.some(req => req.role === 'owner');
         const hasResidentRole = approvedRequests.some(req => req.role === 'resident');
         
@@ -45,12 +50,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         }
         
         return 'resident'; // پیش‌فرض
-    };
-
-    const userRole = getUserRole();
-
-    // Get pending requests count for display
-    const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
+    }, [approvedRequests]);
 
     useEffect(() => {
         // Only fetch resident requests if we don't have them in Redux store
@@ -62,13 +62,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     // Get approved units from hook (already calculated in useResidentUnitData)
     // We need to recalculate here to match the exact format expected by the sidebar
-    const approvedUnits = (() => {
-        const approvedRequests = membershipRequests.filter(req => 
-            req.status === 'approved' || 
-            req.status === 'owner_approved' || 
-            req.status === 'manager_approved'
-        );
-        
+    const approvedUnits = useMemo(() => {
         // گروه‌بندی درخواست‌ها بر اساس ساختمان و واحد
         const unitGroups = {};
         
@@ -82,19 +76,19 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         
         // برای هر واحد، نقش مالک را اولویت بده
         const uniqueUnits = [];
-        Object.values(unitGroups).forEach(requests => {
+        Object.values(unitGroups).forEach(groupRequests => {
             // اگر نقش مالک وجود دارد، آن را انتخاب کن
-            const ownerRequest = requests.find(req => req.role === 'owner');
+            const ownerRequest = groupRequests.find(req => req.role === 'owner');
             if (ownerRequest) {
                 uniqueUnits.push(ownerRequest);
             } else {
                 // در غیر این صورت، اولین درخواست را انتخاب کن
-                uniqueUnits.push(requests[0]);
+                uniqueUnits.push(groupRequests[0]);
             }
         });
         
         return uniqueUnits;
-    })();
+    }, [approvedRequests]);
 
     // Auto-select first approved unit if none is selected
     useEffect(() => {
@@ -172,7 +166,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     // Auto-refresh membership requests every 30 seconds for pending requests
     useEffect(() => {
-        const hasPendingRequests = membershipRequests.some(req => req.status === 'pending');
+        const hasPendingRequests = pendingMembershipRequests.length > 0;
         if (!hasPendingRequests) return;
 
         const interval = setInterval(() => {
@@ -180,7 +174,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         }, 30000); // 30 seconds
 
         return () => clearInterval(interval);
-    }, [membershipRequests, dispatch]);
+    }, [pendingMembershipRequests, dispatch]);
 
     const toggleMenu = (label) => {
         setOpenMenus((prev) => ({
@@ -348,12 +342,6 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         
         // Fallback: Try to find unit_number from membershipRequests
         if (membershipRequests.length > 0) {
-            const approvedRequests = membershipRequests.filter(req => 
-                req.status === 'approved' || 
-                req.status === 'owner_approved' || 
-                req.status === 'manager_approved'
-            );
-            
             const matchingRequest = approvedRequests.find(req => {
                 const reqBuildingId = req.building;
                 // Try multiple matching strategies
@@ -421,10 +409,10 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                             کد: {selectedBuilding.building_code}
                         </span>
                     )}
-                    {membershipRequests.some(req => req.status === 'pending') && (
+                    {pendingMembershipRequests.length > 0 && (
                         <span className="block text-xs text-orange-600 mt-1 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {membershipRequests.filter(req => req.status === 'pending').length} در انتظار تایید
+                            {pendingMembershipRequests.length} در انتظار تایید
                         </span>
                     )}
                 </span>
@@ -437,7 +425,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                 <div className="absolute mt-2 w-full bg-white rounded-lg shadow-lg border text-sm max-h-60 overflow-y-auto z-50">
                     {approvedUnits.length > 0 ? (
                         <>
-                            {approvedUnits.map((request, index) => {
+                            {approvedUnits.map((request, _index) => {
                                 const unit = {
                                     id: `${request.building}-${request.unit_number}-${request.role}-${request.request_id}`,
                                     building_id: request.building,
@@ -485,17 +473,15 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                             })}
                             
                             {/* Show pending requests section */}
-                            {membershipRequests.some(req => req.status === 'pending') && (
+                            {pendingMembershipRequests.length > 0 && (
                                 <>
                                     <div className="border-t border-gray-200 my-2"></div>
                                     <div className="px-4 py-2 text-xs text-gray-500 bg-gray-50 font-medium">
                                         درخواست‌های در انتظار:
                                     </div>
-                                    {membershipRequests
-                                        .filter(req => req.status === 'pending')
-                                        .map((request, index) => (
+                                    {pendingMembershipRequests.map((request, _index) => (
                                             <div
-                                                key={request.request_id || index}
+                                                key={request.request_id || _index}
                                                 className="w-full text-right px-4 py-2 text-gray-600 bg-orange-50 border-r-4 border-orange-300"
                                             >
                                                 <div className="flex flex-col">
