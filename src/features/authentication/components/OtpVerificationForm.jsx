@@ -1,8 +1,9 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useRef, useState } from "react";
 import { RefreshCcw, Edit3 } from "lucide-react";
+import LoadingSpinner from "../../../shared/components/shared/feedback/LoadingSpinner";
 
-export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
+export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack, loading }) {
     const inputsRef = useRef([]);
     const [timer, setTimer] = useState(60);
     const [resendVisible, setResendVisible] = useState(false);
@@ -115,10 +116,16 @@ export default function OtpVerificationForm({ otp, setOtp, onVerify, onBack }) {
 
                 <button
                     onClick={() => handleSubmit(getOtpValue())}
-                    disabled={getOtpValue().length !== 5}
+                    disabled={getOtpValue().length !== 5 || loading}
                     className="w-full bg-melkingGold text-white py-3 rounded-xl font-bold text-base hover:bg-[#16243f] transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    ورود به سامانه
+                    {loading ? (
+                        <div className="flex items-center justify-center gap-2">
+                            <LoadingSpinner size="small" color="white" /> ورود به سامانه
+                        </div>
+                    ) : (
+                        "ورود به سامانه"
+                    )}
                 </button>
 
                 <div className="text-center text-sm text-gray-500">
