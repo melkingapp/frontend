@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { ArrowLeftCircle } from "lucide-react";
+import LoadingSpinner from "../../../shared/components/shared/feedback/LoadingSpinner";
 
 const phoneSchema = yup.object().shape({
     phone: yup
@@ -10,7 +11,7 @@ const phoneSchema = yup.object().shape({
         .matches(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
 });
 
-export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role }) {
+export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role, loading }) {
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: { phone },
         resolver: yupResolver(phoneSchema),
@@ -47,9 +48,16 @@ export default function PhoneInputForm({ phone, setPhone, onSubmit, onBack, role
                     <div className="space-y-3 pt-4 flex flex-col">
                         <button
                             type="submit"
-                            className="w-full bg-melkingGold text-melkingVeryDark py-3 rounded-xl font-bold text-base hover:bg-[#c6a952] transition"
+                            disabled={loading}
+                            className="w-full bg-melkingGold text-melkingVeryDark py-3 rounded-xl font-bold text-base hover:bg-[#c6a952] transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            دریافت کد تأیید
+                            {loading ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <LoadingSpinner size="small" color="white" /> دریافت کد تأیید
+                                </div>
+                            ) : (
+                                "دریافت کد تأیید"
+                            )}
                         </button>
 
                         <button

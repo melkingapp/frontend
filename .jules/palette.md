@@ -1,0 +1,3 @@
+## 2025-02-12 - Implement loading state in authentication forms
+**Learning:** Found that `LoginForm.jsx` was successfully keeping track of authentication submission loading states, but the child UI components `PhoneInputForm` and `OtpVerificationForm` were completely ignoring this prop. This caused a UX gap where users would click "Submit" and see no immediate visual feedback, potentially leading to double-submissions.
+**Action:** Always ensure that network loading props passed down from container/page components are actually utilized by the interactive form components (e.g. disabling the submit button and rendering a LoadingSpinner) to prevent ghost interactions and ensure a responsive feel.
