@@ -12,6 +12,11 @@ import { useResidentUnitData } from "../../building/hooks/useResidentUnitData";
 
 moment.loadPersian({ dialect: "persian-modern" });
 
+// Performance Optimization: Using a stable empty array constant to maintain
+// referential equality as a fallback value for useSelector/state extraction.
+// This prevents unnecessary component re-renders when the state is undefined.
+const EMPTY_ARRAY = [];
+
 // Helper function to get current date in YYYY-MM-DD format
 const getCurrentDate = () => {
   const today = new Date();
@@ -51,8 +56,8 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
