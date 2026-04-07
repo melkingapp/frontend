@@ -1,7 +1,8 @@
 import { Vote, Calendar, Clock, Trash2 } from "lucide-react";
-import clsx from "clsx";
 import { useState } from "react";
 import { toast } from "sonner";
+
+const clsx = (...classes) => classes.filter(Boolean).join(" ");
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSurveyDetails, deleteSurvey, fetchBuildingSurveys } from "../../slices/surveysSlice";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
