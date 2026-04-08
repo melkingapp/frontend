@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { fetchConflictReports, resolveConflict, selectConflictReports, selectConflictReportsLoading, selectResolveConflictLoading } from '../membershipSlice';
@@ -80,10 +80,20 @@ export default function ConflictReportsPage() {
     }
   };
 
-  const filteredReports = reports.filter(report => {
-    if (statusFilter === 'all') return true;
-    return report.status === statusFilter;
-  });
+  const filteredReports = useMemo(() => {
+    return reports.filter(report => {
+      if (statusFilter === 'all') return true;
+      return report.status === statusFilter;
+    });
+  }, [reports, statusFilter]);
+
+  const stats = useMemo(() => {
+    return {
+      pending: reports.filter(r => r.status === 'pending').length,
+      resolved: reports.filter(r => r.status === 'resolved').length,
+      rejected: reports.filter(r => r.status === 'rejected').length
+    };
+  }, [reports]);
 
   return (
     <div className="p-6">
@@ -125,7 +135,7 @@ export default function ConflictReportsPage() {
             <span className="font-medium text-gray-900">در انتظار بررسی</span>
           </div>
           <div className="text-2xl font-bold text-yellow-600 mt-2">
-            {reports.filter(r => r.status === 'pending').length}
+            {stats.pending}
           </div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -134,7 +144,7 @@ export default function ConflictReportsPage() {
             <span className="font-medium text-gray-900">حل شده</span>
           </div>
           <div className="text-2xl font-bold text-green-600 mt-2">
-            {reports.filter(r => r.status === 'resolved').length}
+            {stats.resolved}
           </div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -143,7 +153,7 @@ export default function ConflictReportsPage() {
             <span className="font-medium text-gray-900">رد شده</span>
           </div>
           <div className="text-2xl font-bold text-red-600 mt-2">
-            {reports.filter(r => r.status === 'rejected').length}
+            {stats.rejected}
           </div>
         </div>
       </div>

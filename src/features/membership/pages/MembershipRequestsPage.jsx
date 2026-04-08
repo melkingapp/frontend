@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMembershipRequests } from "../hooks/useMembershipRequests";
 import MembershipRequestForm from "../components/MembershipRequestForm";
 import MembershipRequestDetailsModal from "../components/MembershipRequestDetailsModal";
@@ -26,6 +26,14 @@ export default function MembershipRequestsPage() {
     setIsFormOpen(false);
     handleRefresh();
   };
+
+  const stats = useMemo(() => {
+    return {
+      pending: requests.filter(r => r.status === 'pending' || r.status === 'owner_approved').length,
+      approved: requests.filter(r => r.status === 'manager_approved' || r.status === 'approved').length,
+      rejected: requests.filter(r => r.status === 'rejected').length
+    };
+  }, [requests]);
 
   if (loading && requests.length === 0) {
     return (
@@ -81,7 +89,7 @@ export default function MembershipRequestsPage() {
                   <div className="p-2 bg-yellow-100 rounded-lg"><Clock size={20} className="text-yellow-600" /></div>
                   <div>
                       <p className="text-sm text-gray-600">در انتظار تایید</p>
-                      <p className="text-2xl font-bold text-gray-900">{requests.filter(r => r.status === 'pending' || r.status === 'owner_approved').length}</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
                   </div>
               </div>
           </div>
@@ -90,7 +98,7 @@ export default function MembershipRequestsPage() {
                   <div className="p-2 bg-green-100 rounded-lg"><CheckCircle size={20} className="text-green-600" /></div>
                   <div>
                       <p className="text-sm text-gray-600">تایید شده</p>
-                      <p className="text-2xl font-bold text-gray-900">{requests.filter(r => r.status === 'manager_approved' || r.status === 'approved').length}</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.approved}</p>
                   </div>
               </div>
           </div>
@@ -99,7 +107,7 @@ export default function MembershipRequestsPage() {
                   <div className="p-2 bg-red-100 rounded-lg"><XCircle size={20} className="text-red-600" /></div>
                   <div>
                       <p className="text-sm text-gray-600">رد شده</p>
-                      <p className="text-2xl font-bold text-gray-900">{requests.filter(r => r.status === 'rejected').length}</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.rejected}</p>
                   </div>
               </div>
           </div>

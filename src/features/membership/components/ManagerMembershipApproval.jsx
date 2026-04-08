@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Building, User, Phone, Calendar, CheckCircle, XCircle, Clock, AlertCircle, Home, Car, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
@@ -63,7 +63,6 @@ export default function ManagerMembershipApproval() {
   const { requests, loading, error, approveLoading, rejectLoading } = useSelector(state => state.membership);
   
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
     // دریافت درخواست‌های عضویت که مالک تایید کرده و منتظر تایید مدیر هستند
@@ -116,18 +115,23 @@ export default function ManagerMembershipApproval() {
 
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
-    setIsDetailsOpen(true);
   };
 
   const handleCloseDetails = () => {
-    setIsDetailsOpen(false);
     setSelectedRequest(null);
   };
 
   // فیلتر درخواست‌هایی که مالک تایید کرده و منتظر تایید مدیر هستند
-  const pendingManagerRequests = requests.filter(request => 
-    request.status === 'owner_approved'
-  );
+  const pendingManagerRequests = useMemo(() => {
+    return requests.filter(request => request.status === 'owner_approved');
+  }, [requests]);
+
+  const stats = useMemo(() => {
+    return {
+      managerApproved: requests.filter(r => r.status === 'manager_approved').length,
+      rejected: requests.filter(r => r.status === 'rejected').length
+    };
+  }, [requests]);
 
   if (loading && requests.length === 0) {
     return (
@@ -181,7 +185,7 @@ export default function ManagerMembershipApproval() {
             <div>
               <p className="text-sm text-gray-600">تایید شده توسط مدیر</p>
               <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'manager_approved').length}
+                {stats.managerApproved}
               </p>
             </div>
           </div>
@@ -195,7 +199,7 @@ export default function ManagerMembershipApproval() {
             <div>
               <p className="text-sm text-gray-600">رد شده</p>
               <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'rejected').length}
+                {stats.rejected}
               </p>
             </div>
           </div>
