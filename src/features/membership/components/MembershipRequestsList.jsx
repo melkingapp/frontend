@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest, withdrawMembershipRequest } from "../membershipSlice";
@@ -198,11 +198,10 @@ const MembershipRequestCard = ({ request, onViewDetails, onApprove, onReject, on
 
 export default function MembershipRequestsList() {
   const dispatch = useDispatch();
-  const { requests, loading, error, count } = useSelector(state => state.membership);
+  const { requests, loading, error } = useSelector(state => state.membership);
   
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRequest, setSelectedRequest] = useState(null);
 
   useEffect(() => {
     dispatch(fetchMembershipRequests({ status: statusFilter === 'all' ? '' : statusFilter }));
@@ -262,19 +261,28 @@ export default function MembershipRequestsList() {
   };
 
   const handleViewDetails = (request) => {
-    setSelectedRequest(request);
     // You can implement a modal or navigate to details page here
     console.log('View details for request:', request);
   };
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = searchTerm === '' || 
-      request.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.building_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.unit_number.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
+  const filteredRequests = useMemo(() => {
+    return requests.filter(request => {
+      const matchesSearch = searchTerm === '' ||
+        request.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.building_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.unit_number.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return matchesSearch;
+    });
+  }, [requests, searchTerm]);
+
+  const stats = useMemo(() => {
+    return {
+      pending: requests.filter(r => r.status === 'pending').length,
+      approved: requests.filter(r => r.status === 'approved' || r.status === 'owner_approved' || r.status === 'manager_approved').length,
+      rejected: requests.filter(r => r.status === 'rejected').length
+    };
+  }, [requests]);
 
   if (loading) {
     return (
@@ -376,7 +384,7 @@ export default function MembershipRequestsList() {
             <div>
               <p className="text-sm text-gray-600">در انتظار تایید</p>
               <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'pending').length}
+                {stats.pending}
               </p>
             </div>
           </div>
@@ -390,7 +398,7 @@ export default function MembershipRequestsList() {
             <div>
               <p className="text-sm text-gray-600">تایید شده</p>
               <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'approved' || r.status === 'owner_approved' || r.status === 'manager_approved').length}
+                {stats.approved}
               </p>
             </div>
           </div>
@@ -404,7 +412,7 @@ export default function MembershipRequestsList() {
             <div>
               <p className="text-sm text-gray-600">رد شده</p>
               <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'rejected').length}
+                {stats.rejected}
               </p>
             </div>
           </div>
