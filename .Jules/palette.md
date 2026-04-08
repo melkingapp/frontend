@@ -1,3 +1,3 @@
-## 2024-05-24 - Accessibility improvements for Form Inputs
-**Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
-**Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2025-04-08 - EditableCard Accessibility Improvements
+**Learning:** Icon-only buttons for critical actions (like the Edit button in `EditableCard.jsx`) lacked accessible names, making them invisible to screen readers, while buttons with icons and text lacked clear visual focus states for keyboard users.
+**Action:** Always verify that buttons containing only icons have a localized `aria-label` (and optionally a `title` for mouse users) such as `ویرایش ${title}`. When adding keyboard focus styles, use Tailwind's `focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500` combo to avoid sticky outlines on mouse click while ensuring clear visibility during tab navigation.

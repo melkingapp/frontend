@@ -23,7 +23,12 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
             <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <User /> {title}
                 {!isEditing && (
-                    <button onClick={() => setIsEditing(true)} className="ml-auto text-gray-500 hover:text-gray-700">
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="ml-auto text-gray-500 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+                        aria-label={`ویرایش ${title}`}
+                        title={`ویرایش ${title}`}
+                    >
                         <Edit size={16} />
                     </button>
                 )}
@@ -89,7 +94,7 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
                         <button
                             onClick={handleSave}
                             disabled={loading}
-                            className="flex items-center gap-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="flex items-center gap-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
                         >
                             {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                             {loading ? 'در حال ذخیره...' : 'ذخیره'}
@@ -97,7 +102,7 @@ export default function EditableCard({ title, data, setData, isEditing, setIsEdi
                         <button
                             onClick={() => setIsEditing(false)}
                             disabled={loading}
-                            className="flex items-center gap-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="flex items-center gap-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
                         >
                             <XCircle size={16} /> لغو
                         </button>
