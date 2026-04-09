@@ -1,3 +1,7 @@
-## 2024-05-24 - Accessibility improvements for Form Inputs
-**Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
-**Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2025-02-27 - [Missing aria-label on Mobile Menu Header Button]
+**Learning:** The main public header component (`src/shared/components/headers/publicHeader/Header.jsx`) has a responsive design with a mobile layout hidden on large screens (`md:hidden`). The hamburger menu button `<button>` was missing an `aria-label`, meaning screen readers would only announce it as "button" on mobile viewports. By explicitly setting the viewport in Playwright tests to a mobile size (e.g., width 375), we can accurately simulate the layout condition for verification.
+**Action:** Always check both desktop and mobile viewports for isolated UI components (like hidden hamburger menus) when verifying accessibility improvements, as some accessibility violations may only be exposed under specific responsive breakpoints.
+
+## 2025-02-27 - [Removing clsx Phantom Dependency to fix CI]
+**Learning:** In strict environments or when migrating CI pipelines to `pnpm` (which enforces strict dependency resolution), phantom dependencies like `clsx` that are imported but missing from `package.json` will break the build. Adding missing UI dependencies is out of bounds for the Palette persona. We can elegantly bypass the error by replacing `clsx(...)` with native JS array filtering: `[...].filter(Boolean).join(" ")`.
+**Action:** Always verify if a utility library like `clsx` is explicitly installed in `package.json` before relying on it in UI components, and use native fallback patterns to avoid adding new dependencies.
