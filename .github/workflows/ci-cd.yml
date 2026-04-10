@@ -1,5 +1,4 @@
 name: ⚛️ Frontend CI/CD
-
 on:
   push:
     branches:
@@ -9,47 +8,38 @@ on:
     branches:
       - main
       - develop
-
 env:
   NODE_VERSION: '22'
   DEPLOY_PATH: /var/www/melking/frontend-new
   NGINX_SERVICE: nginx
   FRONTEND_PORT: 8080
   BACKEND_PORT: 9000
-
 jobs:
   build:
     name: 🧪 Test & Build
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9
-
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-
       - name: 📦 Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: 🔍 Lint
         run: pnpm run lint
         continue-on-error: true
-
       - name: 🏗️ Build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'http://171.22.25.201:9000/api/v1' }}
         run: pnpm run build
-
       - name: 📦 Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -57,7 +47,6 @@ jobs:
           path: dist
           if-no-files-found: error
           retention-days: 7
-
   deploy:
     name: 🚀 Deploy
     runs-on: ubuntu-latest
@@ -66,38 +55,30 @@ jobs:
     timeout-minutes: 20
     environment:
       name: production
-
     steps:
       - name: 📥 Download artifact
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
           path: dist
-
       - name: 🏷️ Prepare release metadata
         id: release
         run: echo "name=release-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-
       - name: 🔐 Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: 📦 Archive build
         run: tar -czf frontend-dist.tar.gz -C dist .
-
       - name: 📤 Upload to server
         run: |
           scp -o StrictHostKeyChecking=no frontend-dist.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/frontend-dist.tar.gz
-
       - name: 📁 Setup deployment directory
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
             set -euo pipefail
             DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
-            
             echo "🔍 Checking deployment path: \${DEPLOY_PATH}"
-            
             # Check if directory exists
             if [ -d "\${DEPLOY_PATH}" ]; then
               echo "✅ Directory exists: \${DEPLOY_PATH}"
@@ -108,30 +89,25 @@ jobs:
               sudo mkdir -p "\${DEPLOY_PATH}/shared"
               echo "✅ Directory created: \${DEPLOY_PATH}"
             fi
-            
             # Ensure subdirectories exist
             sudo mkdir -p "\${DEPLOY_PATH}/releases"
             sudo mkdir -p "\${DEPLOY_PATH}/shared"
-            
             # Set proper permissions
             echo "🔐 Setting permissions..."
             sudo chown -R \$USER:\$USER "\${DEPLOY_PATH}" 2>/dev/null || sudo chown -R root:root "\${DEPLOY_PATH}"
             sudo chmod -R 755 "\${DEPLOY_PATH}"
-            
             # Verify access
             if [ -w "\${DEPLOY_PATH}" ] || sudo test -w "\${DEPLOY_PATH}"; then
               echo "✅ Directory is writable"
             else
               echo "⚠️ Directory may not be writable, but will use sudo for operations"
             fi
-            
             echo ""
             echo "📂 Final directory structure:"
             ls -la "\${DEPLOY_PATH}" || true
             echo ""
             echo "✅ Deployment directory setup completed"
           ENDSSH
-
       - name: 🔍 Check backend on port 9000
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << "ENDSSH"
@@ -145,7 +121,6 @@ jobs:
               exit 1
             fi
           ENDSSH
-
       - name: ⚙️ Setup nginx config for frontend port
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
@@ -155,7 +130,6 @@ jobs:
             FRONTEND_PORT="${{ env.FRONTEND_PORT }}"
             BACKEND_PORT="${{ env.BACKEND_PORT }}"
             NGINX_SERVICE="${{ env.NGINX_SERVICE }}"
-            
             echo "🔍 Checking nginx service status..."
             if systemctl is-active --quiet "\${NGINX_SERVICE}" 2>/dev/null; then
               echo "✅ Nginx service is running"
@@ -164,7 +138,6 @@ jobs:
             else
               echo "⚠️ Nginx service status unknown"
             fi
-            
             echo ""
             echo "🔍 Checking for port conflicts on port \${FRONTEND_PORT}..."
             if ss -tuln | grep -q ":\${FRONTEND_PORT} "; then
@@ -174,7 +147,6 @@ jobs:
             else
               echo "✅ Port \${FRONTEND_PORT} is available"
             fi
-            
             echo ""
             echo "📝 Creating nginx config at \${NGINX_CONFIG}..."
             TMP_CONFIG="/tmp/nginx-frontend-new.conf"
@@ -218,7 +190,6 @@ jobs:
             echo "📄 Config file content:"
             cat "\${NGINX_CONFIG}"
             echo ""
-            
             echo "🔗 Creating symlink..."
             sudo ln -sf "\${NGINX_CONFIG}" /etc/nginx/sites-enabled/frontend-new
             if [ -L /etc/nginx/sites-enabled/frontend-new ]; then
@@ -228,7 +199,6 @@ jobs:
               exit 1
             fi
             echo ""
-            
             echo "🔍 Verifying nginx config syntax..."
             if sudo nginx -t 2>&1; then
               echo "✅ Nginx config is valid"
@@ -246,7 +216,6 @@ jobs:
               exit 1
             fi
             echo ""
-            
             echo "🔄 Reloading nginx service..."
             if sudo systemctl reload "\${NGINX_SERVICE}" 2>&1; then
               echo "✅ Nginx reloaded successfully"
@@ -282,7 +251,6 @@ jobs:
                 exit 1
               fi
             fi
-            
             echo ""
             echo "🔍 Verifying nginx is running..."
             if systemctl is-active --quiet "\${NGINX_SERVICE}"; then
@@ -292,7 +260,6 @@ jobs:
               sudo systemctl status "\${NGINX_SERVICE}" --no-pager || true
               exit 1
             fi
-            
             echo ""
             echo "🔍 Checking if nginx is listening on port \${FRONTEND_PORT}..."
             sleep 2
@@ -327,7 +294,6 @@ jobs:
             echo ""
             echo "✅ Nginx setup completed successfully"
           ENDSSH
-
       - name: ♻️ Deploy release
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
@@ -335,30 +301,23 @@ jobs:
             RELEASE_NAME="${{ steps.release.outputs.name }}"
             DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
             FRONTEND_PORT="${{ env.FRONTEND_PORT }}"
-            
             echo "📦 Deploying release: \${RELEASE_NAME}"
             echo "📂 Deployment path: \${DEPLOY_PATH}"
-            
             # Ensure directories exist with sudo
             sudo mkdir -p "\${DEPLOY_PATH}/releases"
             sudo mkdir -p "\${DEPLOY_PATH}/shared"
-            
             RELEASE_DIR="\${DEPLOY_PATH}/releases/\${RELEASE_NAME}"
             echo "📁 Release directory: \${RELEASE_DIR}"
-            
             # Remove old release if exists and create new one
             sudo rm -rf "\${RELEASE_DIR}"
             sudo mkdir -p "\${RELEASE_DIR}"
-            
             # Extract files
             echo "📤 Extracting files..."
             sudo tar -xzf /tmp/frontend-dist.tar.gz -C "\${RELEASE_DIR}"
             sudo rm -f /tmp/frontend-dist.tar.gz
-            
             # Create symlink
             echo "🔗 Creating symlink..."
             sudo ln -sfn "\${RELEASE_DIR}" "\${DEPLOY_PATH}/current"
-            
             # Verify symlink
             if [ -L "\${DEPLOY_PATH}/current" ]; then
               echo "✅ Symlink created: \${DEPLOY_PATH}/current -> \$(readlink -f \${DEPLOY_PATH}/current)"
@@ -403,9 +362,7 @@ jobs:
               echo "⚠️ Frontend health check failed (may need firewall rules)"
             fi
           ENDSSH
-
       - name: 🏥 External health check
-        continue-on-error: true
         run: |
           FRONTEND_URL="http://${{ secrets.SSH_HOST }}:${{ env.FRONTEND_PORT }}"
           echo "Checking frontend externally at ${FRONTEND_URL}..."
@@ -416,21 +373,17 @@ jobs:
             echo "To open port ${{ env.FRONTEND_PORT }}, run on server:"
             echo "  sudo ufw allow ${{ env.FRONTEND_PORT }}/tcp"
           fi
-
   notify:
     name: 🔔 Notify
     runs-on: ubuntu-latest
     needs: deploy
     if: always() && github.ref == 'refs/heads/main'
-
     steps:
       - name: ✅ Success
         if: needs.deploy.result == 'success'
         run: |
           echo "✅ Frontend deployed successfully to ${{ secrets.DEPLOYMENT_URL }}"
-
       - name: ❌ Failure
         if: needs.deploy.result != 'success'
         run: |
           echo "❌ Frontend deployment failed. Please review the logs."
-
