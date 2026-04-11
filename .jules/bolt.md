@@ -1,0 +1,3 @@
+## 2024-05-30 - [Extracted Array References from useSelector Fallbacks]
+**Learning:** Found a recurring pattern where components use `useSelector(state => state.some.data || [])`. This causes the component to re-render on *every* Redux action if the data is falsy because `[]` creates a new array reference every time. Wrapping this fallback inside `useMemo` is not ideal since the hook overhead for such a fast operation outweighs the benefit.
+**Action:** Created a stable module-level constant `const EMPTY_ARRAY = [];` and passed it as the fallback to `useSelector` instead of the inline array literal. Applied this optimization across multiple finance and payment components to significantly reduce wasteful main-thread blocking re-renders.
