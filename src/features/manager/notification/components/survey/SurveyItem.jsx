@@ -1,5 +1,21 @@
 import { Vote, Calendar, Clock, Trash2 } from "lucide-react";
-import clsx from "clsx";
+const clsx = (...args) => {
+  const classes = [];
+  for (const arg of args) {
+    if (!arg) continue;
+    if (typeof arg === "string" || typeof arg === "number") classes.push(arg);
+    else if (Array.isArray(arg)) {
+      const inner = clsx(...arg);
+      if (inner) classes.push(inner);
+    }
+    else if (typeof arg === "object") {
+      for (const key in arg) {
+        if (arg[key]) classes.push(key);
+      }
+    }
+  }
+  return classes.join(" ");
+};
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
