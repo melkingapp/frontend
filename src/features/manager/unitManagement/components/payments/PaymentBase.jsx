@@ -4,12 +4,15 @@ import { useDispatch, useSelector } from "react-redux";
 import PaymentItem from "./PaymentItem";
 import { fetchPendingPayments } from "../../slices/paymentsSlice";
 
+// Constant to prevent inline array creation which causes unnecessary re-renders
+const EMPTY_ARRAY = [];
+
 export default function PaymentBase({ limit, buildingId = null }) {
     const dispatch = useDispatch();
     const { payments: reduxPayments, loading, error } = useSelector(state => state.payments);
     
     // Always use Redux data for real backend integration
-    const dataSource = reduxPayments || [];
+    const dataSource = reduxPayments || EMPTY_ARRAY;
     const displayedPayments = limit ? dataSource.slice(0, limit) : dataSource;
 
     useEffect(() => {
