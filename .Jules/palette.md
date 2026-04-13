@@ -1,3 +1,3 @@
-## 2024-05-24 - Accessibility improvements for Form Inputs
-**Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
-**Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2024-04-13 - [Fieldset Visual Regression]
+**Learning:** While <fieldset> and <legend> are standard semantic HTML for grouping inputs, they can cause major visual regressions in styled React applications (like breaking Tailwind's border continuity or background styling).
+**Action:** Use a <div> with `role="group"` and `aria-labelledby` linked to the label's `id` (via `useId()`) to achieve the exact same accessibility grouping for screen readers without breaking the visual layout.
