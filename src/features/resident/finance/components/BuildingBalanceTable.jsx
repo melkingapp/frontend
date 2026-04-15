@@ -5,6 +5,9 @@ import moment from "moment-jalaali";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
 import { fetchTransactions, selectCurrentFundBalance } from "../../../manager/finance/store/slices/financeSlice";
 import { FinanceTableRow } from "../../../manager/finance/components/transactions/TransactionList";
+// Performance Optimization: Stable reference to prevent unnecessary re-renders
+// when useSelector fallback triggers new array allocation
+const EMPTY_ARRAY = [];
 import { FinanceDetailsModal } from "../../../manager/finance/components/transactions/TransactionDetails";
 import { TransactionFilter } from "../../../manager/finance/components/transactions/TransactionFilters";
 import useCategories from "../../../../shared/hooks/useCategories";
@@ -51,8 +54,8 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {

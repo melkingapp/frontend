@@ -1,0 +1,3 @@
+## 2024-06-18 - [Prevent useSelector Re-renders via Stable Array Reference]
+**Learning:** Redux `useSelector` hooks that fallback to an inline empty array (e.g., `useSelector(state => state.finance.transactions || [])`) cause components to re-render on *every* Redux state change, because the inline array creates a new reference in memory. Redux sees a "new" array, assumes state changed, and re-renders the component.
+**Action:** Always extract empty array fallbacks to a module-level constant (e.g., `const EMPTY_ARRAY = [];`) to provide a stable reference and bypass unnecessary re-renders in Redux connected components.
