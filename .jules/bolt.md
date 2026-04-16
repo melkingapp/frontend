@@ -4,3 +4,6 @@
 ## 2024-05-24 - [Ensure CI workflow correctly caches and executes `pnpm`]
 **Learning:** The CI workflow `.github/workflows/ci-cd.yml` was failing because it used `npm ci` but the lockfile format was strictly updated to `pnpm-lock.yaml` locally. Additionally, `npm ci` fails if the lockfile isn't synced with `package.json`. GitHub Actions environment also logged deprecation warnings for Node.js 20.
 **Action:** When working in a `pnpm` project, ensure that the CI pipelines are strictly updated to `pnpm run ...` commands and install `pnpm/action-setup` before `actions/setup-node`. Additionally, use Node.js version 22+ to resolve deprecation warnings in the runner environments. Always commit the updated `pnpm-lock.yaml` alongside these changes.
+## 2024-05-24 - [Avoid naive clsx polyfills]
+**Learning:** `clsx` was missing as a dependency and caused a build failure. We removed `clsx` imports and added a small polyfill function to the top of the files where it was used to satisfy the build step.
+**Action:** When a utility package like `clsx` is unexpectedly missing from `package.json` but used in the code, do not add it to `package.json` to fix build errors (as per constraints), but instead provide a robust local polyfill in the files that need it, properly flattening arrays and handling objects.

@@ -44,57 +44,6 @@ const FILTER_KEYWORDS = {
   "transfer": ["انتقال", "transfer", "جابجایی"]
 };
 
-const FILTER_KEYWORDS = {
-  "income": ["درآمد", "income", "مثبت"],
-  "expense": ["هزینه", "expense", "منفی"],
-  "charge": ["شارژ", "charge"],
-  "maintenance": ["تعمیرات", "maintenance", "تعمیر"],
-  "utility": ["قبض", "utility", "بیمه"],
-  "water": ["آب", "water"],
-  "electricity": ["برق", "electricity", "الکتریسیته"],
-  "gas": ["گاز", "gas"],
-  "cleaning": ["نظافت", "cleaning", "تمیز"],
-  "security": ["امنیت", "security", "نگهبان"],
-  "camera": ["دوربین", "camera", "نظارت"],
-  "parking": ["پارکینگ", "parking", "پارک"],
-  "purchases": ["اقلام خریدنی", "purchases", "خرید", "لامپ", "شیرآلات"],
-  "transfer": ["انتقال", "transfer", "جابجایی"]
-};
-
-const FILTER_KEYWORDS = {
-  "income": ["درآمد", "income", "مثبت"],
-  "expense": ["هزینه", "expense", "منفی"],
-  "charge": ["شارژ", "charge"],
-  "maintenance": ["تعمیرات", "maintenance", "تعمیر"],
-  "utility": ["قبض", "utility", "بیمه"],
-  "water": ["آب", "water"],
-  "electricity": ["برق", "electricity", "الکتریسیته"],
-  "gas": ["گاز", "gas"],
-  "cleaning": ["نظافت", "cleaning", "تمیز"],
-  "security": ["امنیت", "security", "نگهبان"],
-  "camera": ["دوربین", "camera", "نظارت"],
-  "parking": ["پارکینگ", "parking", "پارک"],
-  "purchases": ["اقلام خریدنی", "purchases", "خرید", "لامپ", "شیرآلات"],
-  "transfer": ["انتقال", "transfer", "جابجایی"]
-};
-
-const FILTER_KEYWORDS = {
-  "income": ["درآمد", "income", "مثبت"],
-  "expense": ["هزینه", "expense", "منفی"],
-  "charge": ["شارژ", "charge"],
-  "maintenance": ["تعمیرات", "maintenance", "تعمیر"],
-  "utility": ["قبض", "utility", "بیمه"],
-  "water": ["آب", "water"],
-  "electricity": ["برق", "electricity", "الکتریسیته"],
-  "gas": ["گاز", "gas"],
-  "cleaning": ["نظافت", "cleaning", "تمیز"],
-  "security": ["امنیت", "security", "نگهبان"],
-  "camera": ["دوربین", "camera", "نظارت"],
-  "parking": ["پارکینگ", "parking", "پارک"],
-  "purchases": ["اقلام خریدنی", "purchases", "خرید", "لامپ", "شیرآلات"],
-  "transfer": ["انتقال", "transfer", "جابجایی"]
-};
-
 export default function BuildingBalance() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth?.user);
