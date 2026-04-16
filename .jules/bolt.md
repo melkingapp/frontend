@@ -1,0 +1,3 @@
+## 2024-05-24 - [Avoid duplicate identifier declarations when hoisting constants]
+**Learning:** When moving static arrays or objects (like `FILTER_KEYWORDS`) outside a component to avoid re-allocation on every render, automated replacements (especially via regex) can accidentally declare the constant multiple times if the matching block appears more than once. This causes a critical `SyntaxError: Identifier has already been declared`.
+**Action:** When performing regex-based code modification to hoist variables, either use a highly specific anchor (like immediately preceding `export default function...`) or explicitly verify the file contents via `cat | grep` afterward to ensure the constant was declared exactly once.
