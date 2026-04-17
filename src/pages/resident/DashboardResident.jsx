@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Plus, Building2, Sparkles, ArrowLeft, Info, CheckCircle2 } from "lucide-react";
 import MembershipRequestForm from "../../features/membership/components/MembershipRequestForm";
@@ -45,11 +45,16 @@ export default function ResidentDashboard() {
   const { user } = useSelector((state) => state.auth);
   // Use hook to get membership requests (prevents duplicate fetches)
   const { membershipRequests } = useResidentUnitData();
-  const approvedRequests = membershipRequests.filter(req => 
-    req.status === 'approved' || 
-    req.status === 'owner_approved' || 
-    req.status === 'manager_approved'
-  );
+
+  // ⚡ Bolt: Memoize expensive array filtering to prevent main-thread blocking during re-renders
+  // Reduces unnecessary recalculations of derived state
+  const approvedRequests = useMemo(() => {
+    return membershipRequests.filter(req =>
+      req.status === 'approved' ||
+      req.status === 'owner_approved' ||
+      req.status === 'manager_approved'
+    );
+  }, [membershipRequests]);
 
   // Load suggested requests when component mounts
   useEffect(() => {

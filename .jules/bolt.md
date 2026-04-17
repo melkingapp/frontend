@@ -1,0 +1,3 @@
+## 2024-10-25 - React Component Array Filtering Optimization
+**Learning:** In React components dealing with large sets of global state (like `useSelector` lists of buildings or membership requests), running `.filter()` operations directly within the render body blocks the main thread during frequent state updates (like typing or toggling menus).
+**Action:** Always wrap derived data calculations like array filtering or mapped combinations in `useMemo` hooks using appropriate dependency arrays. This is especially crucial for list and table components displaying filtered subsets of large Redux states to ensure smooth UI performance.
