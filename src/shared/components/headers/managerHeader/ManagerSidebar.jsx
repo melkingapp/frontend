@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -106,23 +105,16 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
             return (
                 <div key={item.label} className="space-y-1 w-full">
                     <div
-                        className={clsx(
-                            "flex items-center justify-between w-full group",
-                            isCollapsed && !isMobile ? "justify-center" : ""
-                        )}
+                        className={["flex items-center justify-between w-full group", isCollapsed && !isMobile ? "justify-center" : ""].filter(Boolean).join(" ")}
                     >
                         <Link
                             to={item.to}
                             onClick={() => handleItemClick(item)}
-                            className={clsx(
-                                "flex items-center px-3 py-2 rounded-xl transition-colors duration-300 w-full",
-                                isActive
+                            className={["flex items-center px-3 py-2 rounded-xl transition-colors duration-300 w-full", isActive
                                     ? "bg-gradient-to-r from-yellow-500 to-yellow-400 text-[#1C2E4E] font-semibold shadow-lg"
                                     : isMobile
                                         ? "hover:bg-gray-100 text-gray-700"
-                                        : "hover:bg-white/20 text-white",
-                                isCollapsed && !isMobile ? "justify-center" : "gap-3"
-                            )}
+                                        : "hover:bg-white/20 text-white", isCollapsed && !isMobile ? "justify-center" : "gap-3"].filter(Boolean).join(" ")}
                             title={isCollapsed && !isMobile ? item.label : ""}
                         >
                             {item.icon}
@@ -137,12 +129,9 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
                                     e.stopPropagation();
                                     toggleMenu(item.label);
                                 }}
-                                className={clsx(
-                                    "mr-2 transition",
-                                    isMobile
+                                className={["mr-2 transition", isMobile
                                         ? "text-gray-600 hover:text-yellow-500"
-                                        : "text-white/80 hover:text-yellow-400"
-                                )}
+                                        : "text-white/80 hover:text-yellow-400"].filter(Boolean).join(" ")}
                                 aria-label={`${isOpen ? "بستن" : "باز کردن"} زیرمنو ${item.label}`}
                             >
                                 {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -152,9 +141,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
 
                     {hasChildren && (isOpen || isChildActive) && !isCollapsed && (
                         <div
-                            className={clsx(
-                                "pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"
-                            )}
+                            className={["pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"].filter(Boolean).join(" ")}
                         >
                             {item.children.map((child, index) => {
                                 // Normalize paths for comparison
@@ -166,16 +153,13 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
                                     <Link
                                         key={index}
                                         to={child.to}
-                                        className={clsx(
-                                            "block text-sm px-3 py-1.5 rounded-lg transition-colors duration-200 select-none",
-                                            isChildActive
+                                        className={["block text-sm px-3 py-1.5 rounded-lg transition-colors duration-200 select-none", isChildActive
                                                 ? isMobile
                                                     ? "bg-yellow-100 text-yellow-600 font-semibold"
                                                     : "bg-yellow-400/30 text-yellow-300 font-semibold"
                                                 : isMobile
                                                     ? "hover:bg-gray-100 text-gray-700"
-                                                    : "hover:bg-white/20 text-white/90"
-                                        )}
+                                                    : "hover:bg-white/20 text-white/90"].filter(Boolean).join(" ")}
                                     >
                                         {child.label}
                                     </Link>
@@ -192,12 +176,9 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
         <div className="relative z-50">
             <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={clsx(
-                    "text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition",
-                    isMobile
+                className={["text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition", isMobile
                         ? "bg-yellow-100 text-yellow-800"
-                        : "bg-yellow-100 text-yellow-900"
-                )}
+                        : "bg-yellow-100 text-yellow-900"].filter(Boolean).join(" ")}
             >
                 <span className="truncate max-w-[150px]">
                     {selectedBuilding?.title || "انتخاب ساختمان"}
@@ -243,12 +224,9 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
         <>
             {/* Desktop Sidebar */}
             <aside
-                className={clsx(
-                    "hidden md:flex flex-col shadow-lg space-y-3 overflow-y-auto rounded-l-3xl transition-all duration-300 relative",
-                    isCollapsed
+                className={["hidden md:flex flex-col shadow-lg space-y-3 overflow-y-auto rounded-l-3xl transition-all duration-300 relative", isCollapsed
                         ? "w-20 items-center bg-gradient-to-b from-[#1C2E4E] to-[#12355B] p-3"
-                        : "w-64 bg-gradient-to-b from-[#1C2E4E] to-[#12355B] p-5"
-                )}
+                        : "w-64 bg-gradient-to-b from-[#1C2E4E] to-[#12355B] p-5"].filter(Boolean).join(" ")}
             >
                 <button
                     onClick={() => setIsCollapsed((prev) => !prev)}
