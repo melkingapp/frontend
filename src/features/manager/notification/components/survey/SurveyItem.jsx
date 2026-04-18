@@ -1,5 +1,5 @@
+import { clsx } from "../../../../../shared/utils/clsx";
 import { Vote, Calendar, Clock, Trash2 } from "lucide-react";
-import clsx from "clsx";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
