@@ -1,0 +1,3 @@
+## 2024-05-24 - [Stable Redux useSelector fallbacks]
+**Learning:** In React components relying on `useSelector`, using inline empty arrays `[]` as fallback values (`useSelector(state => state.finance.transactions || [])`) completely defeats Redux's strict equality checks because `[] !== []`. This forces the component to unnecessarily re-render on *every single Redux action dispatch*, even for entirely unrelated state slices. Wrapping it in `useMemo` is not ideal since the dependency would be the inline array itself.
+**Action:** Always extract stable fallback constants (`const EMPTY_ARRAY = []`) outside the component scope and use them as fallbacks for Redux state selection to preserve referential equality and avoid catastrophic re-render cycles.
