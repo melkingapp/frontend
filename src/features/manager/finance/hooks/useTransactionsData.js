@@ -2,15 +2,21 @@ import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { getPersianType } from "../../../../shared/utils";
 
+// ⚡ Bolt Performance Optimization:
+// Define a stable empty array outside the hook to provide a consistent reference
+// for useSelector fallback values. This prevents unnecessary recalculations of
+// useMemo dependencies when the Redux store updates but the transactions data remains undefined/empty.
+const EMPTY_ARRAY = [];
+
 /**
  * Hook برای پردازش و نرمال‌سازی داده‌های تراکنش‌ها
  */
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
   // Get transactions from Redux state
-  const transactionsData = useSelector(state => state.finance.transactions || []);
+  const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
   const transactions = Array.isArray(transactionsData) 
     ? transactionsData 
-    : (transactionsData?.transactions || []);
+    : (transactionsData?.transactions || EMPTY_ARRAY);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {

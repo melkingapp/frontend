@@ -4,12 +4,18 @@ import { useDispatch, useSelector } from "react-redux";
 import { PaymentItem } from "../PaymentItem";
 import { fetchPendingPayments } from "../../../store/slices/paymentsSlice";
 
+// ⚡ Bolt Performance Optimization:
+// Define a stable empty array outside the component to provide a consistent reference
+// for useSelector fallback values. This prevents unnecessary re-renders of the component
+// when the Redux store updates but the payments data remains undefined/empty.
+const EMPTY_ARRAY = [];
+
 export default function PaymentBase({ limit, buildingId = null }) {
     const dispatch = useDispatch();
     const { payments: reduxPayments, loading, error } = useSelector(state => state.payments);
     
     // Always use Redux data for real backend integration
-    const dataSource = reduxPayments || [];
+    const dataSource = reduxPayments || EMPTY_ARRAY;
     const displayedPayments = limit ? dataSource.slice(0, limit) : dataSource;
 
     useEffect(() => {
