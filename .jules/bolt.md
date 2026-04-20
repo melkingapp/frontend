@@ -1,0 +1,3 @@
+## 2024-05-18 - Memoize Expensive Array Operations in React
+**Learning:** Performing multiple expensive array operations like `.filter()` on derived state (e.g. `approvedRequests` and `pendingRequestsCount`) directly within the render body can block the main thread and cause unnecessary performance degradation during re-renders, especially when lists like `membershipRequests` are lengthy.
+**Action:** Always wrap derived list computations in `useMemo` with the correct dependency arrays to ensure these operations only run when their underlying dependencies actually change, rather than on every render.
