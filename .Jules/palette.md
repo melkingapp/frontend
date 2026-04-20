@@ -1,3 +1,3 @@
-## 2024-05-24 - Accessibility improvements for Form Inputs
-**Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
-**Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2024-04-20 - Add accessibility and keyboard support to FloatingActionButton
+**Learning:** Hiding custom dropdowns using Tailwind's `opacity-0` and `scale-90` does NOT remove the interactive children from the DOM tab order. Keyboard users can blindly tab into these invisible menu items ("ghost focus"), causing confusion.
+**Action:** When using opacity/scale for exit animations instead of `hidden` or conditional rendering, always pair it with `pointer-events-none`, `aria-hidden="true"` on the container, and dynamically set `tabIndex={-1}` on all focusable children when the menu is closed to strictly manage the tab order. Use `useId()` to establish correct `aria-controls` linkage.
