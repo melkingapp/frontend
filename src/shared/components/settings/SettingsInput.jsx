@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 const SettingsInput = ({ 
     label, 
@@ -13,6 +13,10 @@ const SettingsInput = ({
     disabled = false,
     helpText 
 }) => {
+    const errorId = error ? `${id}-error` : undefined;
+    const helpId = helpText ? `${id}-help` : undefined;
+    const describedBy = [errorId, helpId].filter(Boolean).join(' ') || undefined;
+
     return (
         <div className="group">
             <label htmlFor={id} className="block text-sm font-medium text-gray-900 mb-2">
@@ -27,6 +31,8 @@ const SettingsInput = ({
                     onChange={onChange}
                     placeholder={placeholder}
                     disabled={disabled}
+                    aria-invalid={!!error}
+                    aria-describedby={describedBy}
                     className={`
                         w-full px-4 py-2.5 border rounded-lg shadow-sm
                         transition-all duration-200
@@ -44,18 +50,18 @@ const SettingsInput = ({
                 />
                 {error && (
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                        <AlertCircle size={18} className="text-red-500" />
+                        <AlertCircle size={18} className="text-red-500" aria-hidden="true" />
                     </div>
                 )}
             </div>
             {error && (
-                <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600 animate-fade-in">
-                    <AlertCircle size={14} />
+                <div id={errorId} className="mt-2 flex items-center gap-1.5 text-sm text-red-600 animate-fade-in" role="alert">
+                    <AlertCircle size={14} aria-hidden="true" />
                     <span>{error}</span>
                 </div>
             )}
             {helpText && !error && (
-                <p className="mt-1.5 text-xs text-gray-500">{helpText}</p>
+                <p id={helpId} className="mt-1.5 text-xs text-gray-500">{helpText}</p>
             )}
         </div>
     );
