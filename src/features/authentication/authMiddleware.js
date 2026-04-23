@@ -1,5 +1,3 @@
-import { sanitizeUser } from "../../shared/utils/security";
-
 const authMiddleware = (store) => (next) => (action) => {
     const result = next(action);
 
@@ -7,11 +5,7 @@ const authMiddleware = (store) => (next) => (action) => {
 
     // فقط برای login و logout
     if (action.type.startsWith("auth/")) {
-        const sanitizedAuth = { ...auth };
-        if (sanitizedAuth.user) {
-            sanitizedAuth.user = sanitizeUser(sanitizedAuth.user);
-        }
-        localStorage.setItem("auth", JSON.stringify(sanitizedAuth));
+        localStorage.setItem("auth", JSON.stringify(auth));
     }
 
     return result;
