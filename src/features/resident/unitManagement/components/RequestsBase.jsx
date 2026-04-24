@@ -10,6 +10,8 @@ import { useResidentUnitData } from "../../building/hooks/useResidentUnitData";
 import { useApprovedBuildings, useAllApprovedUnits } from "../../building/hooks/useApprovedRequests";
 import { useBuildingAutoSelection } from "../../building/hooks/useBuildingSelection";
 
+
+const EMPTY_ARRAY = [];
 export default function RequestsBase({ requests: propRequests, limit }) {
     const dispatch = useDispatch();
     const managerBuilding = useSelector(selectSelectedBuilding);
@@ -141,7 +143,7 @@ export default function RequestsBase({ requests: propRequests, limit }) {
     }, [userApprovedUnits]);
     
     // Use Redux data if available, otherwise fall back to props
-    const allRequests = reduxRequests.length > 0 ? reduxRequests : (propRequests || []);
+    const allRequests = reduxRequests.length > 0 ? reduxRequests : (propRequests || EMPTY_ARRAY);
     
     // Filter requests to show only user's requests for residents
     const dataSource = useMemo(() => {

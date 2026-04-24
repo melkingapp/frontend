@@ -8,6 +8,8 @@ import { fetchUnits } from "../../../manager/unitManagement/slices/unitsSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
 import { useResidentUnitData } from "../../../resident/building/hooks/useResidentUnitData";
 
+
+const EMPTY_ARRAY = [];
 export default function UnitsBase({ units: propUnits, limit }) {
     const dispatch = useDispatch();
     const managerBuilding = useSelector(selectSelectedBuilding);
@@ -50,7 +52,7 @@ export default function UnitsBase({ units: propUnits, limit }) {
     // اگر نقش کاربر ساکن است، فقط از درخواست‌های تایید شده خودش استفاده کن و هرگز همه واحدهای ساختمان را نشان نده
     const dataSource = user?.role === 'resident'
         ? membershipUnits
-        : (membershipUnits.length > 0 ? membershipUnits : (reduxUnits.length > 0 ? reduxUnits : (propUnits || [])));
+        : (membershipUnits.length > 0 ? membershipUnits : (reduxUnits.length > 0 ? reduxUnits : (propUnits || EMPTY_ARRAY)));
     
     // Sort by unit_number
     const sorted = [...dataSource].sort((a, b) => {

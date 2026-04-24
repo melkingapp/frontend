@@ -8,6 +8,8 @@ import { fetchBuildingLetters } from "../../../../manager/notification/slices/le
 import { selectSelectedResidentBuilding, setSelectedBuilding as setResidentSelectedBuilding } from "../../../building/residentBuildingSlice";
 import { selectMembershipRequests, fetchMembershipRequests } from "../../../../membership/membershipSlice";
 
+
+const EMPTY_ARRAY = [];
 export default function BuildingNewsBase({ letters: propLetters, limit }) {
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedResidentBuilding);
@@ -16,7 +18,7 @@ export default function BuildingNewsBase({ letters: propLetters, limit }) {
     const [selectedLetter, setSelectedLetter] = useState(null);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxLetters.length > 0 ? reduxLetters : (propLetters || []);
+    const dataSource = reduxLetters.length > 0 ? reduxLetters : (propLetters || EMPTY_ARRAY);
     
     // Sort by created_at (from API) or createdAt (from props)
     const sorted = [...dataSource].sort((a, b) => {

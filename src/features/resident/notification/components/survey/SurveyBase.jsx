@@ -7,6 +7,8 @@ import SurveyModal from "../../../../manager/notification/components/survey/Surv
 import { fetchBuildingSurveys } from "../../../../manager/notification/slices/surveysSlice";
 import { selectSelectedResidentBuilding } from "../../../building/residentBuildingSlice";
 
+
+const EMPTY_ARRAY = [];
 export default function SurveyBase({ surveys: propSurveys, limit }) {
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedResidentBuilding);
@@ -15,7 +17,7 @@ export default function SurveyBase({ surveys: propSurveys, limit }) {
     const [selectedSurvey, setSelectedSurvey] = useState(null);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxSurveys.length > 0 ? reduxSurveys : (propSurveys || []);
+    const dataSource = reduxSurveys.length > 0 ? reduxSurveys : (propSurveys || EMPTY_ARRAY);
     
     // Sort by created_at (from API) or createdAt (from props)
     const sorted = [...dataSource].sort((a, b) => {

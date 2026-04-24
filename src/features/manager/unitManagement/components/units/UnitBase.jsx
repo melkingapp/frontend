@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
 import moment from "moment-jalaali";
 
+
+const EMPTY_ARRAY = [];
 moment.loadPersian({ dialect: "persian-modern" });
 
 export default function UnitBase({ limit, showCreateButton = true, buildingId = null }) {
@@ -24,7 +26,7 @@ export default function UnitBase({ limit, showCreateButton = true, buildingId = 
     const [isExporting, setIsExporting] = useState(false);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = (reduxUnits || []).filter(unit => unit != null);
+    const dataSource = (reduxUnits || EMPTY_ARRAY).filter(unit => unit != null);
     const displayedUnits = limit ? dataSource.slice(0, limit) : dataSource;
 
     useEffect(() => {
