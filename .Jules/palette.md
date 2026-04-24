@@ -1,3 +1,6 @@
 ## 2024-05-24 - Accessibility improvements for Form Inputs
 **Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
 **Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2026-04-24 - [Accessible Floating Action Button]
+**Learning:** Tailwind's static extraction engine cannot detect dynamically constructed class names (e.g., `focus-visible:ring-${color.split('-')[1]}-500`). When creating reusable components with color props, dynamic focus rings can get purged in production. Additionally, when using `opacity-0` to hide dropdowns instead of `hidden` (to preserve animations), focusable children still receive keyboard focus ('ghost focus') unless their `tabIndex` is explicitly set to `-1` when closed.
+**Action:** Always explicitly map or provide full class names rather than constructing them via string interpolation. Manage keyboard focus dynamically (via `tabIndex={-1}`) when preserving DOM nodes for transition animations.
