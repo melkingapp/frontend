@@ -4,12 +4,14 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTransactions } from "../../slices/transactionsSlice";
 
+
+const EMPTY_ARRAY = [];
 export default function TransactionsBase({ limit, buildingId = null }) {
     const dispatch = useDispatch();
     const { transactions: reduxTransactions, loading, error } = useSelector(state => state.transactions);
     
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxTransactions || [];
+    const dataSource = reduxTransactions || EMPTY_ARRAY;
     const displayedTransactions = limit ? dataSource.slice(0, limit) : dataSource;
 
     useEffect(() => {

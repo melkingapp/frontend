@@ -6,6 +6,8 @@ import TransactionItem from "../../../manager/unitManagement/components/transact
 import { fetchTransactions } from "../../../manager/unitManagement/slices/transactionsSlice";
 import { selectSelectedBuilding } from "../../../manager/building/buildingSlice";
 
+
+const EMPTY_ARRAY = [];
 export default function TransactionsBase({ transactions: propTransactions, limit }) {
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedBuilding);
@@ -13,7 +15,7 @@ export default function TransactionsBase({ transactions: propTransactions, limit
     const [selectedTransaction, setSelectedTransaction] = useState(null);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxTransactions.length > 0 ? reduxTransactions : (propTransactions || []);
+    const dataSource = reduxTransactions.length > 0 ? reduxTransactions : (propTransactions || EMPTY_ARRAY);
     
     // Sort by created_at (from API) or createdAt (from props)
     const sorted = [...dataSource].sort((a, b) => {

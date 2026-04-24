@@ -5,13 +5,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchRequests } from "../../slices/requestsSlice";
 import CreateRequestModal from "./CreateRequestModal";
 
+
+const EMPTY_ARRAY = [];
 export default function RequestBase({ limit, buildingId = null }) {
     const dispatch = useDispatch();
     const { requests: reduxRequests, loading, error } = useSelector(state => state.requests);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxRequests || [];
+    const dataSource = reduxRequests || EMPTY_ARRAY;
     const displayedRequests = limit ? dataSource.slice(0, limit) : dataSource;
 
     useEffect(() => {

@@ -7,6 +7,8 @@ import ServiceModal from "../../../../manager/notification/components/service/Se
 import { fetchBuildingServices } from "../../../../manager/notification/slices/servicesSlice";
 import { selectSelectedResidentBuilding } from "../../../building/residentBuildingSlice";
 
+
+const EMPTY_ARRAY = [];
 export default function ServicesBase({ services: propServices, limit }) {
     const dispatch = useDispatch();
     const selectedBuilding = useSelector(selectSelectedResidentBuilding);
@@ -14,7 +16,7 @@ export default function ServicesBase({ services: propServices, limit }) {
     const [selectedService, setSelectedService] = useState(null);
 
     // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxServices.length > 0 ? reduxServices : (propServices || []);
+    const dataSource = reduxServices.length > 0 ? reduxServices : (propServices || EMPTY_ARRAY);
     
     // Sort by created_at (from API) or createdAt (from props)
     const sorted = [...dataSource].sort((a, b) => {
