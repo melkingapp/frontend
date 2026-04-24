@@ -1,3 +1,6 @@
 ## 2024-05-24 - Accessibility improvements for Form Inputs
 **Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
 **Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2026-04-24 - [Setup CI Update]
+**Learning:** GitHub Actions using Node 20 will be deprecated, and CI requires updating Node versions. Furthermore, running a frozen-lockfile `pnpm` install in CI can fail if `pnpm-lock.yaml` is slightly out of sync. To resolve CI errors related to dependency resolution mismatch, install dependencies correctly (e.g., adding `clsx`), generating an updated `pnpm-lock.yaml`, committing it, and ensuring CI pipeline uses `pnpm` natively instead of `npm`.
+**Action:** Always verify CI configurations match the project's actual package manager (e.g., replace `npm ci` with `pnpm install --frozen-lockfile`). When a `pnpm` lockfile fails in CI, update it locally, ensure missing dependencies are properly added to `package.json` (if necessary), and include the updated lockfile in the commit.
