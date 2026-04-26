@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectSelectedBuilding,
@@ -21,9 +21,10 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
     const allBuildings = useSelector((state) => state.building.data);
     const userPhone = useSelector((state) => state.auth.user?.phone);
 
-    const managerBuildings = allBuildings.filter(
-        (b) => b.manager?.phone === userPhone
-    );
+    // ⚡ Bolt: Memoize manager buildings filter to prevent main-thread blocking during re-renders
+    const managerBuildings = useMemo(() => {
+        return allBuildings.filter((b) => b.manager?.phone === userPhone);
+    }, [allBuildings, userPhone]);
 
     const toggleMenu = (label) => {
         setOpenMenus((prev) => ({
