@@ -1,20 +1,10 @@
-import { useState, useMemo } from "react";
-
-const EMPTY_ARRAY = [];
+import { useState } from "react";
 
 export default function UnitTransactionsSummary({
   unitTransactions,
   unitStatusFilter,
   onStatusFilterChange,
 }) {
-  // ⚡ Bolt: Memoize the shared expenses filter operation to prevent main-thread
-  // blocking during re-renders, especially when dealing with large transaction histories.
-  const sharedExpensesCount = useMemo(() => {
-    if (!unitTransactions) return 0;
-    const items = unitTransactions.invoices || unitTransactions.transactions || EMPTY_ARRAY;
-    return items.filter((tx) => tx.is_shared_expense).length;
-  }, [unitTransactions]);
-
   if (!unitTransactions) return null;
 
   return (
@@ -128,7 +118,9 @@ export default function UnitTransactionsSummary({
           </div>
           <div className="flex items-baseline justify-between">
             <span className="font-extrabold text-indigo-700 text-lg">
-              {sharedExpensesCount}
+              {(unitTransactions.invoices || unitTransactions.transactions || []).filter(
+                (tx) => tx.is_shared_expense
+              ).length}
             </span>
             <span className="text-[11px] text-gray-500">مورد</span>
           </div>

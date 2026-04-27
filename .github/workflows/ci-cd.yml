@@ -11,7 +11,7 @@ on:
       - develop
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '20'
   DEPLOY_PATH: /var/www/melking/frontend-new
   NGINX_SERVICE: nginx
   FRONTEND_PORT: 8080
@@ -27,28 +27,23 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: ⚙️ Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: npm
 
       - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: 🔍 Lint
-        run: pnpm run lint
+        run: npm run lint
         continue-on-error: true
 
       - name: 🏗️ Build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'http://171.22.25.201:9000/api/v1' }}
-        run: pnpm run build
+        run: npm run build
 
       - name: 📦 Upload artifact
         uses: actions/upload-artifact@v4
