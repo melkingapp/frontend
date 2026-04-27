@@ -1,0 +1,3 @@
+## 2024-04-27 - Avoid unprompted package installation
+**Learning:** Running `pnpm install --no-frozen-lockfile` to fix local missing module issues (for `pnpm lint` or `pnpm test`) on an unprepared branch can introduce massive unprompted changes to `pnpm-lock.yaml`, leading to code review rejection.
+**Action:** Do not run `pnpm install --no-frozen-lockfile` unless explicitly instructed to fix a CI issue. If `pnpm lint` or `test` fails due to pre-existing missing node_modules or mismatched configs (like multiple jest files), report the existing failures but do not pollute the git working directory with unauthorized dependency changes.
