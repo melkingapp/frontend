@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { 
   TrendingUp, 
@@ -195,10 +195,14 @@ export default function BuildingBalance() {
     }
   };
 
-  const filteredTransactions = balanceData.transactions.filter(transaction => {
-    // Filter by transaction type
-    let matchesFilter = true;
-    if (filter !== "all") {
+  // ⚡ BOLT OPTIMIZATION: Memoize filtered transactions to prevent O(n) string matching and array iteration
+  // on every component re-render. This avoids blocking the main thread when large transaction histories
+  // are loaded and unrelated state changes occur.
+  const filteredTransactions = useMemo(() => {
+    return balanceData.transactions.filter(transaction => {
+      // Filter by transaction type
+      let matchesFilter = true;
+      if (filter !== "all") {
       console.log(`🔥 Filtering for: ${filter}`);
       console.log(`🔥 Transaction:`, transaction);
 
@@ -264,17 +268,18 @@ export default function BuildingBalance() {
       }
     }
     
-    // Filter by search term
-    const matchesSearch = searchTerm === "" || 
-      transaction.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const result = matchesFilter && matchesSearch;
-    if (filter !== "all") {
-      console.log(`🔥 Match result: ${result} (filter: ${matchesFilter}, search: ${matchesSearch})`);
-    }
-    return result;
-  });
+      // Filter by search term
+      const matchesSearch = searchTerm === "" ||
+        transaction.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const result = matchesFilter && matchesSearch;
+      if (filter !== "all") {
+        console.log(`🔥 Match result: ${result} (filter: ${matchesFilter}, search: ${matchesSearch})`);
+      }
+      return result;
+    });
+  }, [balanceData.transactions, filter, searchTerm]);
   
   console.log(`🔥 Total transactions: ${balanceData.transactions.length}`);
   console.log(`🔥 Filtered transactions: ${filteredTransactions.length}`);

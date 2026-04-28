@@ -1,0 +1,3 @@
+## 2025-02-28 - [Memoizing Array Operations in Render Cycle]
+**Learning:** In React components like `BalancePage.jsx`, calculating filtered results (e.g. `balanceData.transactions.filter`) with complex inner logic directly inside the render loop causes significant main-thread blocking on every re-render, especially with large datasets, even when the state changes are unrelated to the filters.
+**Action:** Always wrap derived data calculations that involve string matching or looping over arrays in `useMemo` hooks with their proper dependencies (`data`, `filters`, `searchTerm`) to avoid unnecessary re-calculations.
