@@ -203,71 +203,71 @@ export default function BuildingBalance() {
       // Filter by transaction type
       let matchesFilter = true;
       if (filter !== "all") {
-      console.log(`🔥 Filtering for: ${filter}`);
-      console.log(`🔥 Transaction:`, transaction);
+        console.log(`🔥 Filtering for: ${filter}`);
+        console.log(`🔥 Transaction:`, transaction);
 
-      // Handle unit occupancy filters
-      if (filter === "occupied_units") {
-        // Show transactions only for occupied units
-        matchesFilter = transaction.unit_occupied === true ||
-                       transaction.is_occupied === true ||
-                       (transaction.unit && transaction.unit.is_occupied === true) ||
-                       (transaction.unit_info && transaction.unit_info.is_occupied === true);
-      } else if (filter === "empty_units") {
-        // Show transactions only for empty units
-        matchesFilter = transaction.unit_occupied === false ||
-                       transaction.is_occupied === false ||
-                       (transaction.unit && transaction.unit.is_occupied === false) ||
-                       (transaction.unit_info && transaction.unit_info.is_occupied === false) ||
-                       transaction.unit_occupied === null ||
-                       transaction.is_occupied === null;
-      } else {
-        // Create a more flexible filtering system for other filters
-        const filterKeywords = {
-          "income": ["درآمد", "income", "مثبت"],
-          "expense": ["هزینه", "expense", "منفی"],
-          "charge": ["شارژ", "charge", "شارژ جاری", "شارژ عمرانی", "current_charge", "construction_charge"],
-          "maintenance": ["تعمیرات", "maintenance", "تعمیر"],
-          "utility": ["قبض", "utility", "بیمه"],
-          "water": ["آب", "water"],
-          "electricity": ["برق", "electricity", "الکتریسیته"],
-          "gas": ["گاز", "gas"],
-          "cleaning": ["نظافت", "cleaning", "تمیز"],
-          "security": ["امنیت", "security", "نگهبان"],
-          "camera": ["دوربین", "camera", "نظارت"],
-          "parking": ["پارکینگ", "parking", "پارک"],
-          "purchases": ["اقلام خریدنی", "purchases", "خرید", "لامپ", "شیرآلات"],
-          "transfer": ["انتقال", "transfer", "جابجایی"]
-        };
+        // Handle unit occupancy filters
+        if (filter === "occupied_units") {
+          // Show transactions only for occupied units
+          matchesFilter = transaction.unit_occupied === true ||
+                         transaction.is_occupied === true ||
+                         (transaction.unit && transaction.unit.is_occupied === true) ||
+                         (transaction.unit_info && transaction.unit_info.is_occupied === true);
+        } else if (filter === "empty_units") {
+          // Show transactions only for empty units
+          matchesFilter = transaction.unit_occupied === false ||
+                         transaction.is_occupied === false ||
+                         (transaction.unit && transaction.unit.is_occupied === false) ||
+                         (transaction.unit_info && transaction.unit_info.is_occupied === false) ||
+                         transaction.unit_occupied === null ||
+                         transaction.is_occupied === null;
+        } else {
+          // Create a more flexible filtering system for other filters
+          const filterKeywords = {
+            "income": ["درآمد", "income", "مثبت"],
+            "expense": ["هزینه", "expense", "منفی"],
+            "charge": ["شارژ", "charge", "شارژ جاری", "شارژ عمرانی", "current_charge", "construction_charge"],
+            "maintenance": ["تعمیرات", "maintenance", "تعمیر"],
+            "utility": ["قبض", "utility", "بیمه"],
+            "water": ["آب", "water"],
+            "electricity": ["برق", "electricity", "الکتریسیته"],
+            "gas": ["گاز", "gas"],
+            "cleaning": ["نظافت", "cleaning", "تمیز"],
+            "security": ["امنیت", "security", "نگهبان"],
+            "camera": ["دوربین", "camera", "نظارت"],
+            "parking": ["پارکینگ", "parking", "پارک"],
+            "purchases": ["اقلام خریدنی", "purchases", "خرید", "لامپ", "شیرآلات"],
+            "transfer": ["انتقال", "transfer", "جابجایی"]
+          };
 
-        const keywords = filterKeywords[filter] || [];
+          const keywords = filterKeywords[filter] || [];
 
-        // Check multiple fields for matches
-        const checkFields = [
-          transaction.category,
-          transaction.type,
-          transaction.subject,
-          transaction.description,
-          transaction.title,
-          transaction.bill_type,
-          transaction.expense_type
-        ].filter(Boolean); // Remove null/undefined values
+          // Check multiple fields for matches
+          const checkFields = [
+            transaction.category,
+            transaction.type,
+            transaction.subject,
+            transaction.description,
+            transaction.title,
+            transaction.bill_type,
+            transaction.expense_type
+          ].filter(Boolean); // Remove null/undefined values
 
-        matchesFilter = keywords.some(keyword =>
-          checkFields.some(field =>
-            field.toString().toLowerCase().includes(keyword.toLowerCase())
-          )
-        );
+          matchesFilter = keywords.some(keyword =>
+            checkFields.some(field =>
+              field.toString().toLowerCase().includes(keyword.toLowerCase())
+            )
+          );
 
-        // Special handling for income/expense based on amount
-        if (filter === "income") {
-          matchesFilter = matchesFilter || (transaction.amount && transaction.amount > 0);
-        } else if (filter === "expense") {
-          matchesFilter = matchesFilter || (transaction.amount && transaction.amount < 0);
+          // Special handling for income/expense based on amount
+          if (filter === "income") {
+            matchesFilter = matchesFilter || (transaction.amount && transaction.amount > 0);
+          } else if (filter === "expense") {
+            matchesFilter = matchesFilter || (transaction.amount && transaction.amount < 0);
+          }
         }
       }
-    }
-    
+
       // Filter by search term
       const matchesSearch = searchTerm === "" ||
         transaction.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -277,8 +277,8 @@ export default function BuildingBalance() {
       if (filter !== "all") {
         console.log(`🔥 Match result: ${result} (filter: ${matchesFilter}, search: ${matchesSearch})`);
       }
-      return result;
-    });
+        return result;
+      });
   }, [balanceData.transactions, filter, searchTerm]);
   
   console.log(`🔥 Total transactions: ${balanceData.transactions.length}`);
