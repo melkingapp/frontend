@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Clock, CheckCircle, CheckCircle2, XCircle, Building2, Calendar, RefreshCw, Home, Users, Car } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -39,6 +39,144 @@ export default function BuildingRequestStatus() {
 
         return () => clearInterval(interval);
     }, [dispatch, requests]);
+
+    const requestElements = useMemo(() => {
+            // Filter out requests with unknown status
+            const validStatuses = ['pending', 'owner_approved', 'manager_approved', 'rejected', 'approved', 'suggested'];
+            const validRequests = requests.filter(req => {
+                const status = req.status;
+                return status && validStatuses.includes(status);
+            });
+
+            // Group requests by building_code and unit_number
+            const requestsByKey = {};
+            validRequests.forEach(req => {
+                const key = `${req.building_code}-${req.unit_number}`;
+                if (!requestsByKey[key]) {
+                    requestsByKey[key] = [];
+                }
+                requestsByKey[key].push(req);
+            });
+
+            // For each group, keep only the best request:
+            // Priority: manager_approved > owner_approved > approved > pending > rejected > suggested
+            const uniqueRequests = Object.values(requestsByKey).map(group => {
+                const statusPriority = {
+                    'manager_approved': 1,
+                    'owner_approved': 2,
+                    'approved': 3,
+                    'pending': 4,
+                    'suggested': 5,
+                    'rejected': 6
+                };
+
+                // Sort by priority, then by date (most recent first)
+                group.sort((a, b) => {
+                    const priorityA = statusPriority[a.status] || 999;
+                    const priorityB = statusPriority[b.status] || 999;
+
+                    if (priorityA !== priorityB) {
+                        return priorityA - priorityB;
+                    }
+
+                    // Same priority, get most recent
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+
+                return group[0]; // Return the best one
+            });
+
+            return uniqueRequests.map((request, index) => {
+                const statusText = getStatusText(request.status);
+                // Skip if status is unknown (shouldn't happen after filtering, but just in case)
+                if (!statusText) return null;
+
+                return (
+            <div
+                key={request.request_id}
+                className="group border-2 border-gray-200 hover:border-indigo-300 rounded-xl p-5 bg-gradient-to-br from-white to-gray-50/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
+                style={{ animationDelay: `${index * 50}ms` }}
+            >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                    <div className="flex items-start gap-4 flex-1">
+                        <div className="p-2.5 bg-white rounded-lg shadow-sm border border-gray-100">
+                            {getStatusIcon(request.status)}
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-lg text-gray-800 mb-1">
+                                {request.building_title}
+                            </h3>
+                            <p className="text-sm text-gray-600 flex items-center gap-2 flex-wrap">
+                                <span className="inline-flex items-center gap-1">
+                                    <Building2 size={14} className="text-gray-400" />
+                                    کد: {request.building_code}
+                                </span>
+                                <span className="text-gray-300">|</span>
+                                <span>واحد {request.unit_number}</span>
+                                <span className="text-gray-300">|</span>
+                                <span>طبقه {request.floor}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <span className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 shadow-sm ${getStatusColor(request.status)}`}>
+                        {getStatusText(request.status)}
+                    </span>
+                </div>
+
+                {/* اطلاعات واحد */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 p-4 bg-white/60 rounded-lg border border-gray-100">
+                    <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/80 p-2 rounded-lg">
+                        <Home size={18} className="text-indigo-500" />
+                        <span className="font-medium">متراژ: <span className="text-gray-600">{request.area ? `${request.area} متر مربع` : 'نامشخص'}</span></span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/80 p-2 rounded-lg">
+                        <Users size={18} className="text-indigo-500" />
+                        <span className="font-medium">تعداد نفر: <span className="text-gray-600">{request.resident_count || 'نامشخص'}</span></span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/80 p-2 rounded-lg">
+                        <Car size={18} className="text-indigo-500" />
+                        <span className="font-medium">پارکینگ: <span className="text-gray-600">{request.has_parking ? `دارد (${request.parking_count || 0} عدد)` : 'ندارد'}</span></span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/80 p-2 rounded-lg">
+                        <Building2 size={18} className="text-indigo-500" />
+                        <span className="font-medium">نقش: <span className="text-gray-600">{request.role === 'resident' ? 'ساکن' : 'مالک'}</span></span>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 pt-3 border-t border-gray-200">
+                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium">ارسال: <span className="text-gray-500">{formatDate(request.created_at)}</span></span>
+                    </div>
+                    {request.approved_at && (
+                        <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg">
+                            <Calendar className="w-4 h-4 text-green-500" />
+                            <span className="font-medium text-green-700">تایید: <span className="text-green-600">{formatDate(request.approved_at)}</span></span>
+                        </div>
+                    )}
+                </div>
+
+                {(request.status === 'approved' || request.status === 'owner_approved' || request.status === 'manager_approved') && (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 rounded-lg shadow-sm">
+                        <p className="text-sm font-medium text-green-800 flex items-center gap-2">
+                            <CheckCircle2 size={18} className="text-green-600" />
+                            تبریک! درخواست شما تایید شد. حالا می‌توانید به اطلاعات ساختمان دسترسی داشته باشید.
+                        </p>
+                    </div>
+                )}
+
+                {request.status === 'rejected' && (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-red-50 to-rose-50 border-r-4 border-red-500 rounded-lg shadow-sm">
+                        <p className="text-sm font-medium text-red-800 flex items-center gap-2">
+                            <XCircle size={18} className="text-red-600" />
+                            متأسفانه درخواست شما رد شد. در صورت نیاز با مدیر ساختمان تماس بگیرید.
+                        </p>
+                    </div>
+                )}
+            </div>
+                );
+            }).filter(Boolean); // Remove null entries
+    }, [requests]);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -276,143 +414,7 @@ export default function BuildingRequestStatus() {
             </div>
 
             <div className="p-6 space-y-4">
-                {(() => {
-                    // Filter out requests with unknown status
-                    const validStatuses = ['pending', 'owner_approved', 'manager_approved', 'rejected', 'approved', 'suggested'];
-                    const validRequests = requests.filter(req => {
-                        const status = req.status;
-                        return status && validStatuses.includes(status);
-                    });
-                    
-                    // Group requests by building_code and unit_number
-                    const requestsByKey = {};
-                    validRequests.forEach(req => {
-                        const key = `${req.building_code}-${req.unit_number}`;
-                        if (!requestsByKey[key]) {
-                            requestsByKey[key] = [];
-                        }
-                        requestsByKey[key].push(req);
-                    });
-                    
-                    // For each group, keep only the best request:
-                    // Priority: manager_approved > owner_approved > approved > pending > rejected > suggested
-                    const uniqueRequests = Object.values(requestsByKey).map(group => {
-                        const statusPriority = {
-                            'manager_approved': 1,
-                            'owner_approved': 2,
-                            'approved': 3,
-                            'pending': 4,
-                            'suggested': 5,
-                            'rejected': 6
-                        };
-                        
-                        // Sort by priority, then by date (most recent first)
-                        group.sort((a, b) => {
-                            const priorityA = statusPriority[a.status] || 999;
-                            const priorityB = statusPriority[b.status] || 999;
-                            
-                            if (priorityA !== priorityB) {
-                                return priorityA - priorityB;
-                            }
-                            
-                            // Same priority, get most recent
-                            return new Date(b.created_at) - new Date(a.created_at);
-                        });
-                        
-                        return group[0]; // Return the best one
-                    });
-                    
-                    return uniqueRequests.map((request, index) => {
-                        const statusText = getStatusText(request.status);
-                        // Skip if status is unknown (shouldn't happen after filtering, but just in case)
-                        if (!statusText) return null;
-                        
-                        return (
-                    <div 
-                        key={request.request_id} 
-                        className="group border-2 border-gray-200 hover:border-indigo-300 rounded-xl p-5 bg-gradient-to-br from-white to-gray-50/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                            <div className="flex items-start gap-4 flex-1">
-                                <div className="p-2.5 bg-white rounded-lg shadow-sm border border-gray-100">
-                                    {getStatusIcon(request.status)}
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-lg text-gray-800 mb-1">
-                                        {request.building_title}
-                                    </h3>
-                                    <p className="text-sm text-gray-600 flex items-center gap-2 flex-wrap">
-                                        <span className="inline-flex items-center gap-1">
-                                            <Building2 size={14} className="text-gray-400" />
-                                            کد: {request.building_code}
-                                        </span>
-                                        <span className="text-gray-300">|</span>
-                                        <span>واحد {request.unit_number}</span>
-                                        <span className="text-gray-300">|</span>
-                                        <span>طبقه {request.floor}</span>
-                                    </p>
-                                </div>
-                            </div>
-                            <span className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 shadow-sm ${getStatusColor(request.status)}`}>
-                                {getStatusText(request.status)}
-                            </span>
-                        </div>
-
-                        {/* اطلاعات واحد */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 p-4 bg-white/60 rounded-lg border border-gray-100">
-                            <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/80 p-2 rounded-lg">
-                                <Home size={18} className="text-indigo-500" />
-                                <span className="font-medium">متراژ: <span className="text-gray-600">{request.area ? `${request.area} متر مربع` : 'نامشخص'}</span></span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/80 p-2 rounded-lg">
-                                <Users size={18} className="text-indigo-500" />
-                                <span className="font-medium">تعداد نفر: <span className="text-gray-600">{request.resident_count || 'نامشخص'}</span></span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/80 p-2 rounded-lg">
-                                <Car size={18} className="text-indigo-500" />
-                                <span className="font-medium">پارکینگ: <span className="text-gray-600">{request.has_parking ? `دارد (${request.parking_count || 0} عدد)` : 'ندارد'}</span></span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/80 p-2 rounded-lg">
-                                <Building2 size={18} className="text-indigo-500" />
-                                <span className="font-medium">نقش: <span className="text-gray-600">{request.role === 'resident' ? 'ساکن' : 'مالک'}</span></span>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 pt-3 border-t border-gray-200">
-                            <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
-                                <Calendar className="w-4 h-4 text-gray-400" />
-                                <span className="font-medium">ارسال: <span className="text-gray-500">{formatDate(request.created_at)}</span></span>
-                            </div>
-                            {request.approved_at && (
-                                <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg">
-                                    <Calendar className="w-4 h-4 text-green-500" />
-                                    <span className="font-medium text-green-700">تایید: <span className="text-green-600">{formatDate(request.approved_at)}</span></span>
-                                </div>
-                            )}
-                        </div>
-
-                        {(request.status === 'approved' || request.status === 'owner_approved' || request.status === 'manager_approved') && (
-                            <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-r-4 border-green-500 rounded-lg shadow-sm">
-                                <p className="text-sm font-medium text-green-800 flex items-center gap-2">
-                                    <CheckCircle2 size={18} className="text-green-600" />
-                                    تبریک! درخواست شما تایید شد. حالا می‌توانید به اطلاعات ساختمان دسترسی داشته باشید.
-                                </p>
-                            </div>
-                        )}
-
-                        {request.status === 'rejected' && (
-                            <div className="mt-4 p-4 bg-gradient-to-r from-red-50 to-rose-50 border-r-4 border-red-500 rounded-lg shadow-sm">
-                                <p className="text-sm font-medium text-red-800 flex items-center gap-2">
-                                    <XCircle size={18} className="text-red-600" />
-                                    متأسفانه درخواست شما رد شد. در صورت نیاز با مدیر ساختمان تماس بگیرید.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                        );
-                    }).filter(Boolean); // Remove null entries
-                })()}
+                {requestElements}
             </div>
         </div>
     );
