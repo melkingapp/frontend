@@ -1,3 +1,3 @@
-## 2024-05-24 - Accessibility improvements for Form Inputs
-**Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
-**Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2025-04-29 - Mobile Menu Button Accessibility
+**Learning:** Found a pattern where mobile header icons lack `aria-label` attributes and focus ring styling. Also learned that applying arbitrary Tailwind focus rings (like `focus-visible:ring-[#D3B66C]`) works perfectly when picking up the app's standard gold theme, provided the elements are actually focusable. In the future, prefer semantic colors if defined in the Tailwind config, but arbitrary hexes align with the codebase's existing styling approach.
+**Action:** Always ensure header/menu buttons on mobile layouts have localized `aria-label`s (e.g., "باز کردن منو" in Persian) and visible focus outlines for screen reader and keyboard accessibility.
