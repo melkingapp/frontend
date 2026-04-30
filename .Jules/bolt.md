@@ -1,0 +1,3 @@
+## 2024-05-01 - Optimizing Inline Array Fallbacks
+**Learning:** When refactoring inline array operations (like `.filter()`) into a `useMemo` hook, it's critical to avoid using inline fallback values (e.g., `[]`) within the hook if the hook evaluates early. Using a stable module-level constant (e.g., `const EMPTY_ARRAY = []`) as the fallback prevents allocating a new array on every render, saving overhead and maintaining referential equality to avoid unnecessary downstream re-renders.
+**Action:** Always combine `useMemo` with stable module-level fallback arrays when optimizing operations that rely on conditionally present data to maximize performance gains without unnecessary allocation overhead.
