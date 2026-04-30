@@ -1,3 +1,6 @@
 ## 2024-05-24 - Accessibility improvements for Form Inputs
 **Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
 **Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2026-04-30 - [A11y: Form Input Error & Description Associations]
+**Learning:** When creating custom inputs or toggles (e.g. `SettingsInput` or `NotificationToggle`), standard `htmlFor` only associates the label with the input. Additional contextual information like error messages or descriptions are completely missed by screen readers unless explicitly linked using `aria-describedby` combined with dynamic IDs (e.g., `${id}-error`). Error states specifically require `role="alert"` to force announcements when they appear, and decorative icons used within these contexts need `aria-hidden="true"` to prevent redundant clutter for assistive technologies.
+**Action:** Always link validation text, errors, and help text blocks using `aria-describedby` when building custom input and settings components.
