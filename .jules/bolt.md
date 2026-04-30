@@ -1,0 +1,3 @@
+## 2024-05-01 - Optimizing Inline Array Operations
+**Learning:** Performing inline array operations (like `.filter()`) within a JSX component's render function can cause main-thread blocking on large arrays during frequent re-renders. Moving these operations into a `useMemo` hook optimizes the render cycle by caching the derived data.
+**Action:** Always wrap expensive derived data calculations in `useMemo` hooks to prevent main-thread blocking during re-renders, while using a stable module-level constant like `EMPTY_ARRAY` instead of inline `[]` fallbacks to avoid allocating unnecessary fallback arrays in memory.
