@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -407,12 +406,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         <div className="relative z-50">
             <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={clsx(
-                    "text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition",
-                    isMobile
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-yellow-100 text-yellow-900"
-                )}
+                className={`text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition ${isMobile ? "bg-yellow-100 text-yellow-800" : "bg-yellow-100 text-yellow-900"}`}
             >
                 <span className="truncate max-w-[150px]">
                     {selectedBuilding?.title ? `${selectedBuilding.title} - واحد ${unitNumber || 'نامشخص'}` : "انتخاب واحد"}
