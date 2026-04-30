@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -106,10 +105,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
             return (
                 <div key={item.label} className="space-y-1 w-full">
                     <div
-                        className={clsx(
-                            "flex items-center justify-between w-full group",
-                            isCollapsed && !isMobile ? "justify-center" : ""
-                        )}
+                        className={`flex items-center justify-between w-full group ${isCollapsed && !isMobile ? "justify-center" : ""}`}
                     >
                         <Link
                             to={item.to}
@@ -137,12 +133,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
                                     e.stopPropagation();
                                     toggleMenu(item.label);
                                 }}
-                                className={clsx(
-                                    "mr-2 transition",
-                                    isMobile
-                                        ? "text-gray-600 hover:text-yellow-500"
-                                        : "text-white/80 hover:text-yellow-400"
-                                )}
+                                className={`mr-2 transition ${isMobile ? "text-gray-600 hover:text-yellow-500" : "text-white/80 hover:text-yellow-400"}`}
                                 aria-label={`${isOpen ? "بستن" : "باز کردن"} زیرمنو ${item.label}`}
                             >
                                 {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -152,9 +143,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
 
                     {hasChildren && (isOpen || isChildActive) && !isCollapsed && (
                         <div
-                            className={clsx(
-                                "pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"
-                            )}
+                            className="pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"
                         >
                             {item.children.map((child, index) => {
                                 // Normalize paths for comparison
@@ -192,12 +181,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
         <div className="relative z-50">
             <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={clsx(
-                    "text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition",
-                    isMobile
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-yellow-100 text-yellow-900"
-                )}
+                className={`text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition ${isMobile ? "bg-yellow-100 text-yellow-800" : "bg-yellow-100 text-yellow-900"}`}
             >
                 <span className="truncate max-w-[150px]">
                     {selectedBuilding?.title || "انتخاب ساختمان"}
