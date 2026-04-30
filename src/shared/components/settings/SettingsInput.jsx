@@ -41,21 +41,22 @@ const SettingsInput = ({
                         focus:outline-none focus:ring-2 focus:ring-opacity-50
                         text-sm
                     `}
+                    aria-describedby={error ? `${id}-error` : helpText ? `${id}-help` : undefined}
                 />
                 {error && (
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                        <AlertCircle size={18} className="text-red-500" />
+                        <AlertCircle size={18} className="text-red-500" aria-hidden="true" />
                     </div>
                 )}
             </div>
             {error && (
-                <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600 animate-fade-in">
-                    <AlertCircle size={14} />
+                <div id={`${id}-error`} role="alert" className="mt-2 flex items-center gap-1.5 text-sm text-red-600 animate-fade-in">
+                    <AlertCircle size={14} aria-hidden="true" />
                     <span>{error}</span>
                 </div>
             )}
             {helpText && !error && (
-                <p className="mt-1.5 text-xs text-gray-500">{helpText}</p>
+                <p id={`${id}-help`} className="mt-1.5 text-xs text-gray-500">{helpText}</p>
             )}
         </div>
     );

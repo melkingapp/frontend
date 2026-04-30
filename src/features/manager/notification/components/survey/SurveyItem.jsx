@@ -1,11 +1,28 @@
 import { Vote, Calendar, Clock, Trash2 } from "lucide-react";
-import clsx from "clsx";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSurveyDetails, deleteSurvey, fetchBuildingSurveys } from "../../slices/surveysSlice";
 import { selectSelectedBuilding } from "../../../building/buildingSlice";
 import { selectSelectedResidentBuilding } from "../../../../resident/building/residentBuildingSlice";
+
+const clsx = (...args) => {
+  return args
+    .flat()
+    .filter(Boolean)
+    .map(arg => {
+      if (typeof arg === 'string' || typeof arg === 'number') return arg;
+      if (typeof arg === 'object' && !Array.isArray(arg)) {
+        return Object.entries(arg)
+          .filter(([_, value]) => Boolean(value))
+          .map(([key, _]) => key)
+          .join(' ');
+      }
+      return '';
+    })
+    .join(' ')
+    .trim();
+};
 
 export default function SurveyItem({ survey, onSelect, selectedBuilding: propSelectedBuilding }) {
     const dispatch = useDispatch();

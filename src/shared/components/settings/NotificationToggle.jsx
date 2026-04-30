@@ -7,7 +7,7 @@ const NotificationToggle = ({ label, description, checked, onChange, id }) => {
                 <label htmlFor={id} className="text-sm font-semibold text-gray-900 cursor-pointer">
                     {label}
                 </label>
-                {description && <p className="text-xs text-gray-600 mt-1.5">{description}</p>}
+                {description && <p id={`${id}-desc`} className="text-xs text-gray-600 mt-1.5">{description}</p>}
             </div>
             <label htmlFor={id} className="relative inline-flex items-center cursor-pointer mr-4">
                 <input
@@ -16,6 +16,7 @@ const NotificationToggle = ({ label, description, checked, onChange, id }) => {
                     className="sr-only peer"
                     checked={checked}
                     onChange={onChange}
+                    aria-describedby={description ? `${id}-desc` : undefined}
                 />
                 <div className="
                     w-14 h-7 bg-gray-200 
