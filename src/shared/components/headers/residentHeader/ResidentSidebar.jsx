@@ -1,13 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
     setSelectedBuilding,
     fetchResidentRequests,
-    fetchApprovedBuildingsDetails,
 } from "../../../../features/resident/building/residentBuildingSlice";
 import { useResidentUnitData } from "../../../../features/resident/building/hooks/useResidentUnitData";
 import MelkingLogo from "../../../../assets/logo/Melking-fa.svg";
@@ -21,20 +20,24 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const dispatch = useDispatch();
 
     // Use hook for resident unit data (prevents duplicate fetches)
-    const { selectedBuilding, approvedBuildings, membershipRequests } = useResidentUnitData();
+    const { selectedBuilding, membershipRequests } = useResidentUnitData();
     const requests = useSelector(selectResidentRequests);
-    const { user } = useSelector(state => state.auth);
+
 
     // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
-    const getUserRole = () => {
-        const approvedRequests = membershipRequests.filter(req => 
-            req.status === 'approved' || 
-            req.status === 'owner_approved' || 
-            req.status === 'manager_approved'
-        );
+    const userRole = useMemo(() => {
+        let hasOwnerRole = false;
+        let hasResidentRole = false;
         
-        const hasOwnerRole = approvedRequests.some(req => req.role === 'owner');
-        const hasResidentRole = approvedRequests.some(req => req.role === 'resident');
+        for (let i = 0; i < membershipRequests.length; i++) {
+            const req = membershipRequests[i];
+            if (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved') {
+                if (req.role === 'owner') hasOwnerRole = true;
+                else if (req.role === 'resident') hasResidentRole = true;
+
+                if (hasOwnerRole && hasResidentRole) break;
+            }
+        }
         
         if (hasOwnerRole && hasResidentRole) {
             return 'owner'; // اگر هم مالک و هم ساکن است، مالک را اولویت بده
@@ -45,9 +48,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         }
         
         return 'resident'; // پیش‌فرض
-    };
-
-    const userRole = getUserRole();
+    }, [membershipRequests]);
 
     // Get pending requests count for display
     const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
@@ -62,27 +63,32 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     // Get approved units from hook (already calculated in useResidentUnitData)
     // We need to recalculate here to match the exact format expected by the sidebar
-    const approvedUnits = (() => {
-        const approvedRequests = membershipRequests.filter(req => 
-            req.status === 'approved' || 
-            req.status === 'owner_approved' || 
-            req.status === 'manager_approved'
-        );
+    const approvedUnits = useMemo(() => {
+        const approvedRequests = [];
+        for (let i = 0; i < membershipRequests.length; i++) {
+            const req = membershipRequests[i];
+            if (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved') {
+                approvedRequests.push(req);
+            }
+        }
         
         // گروه‌بندی درخواست‌ها بر اساس ساختمان و واحد
         const unitGroups = {};
         
-        approvedRequests.forEach(request => {
+        for (let i = 0; i < approvedRequests.length; i++) {
+            const request = approvedRequests[i];
             const key = `${request.building}-${request.unit_number}`;
             if (!unitGroups[key]) {
                 unitGroups[key] = [];
             }
             unitGroups[key].push(request);
-        });
+        }
         
         // برای هر واحد، نقش مالک را اولویت بده
         const uniqueUnits = [];
-        Object.values(unitGroups).forEach(requests => {
+        const groupValues = Object.values(unitGroups);
+        for (let i = 0; i < groupValues.length; i++) {
+            const requests = groupValues[i];
             // اگر نقش مالک وجود دارد، آن را انتخاب کن
             const ownerRequest = requests.find(req => req.role === 'owner');
             if (ownerRequest) {
@@ -91,10 +97,10 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                 // در غیر این صورت، اولین درخواست را انتخاب کن
                 uniqueUnits.push(requests[0]);
             }
-        });
+        }
         
         return uniqueUnits;
-    })();
+    }, [membershipRequests]);
 
     // Auto-select first approved unit if none is selected
     useEffect(() => {

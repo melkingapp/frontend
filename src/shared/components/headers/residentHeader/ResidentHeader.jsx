@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { LogOut, Menu, Home, BellRing, User, Globe } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { logout } from "../../../../features/authentication/authSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -16,16 +16,19 @@ export default function ResidentHeader({ onOpenSidebar }) {
     const membershipRequests = useSelector(selectMembershipRequests);
 
     // تعیین نوع پنل بر اساس نقش واقعی کاربر
-    const getPanelTitle = () => {
-        // بررسی درخواست‌های عضویت برای تعیین نقش واقعی
-        const approvedRequests = membershipRequests.filter(req => 
-            req.status === 'approved' || 
-            req.status === 'owner_approved' || 
-            req.status === 'manager_approved'
-        );
+    const panelTitle = useMemo(() => {
+        let hasOwnerRole = false;
+        let hasResidentRole = false;
         
-        const hasOwnerRole = approvedRequests.some(req => req.role === 'owner');
-        const hasResidentRole = approvedRequests.some(req => req.role === 'resident');
+        for (let i = 0; i < membershipRequests.length; i++) {
+            const req = membershipRequests[i];
+            if (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved') {
+                if (req.role === 'owner') hasOwnerRole = true;
+                else if (req.role === 'resident') hasResidentRole = true;
+
+                if (hasOwnerRole && hasResidentRole) break;
+            }
+        }
         
         if (hasOwnerRole && hasResidentRole) {
             return 'پنل مالک/ساکن';
@@ -42,7 +45,7 @@ export default function ResidentHeader({ onOpenSidebar }) {
             return 'پنل مدیریت ساختمان';
         }
         return 'پنل ساکن/مالک'; // پیش‌فرض
-    };
+    }, [membershipRequests, location.pathname]);
 
     const handleLogout = () => {
         dispatch(logout());
@@ -70,7 +73,7 @@ export default function ResidentHeader({ onOpenSidebar }) {
 
             {/* Title */}
             <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white drop-shadow-sm text-center">
-                {getPanelTitle()}
+                {panelTitle}
             </h1>
 
             {/* Icons */}
