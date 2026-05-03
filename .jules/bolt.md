@@ -1,0 +1,3 @@
+## 2025-03-01 - Heavy array operations during render in BuildingRequestStatus
+**Learning:** Found a performance bottleneck in `BuildingRequestStatus.jsx` where complex array filtering, object grouping, sorting, and mapping were happening inline inside an IIFE during the render cycle. This is an anti-pattern as these operations block the main thread on every re-render.
+**Action:** Always extract complex derived state calculations (filtering, sorting, grouping) out of the render loop and wrap them in a `useMemo` hook to ensure they only run when their dependencies (like `requests`) actually change.
