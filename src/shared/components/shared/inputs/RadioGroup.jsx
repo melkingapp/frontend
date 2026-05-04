@@ -1,12 +1,23 @@
-function ErrorMessage({ children }) {
+import { useId } from "react";
+
+function ErrorMessage({ children, id }) {
     if (!children) return null;
-    return <p className="text-red-500 text-xs mb-3">{children}</p>;
+    return <p id={id} role="alert" className="text-red-500 text-xs mb-3">{children}</p>;
 }
 
 export default function RadioGroup({ label, name, options, value, onChange, error }) {
+    const baseId = useId();
+    const labelId = `${baseId}-label`;
+    const errorId = error ? `${baseId}-error` : undefined;
+
     return (
-        <div className={`my-4 ${error ? "border border-red-500 rounded-xl p-2" : ""}`}>
-            <p className="block text-sm font-semibold text-gray-700 mb-2">{label}</p>
+        <div
+            role="group"
+            aria-labelledby={labelId}
+            aria-describedby={errorId}
+            className={`my-4 ${error ? "border border-red-500 rounded-xl p-2" : ""}`}
+        >
+            <p id={labelId} className="block text-sm font-semibold text-gray-700 mb-2">{label}</p>
             <div className="grid grid-cols-2 gap-2">
                 {options.map(({ value: optVal, label: optLabel }) => (
                     <label
@@ -20,13 +31,13 @@ export default function RadioGroup({ label, name, options, value, onChange, erro
                             value={optVal}
                             checked={value === optVal}
                             onChange={onChange}
-                            className="cursor-pointer"
+                            className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                         />
                         {optLabel}
                     </label>
                 ))}
             </div>
-            <ErrorMessage>{error}</ErrorMessage>
+            <ErrorMessage id={errorId}>{error}</ErrorMessage>
         </div>
     );
 }
