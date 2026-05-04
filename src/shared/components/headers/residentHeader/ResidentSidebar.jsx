@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -11,6 +10,23 @@ import {
 } from "../../../../features/resident/building/residentBuildingSlice";
 import { useResidentUnitData } from "../../../../features/resident/building/hooks/useResidentUnitData";
 import MelkingLogo from "../../../../assets/logo/Melking-fa.svg";
+
+const clsx = (...args) => {
+  return args
+    .filter(Boolean)
+    .map(arg => {
+      if (typeof arg === 'string') return arg;
+      if (typeof arg === 'object' && arg !== null) {
+        return Object.keys(arg)
+          .filter(key => arg[key])
+          .join(' ');
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join(' ');
+};
+
 
 export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar }) {
     const { pathname } = useLocation();

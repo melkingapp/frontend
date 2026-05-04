@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { X, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import UnitRequestItem from "./modalItem/UnitRequestItem";
@@ -122,17 +122,29 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
         ? financialTransactions 
         : (unit.transactions || []);
     
-    const sortedTx = transactionsToUse
-        ? [...transactionsToUse].sort((a, b) => {
-            const dateA = (a.date || a.issue_date) ? moment(a.date || a.issue_date).valueOf() : 0;
-            const dateB = (b.date || b.issue_date) ? moment(b.date || b.issue_date).valueOf() : 0;
-            return dateB - dateA;
-        })
-        : [];
+    const sortedTx = useMemo(() => {
+        // ⚡ Bolt: Memoized sorting of transactions to prevent expensive O(N log N) recalculation on every re-render
+        return transactionsToUse
+            ? [...transactionsToUse].sort((a, b) => {
+                const dateA = (a.date || a.issue_date) ? moment(a.date || a.issue_date).valueOf() : 0;
+                const dateB = (b.date || b.issue_date) ? moment(b.date || b.issue_date).valueOf() : 0;
+                return dateB - dateA;
+            })
+            : [];
+    }, [transactionsToUse]);
 
     // در فرمت جدید API، فقط فاکتورها (invoices) برگردانده می‌شوند
     const expenseTransactions = sortedTx;
-    const txToShow = expenseTransactions.slice(0, visibleTxCount);
+
+    // ⚡ Bolt: Memoized the sliced transactions array to prevent mapping identical arrays on unrelated re-renders
+    const txToShow = useMemo(() => expenseTransactions.slice(0, visibleTxCount), [expenseTransactions, visibleTxCount]);
+
+    const sharedExpenseCount = useMemo(() => {
+        // ⚡ Bolt: Memoized and optimized array filter+length into a single reduce pass to prevent unnecessary re-evaluations
+        return Array.isArray(financialTransactions)
+            ? financialTransactions.reduce((count, tx) => tx.is_shared_expense ? count + 1 : count, 0)
+            : 0;
+    }, [financialTransactions]);
 
     const handleOwnerDataChange = (newData) => {
         let updatedData = { ...newData };
@@ -458,9 +470,7 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
                                 <div className="bg-white p-3 rounded-lg shadow-sm">
                                     <div className="text-gray-600">صورتحساب‌های مشترک</div>
                                     <div className="text-lg font-bold text-indigo-600">
-                                        {Array.isArray(financialTransactions)
-                                            ? financialTransactions.filter(tx => tx.is_shared_expense).length
-                                            : 0}
+                                        {sharedExpenseCount}
                                     </div>
                                 </div>
                             </div>
