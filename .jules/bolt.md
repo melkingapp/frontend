@@ -1,0 +1,3 @@
+## 2024-05-05 - Array Operations Optimization in React Components
+**Learning:** Performing multiple sequential array operations like `.filter()`, `.map()`, and Set construction directly within a component's render body can cause significant performance overhead during frequent re-renders, especially when dealing with potentially large datasets like membership requests.
+**Action:** Always wrap derived data calculations that involve complex array operations in a `useMemo` hook, ensuring that these expensive computations are only re-executed when their dependencies (e.g., `requests`, `user`, or filters) change.

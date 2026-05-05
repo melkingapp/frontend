@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   CheckCircle, 
@@ -546,29 +546,30 @@ export default function OwnerMembershipApproval() {
     }
   };
 
-  // فیلتر درخواست‌ها بر اساس ساختمان‌های مالک
-  const ownerApprovedRequests = requests.filter(req => 
-    (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved') && 
-    req.role === 'owner' && 
-    req.user === user?.id
-  );
-  const ownerBuildingIds = ownerApprovedRequests.map(req => req.building);
-  
-  const userBuildings = user?.buildings || [];
-  const userBuildingIds = userBuildings.map(building => building.building_id);
-  
-  const allOwnerBuildingIds = [...new Set([...ownerBuildingIds, ...userBuildingIds])];
-  
-  // فیلتر درخواست‌ها بر اساس وضعیت و ساختمان‌های مالک
-  const filteredRequests = requests.filter(request => {
-    // فیلتر بر اساس وضعیت
-    const statusMatch = statusFilter === 'all' || request.status === statusFilter;
+  // فیلتر درخواست‌ها بر اساس وضعیت و ساختمان‌های مالک با استفاده از useMemo برای بهینه‌سازی
+  const filteredRequests = useMemo(() => {
+    const ownerApprovedRequests = requests.filter(req =>
+      (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved') &&
+      req.role === 'owner' &&
+      req.user === user?.id
+    );
+    const ownerBuildingIds = ownerApprovedRequests.map(req => req.building);
     
-    // فیلتر بر اساس ساختمان‌های مالک
-    const buildingMatch = allOwnerBuildingIds.includes(request.building);
+    const userBuildings = user?.buildings || [];
+    const userBuildingIds = userBuildings.map(building => building.building_id);
     
-    return statusMatch && buildingMatch;
-  });
+    const allOwnerBuildingIds = [...new Set([...ownerBuildingIds, ...userBuildingIds])];
+
+    return requests.filter(request => {
+      // فیلتر بر اساس وضعیت
+      const statusMatch = statusFilter === 'all' || request.status === statusFilter;
+
+      // فیلتر بر اساس ساختمان‌های مالک
+      const buildingMatch = allOwnerBuildingIds.includes(request.building);
+
+      return statusMatch && buildingMatch;
+    });
+  }, [requests, user, statusFilter]);
 
   return (
     <div className="space-y-6">
