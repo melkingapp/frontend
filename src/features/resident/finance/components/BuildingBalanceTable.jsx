@@ -142,7 +142,7 @@ export default function BuildingBalanceTable() {
                 (item.title && item.title.toLowerCase().includes(search)) ||
                 (item.status && item.status.toLowerCase().includes(search)) ||
                 (item.date && item.date.toLowerCase().includes(search)) ||
-                (item.amount && item.amount.toString().includes(search));
+                (item.amount != null && item.amount.toString().includes(search));
 
             return matchesFilter && matchesSearch;
         });
