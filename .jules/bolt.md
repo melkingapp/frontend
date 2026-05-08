@@ -1,0 +1,3 @@
+## 2024-05-17 - Optimizing filters with UseMemo and hoisted mappings
+**Learning:** Object mappings inside `.filter` loops in React are re-created for every item iteration. If the filter is also not wrapped in `useMemo`, it runs on every single render (e.g., when inputs change), causing unnecessary overhead for large transaction arrays.
+**Action:** Always move static mappings (`filterMapping`, `billTypeMapping`) outside of components or wrap them in `useMemo`, and wrap expensive array sorting and filtering operations in `useMemo` so they only recalculate when their specific dependencies change.

@@ -11,7 +11,8 @@ on:
       - develop
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   DEPLOY_PATH: /var/www/melking/frontend-new
   NGINX_SERVICE: nginx
   FRONTEND_PORT: 8080
