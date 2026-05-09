@@ -1,3 +1,7 @@
 ## 2024-05-24 - Accessibility improvements for Form Inputs
 **Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
 **Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+
+## 2024-05-14 - Icon-only Button Accessibility and Keyboard Focus
+**Learning:** In main navigation headers with multiple icon-only action buttons, screen readers can redundantly announce both the button label and the inner SVG content if `aria-hidden` is not used. Additionally, relying solely on custom CSS hover states without explicit `focus-visible` styling severely limits keyboard navigation accessibility. Furthermore, custom tooltip implementations (`onMouseEnter`) aren't sufficient for basic accessibility; standard native `title` attributes act as a robust fallback for screen reader consistency alongside `aria-label`.
+**Action:** When creating or refactoring icon-only buttons, especially in global navigation, always pair `aria-label` with a native `title` attribute for redundancy. Explicitly add `aria-hidden="true"` to the decorative inner SVG `<Icon>`. Ensure keyboard accessibility by adding standard focus ring utilities (e.g., `focus:outline-none focus-visible:ring-2 focus-visible:ring-[color]`) to the button wrapper.
