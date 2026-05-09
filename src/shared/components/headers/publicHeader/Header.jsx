@@ -54,8 +54,13 @@ export default function Header() {
 
                 {/* ----------------- Mobile Layout ------------------ */}
                 <div className="flex w-full items-center justify-between md:hidden">
-                    <button onClick={() => setMenuOpen(true)} className="text-gray-700">
-                        <Menu className="w-6 h-6" />
+                    <button
+                        onClick={() => setMenuOpen(true)}
+                        className="text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C] hover:bg-gray-100 transition-colors p-2 rounded-full"
+                        aria-label="باز کردن منو"
+                        title="باز کردن منو"
+                    >
+                        <Menu className="w-6 h-6" aria-hidden="true" />
                     </button>
 
                     <Link to="/" className="mx-auto">
@@ -70,12 +75,13 @@ export default function Header() {
                                     onClick={onClick}
                                     onMouseEnter={() => setHovered(id)}
                                     onMouseLeave={() => setHovered(null)}
-                                    className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] p-2"
+                                    className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                                     aria-label={label}
+                                    title={label}
                                     type="button"
                                 >
                                     <div className="flex items-center justify-center transition-all duration-200 rounded-full shadow-sm">
-                                        <Icon size={20} />
+                                        <Icon size={20} aria-hidden="true" />
                                     </div>
                                     {hovered === id && (
                                         <span className="absolute top-full mt-1 right-1/2 translate-x-1/2 whitespace-nowrap bg-[#1C2E4E] text-white text-xs font-medium px-2 py-0.5 rounded shadow-lg z-10">
@@ -123,12 +129,13 @@ export default function Header() {
                                     onClick={onClick}
                                     onMouseEnter={() => setHovered(id)}
                                     onMouseLeave={() => setHovered(null)}
-                                    className="relative group bg-black/10  hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C]"
+                                    className="relative group bg-black/10  hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                                     aria-label={label}
+                                    title={label}
                                     type="button"
                                 >
                                     <div className="w-10 h-10 flex items-center justify-center transition-all duration-200 rounded-full shadow-sm">
-                                        <Icon size={22} />
+                                        <Icon size={22} aria-hidden="true" />
                                     </div>
                                     {hovered === id && (
                                         <span className="absolute top-full mt-1 right-1/2 translate-x-1/2 whitespace-nowrap bg-[#1C2E4E] text-white text-xs font-medium px-2 py-0.5 rounded shadow-lg z-10">
