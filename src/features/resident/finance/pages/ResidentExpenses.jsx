@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import {
   TrendingUp,
@@ -80,7 +80,7 @@ export default function ResidentExpenses() {
     fetchExpenses();
   };
 
-  const filteredExpenses = expenses
+  const filteredExpenses = useMemo(() => expenses
     .filter((expense) => {
       if (filterStatus === "all") return true;
       return expense.status === filterStatus;
@@ -92,7 +92,7 @@ export default function ResidentExpenses() {
         return b.amount - a.amount;
       }
       return 0;
-    });
+    }), [expenses, filterStatus, sortBy]);
 
   const getStatusBadge = (status, isOverdue) => {
     if (isOverdue) {
