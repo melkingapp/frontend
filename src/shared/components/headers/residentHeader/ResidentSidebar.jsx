@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+
+const clsx = (...args) => args.filter(Boolean).map(arg => typeof arg === 'object' && !Array.isArray(arg) ? Object.keys(arg).filter(key => Boolean(arg[key])).join(' ') : arg).join(' ');
 import {
     selectResidentRequests,
     setSelectedBuilding,
