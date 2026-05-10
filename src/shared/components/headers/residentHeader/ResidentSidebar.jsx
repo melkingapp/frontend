@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+
+const clsx = (...args) => args.filter(Boolean).map(arg => typeof arg === 'object' && !Array.isArray(arg) ? Object.keys(arg).filter(key => Boolean(arg[key])).join(' ') : arg).join(' ');
 import {
     selectResidentRequests,
     setSelectedBuilding,
@@ -21,18 +22,12 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const dispatch = useDispatch();
 
     // Use hook for resident unit data (prevents duplicate fetches)
-    const { selectedBuilding, approvedBuildings, membershipRequests } = useResidentUnitData();
+    const { selectedBuilding, approvedBuildings, membershipRequests, approvedUnits, approvedRequests } = useResidentUnitData();
     const requests = useSelector(selectResidentRequests);
     const { user } = useSelector(state => state.auth);
 
     // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
     const getUserRole = () => {
-        const approvedRequests = membershipRequests.filter(req => 
-            req.status === 'approved' || 
-            req.status === 'owner_approved' || 
-            req.status === 'manager_approved'
-        );
-        
         const hasOwnerRole = approvedRequests.some(req => req.role === 'owner');
         const hasResidentRole = approvedRequests.some(req => req.role === 'resident');
         
@@ -59,42 +54,6 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
             dispatch(fetchResidentRequests());
         }
     }, [dispatch, requests.length]);
-
-    // Get approved units from hook (already calculated in useResidentUnitData)
-    // We need to recalculate here to match the exact format expected by the sidebar
-    const approvedUnits = (() => {
-        const approvedRequests = membershipRequests.filter(req => 
-            req.status === 'approved' || 
-            req.status === 'owner_approved' || 
-            req.status === 'manager_approved'
-        );
-        
-        // گروه‌بندی درخواست‌ها بر اساس ساختمان و واحد
-        const unitGroups = {};
-        
-        approvedRequests.forEach(request => {
-            const key = `${request.building}-${request.unit_number}`;
-            if (!unitGroups[key]) {
-                unitGroups[key] = [];
-            }
-            unitGroups[key].push(request);
-        });
-        
-        // برای هر واحد، نقش مالک را اولویت بده
-        const uniqueUnits = [];
-        Object.values(unitGroups).forEach(requests => {
-            // اگر نقش مالک وجود دارد، آن را انتخاب کن
-            const ownerRequest = requests.find(req => req.role === 'owner');
-            if (ownerRequest) {
-                uniqueUnits.push(ownerRequest);
-            } else {
-                // در غیر این صورت، اولین درخواست را انتخاب کن
-                uniqueUnits.push(requests[0]);
-            }
-        });
-        
-        return uniqueUnits;
-    })();
 
     // Auto-select first approved unit if none is selected
     useEffect(() => {
@@ -348,12 +307,6 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         
         // Fallback: Try to find unit_number from membershipRequests
         if (membershipRequests.length > 0) {
-            const approvedRequests = membershipRequests.filter(req => 
-                req.status === 'approved' || 
-                req.status === 'owner_approved' || 
-                req.status === 'manager_approved'
-            );
-            
             const matchingRequest = approvedRequests.find(req => {
                 const reqBuildingId = req.building;
                 // Try multiple matching strategies

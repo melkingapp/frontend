@@ -50,9 +50,9 @@ export function useResidentUnitData() {
         }
     }, [dispatch, approvedBuildings.length]);
 
-    // Calculate approvedUnits from membershipRequests
-    const approvedUnits = useMemo(() => {
-        const approvedRequests = membershipRequests.filter(req => 
+    // Calculate approvedRequests and approvedUnits from membershipRequests
+    const { approvedRequests, approvedUnits } = useMemo(() => {
+        const filteredRequests = membershipRequests.filter(req =>
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
             req.status === 'manager_approved'
@@ -61,7 +61,7 @@ export function useResidentUnitData() {
         // گروه‌بندی درخواست‌ها بر اساس ساختمان و واحد
         const unitGroups = {};
         
-        approvedRequests.forEach(request => {
+        filteredRequests.forEach(request => {
             const key = `${request.building}-${request.unit_number}`;
             if (!unitGroups[key]) {
                 unitGroups[key] = [];
@@ -82,11 +82,12 @@ export function useResidentUnitData() {
             }
         });
         
-        return uniqueUnits;
+        return { approvedRequests: filteredRequests, approvedUnits: uniqueUnits };
     }, [membershipRequests]);
 
     return {
         selectedBuilding,
+        approvedRequests,
         approvedUnits,
         approvedBuildings,
         membershipRequests,
