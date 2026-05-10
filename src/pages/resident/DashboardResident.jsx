@@ -44,12 +44,7 @@ export default function ResidentDashboard() {
   const [showSuggestedRequestsList, setShowSuggestedRequestsList] = useState(false);
   const { user } = useSelector((state) => state.auth);
   // Use hook to get membership requests (prevents duplicate fetches)
-  const { membershipRequests } = useResidentUnitData();
-  const approvedRequests = membershipRequests.filter(req => 
-    req.status === 'approved' || 
-    req.status === 'owner_approved' || 
-    req.status === 'manager_approved'
-  );
+  const { membershipRequests, approvedRequests } = useResidentUnitData();
 
   // Load suggested requests when component mounts
   useEffect(() => {
