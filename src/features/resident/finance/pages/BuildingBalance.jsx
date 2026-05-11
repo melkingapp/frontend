@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { 
   TrendingUp, 
@@ -427,7 +427,7 @@ export default function BuildingBalance() {
     }
   };
 
-  const filteredTransactions = balanceData.transactions.filter(transaction => {
+  const filteredTransactions = useMemo(() => balanceData.transactions.filter(transaction => {
     // Filter by transaction type
     let matchesFilter = true;
     if (filter !== "all") {
@@ -488,7 +488,7 @@ export default function BuildingBalance() {
       console.log(`🔥 Match result: ${result} (filter: ${matchesFilter}, search: ${matchesSearch})`);
     }
     return result;
-  });
+  }), [balanceData.transactions, filter, searchTerm]);
   
   console.log(`🔥 Total transactions: ${balanceData.transactions.length}`);
   console.log(`🔥 Filtered transactions: ${filteredTransactions.length}`);
