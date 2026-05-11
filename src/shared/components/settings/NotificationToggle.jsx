@@ -1,13 +1,15 @@
 import React from 'react';
 
 const NotificationToggle = ({ label, description, checked, onChange, id }) => {
+    const descriptionId = description ? `${id}-desc` : undefined;
+
     return (
         <div className="flex items-center justify-between py-4 px-4 -mx-4 hover:bg-gray-50 rounded-lg transition-colors duration-200">
             <div className="flex-1">
                 <label htmlFor={id} className="text-sm font-semibold text-gray-900 cursor-pointer">
                     {label}
                 </label>
-                {description && <p className="text-xs text-gray-600 mt-1.5">{description}</p>}
+                {description && <p id={descriptionId} className="text-xs text-gray-600 mt-1.5">{description}</p>}
             </div>
             <label htmlFor={id} className="relative inline-flex items-center cursor-pointer mr-4">
                 <input
@@ -16,6 +18,7 @@ const NotificationToggle = ({ label, description, checked, onChange, id }) => {
                     className="sr-only peer"
                     checked={checked}
                     onChange={onChange}
+                    aria-describedby={descriptionId}
                 />
                 <div className="
                     w-14 h-7 bg-gray-200 
