@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -8,6 +7,9 @@ import {
     setSelectedBuilding,
 } from "../../../../features/manager/building/buildingSlice";
 import MelkingLogo from "../../../../assets/logo/Melking-fa.svg";
+
+const clsx = (...args) => args.filter(Boolean).map(arg => typeof arg === 'object' && !Array.isArray(arg) ? Object.keys(arg).filter(key => Boolean(arg[key])).join(' ') : arg).join(' ');
+
 
 export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }) {
     const { pathname } = useLocation();
