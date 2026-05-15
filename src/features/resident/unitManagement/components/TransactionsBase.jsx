@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CreditCard, Loader2, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -12,17 +12,21 @@ export default function TransactionsBase({ transactions: propTransactions, limit
     const { transactions: reduxTransactions, loading, error } = useSelector(state => state.transactions);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
 
-    // Use Redux data if available, otherwise fall back to props
-    const dataSource = reduxTransactions.length > 0 ? reduxTransactions : (propTransactions || []);
+    // Memoize the data source resolution
+    const dataSource = useMemo(() => {
+        return reduxTransactions.length > 0 ? reduxTransactions : (propTransactions || []);
+    }, [reduxTransactions, propTransactions]);
     
-    // Sort by created_at (from API) or createdAt (from props)
-    const sorted = [...dataSource].sort((a, b) => {
-        const dateA = new Date(a.created_at || a.createdAt);
-        const dateB = new Date(b.created_at || b.createdAt);
-        return dateB - dateA;
-    });
-    
-    const displayed = limit ? sorted.slice(0, limit) : sorted;
+    // Memoize sorted and displayed transactions
+    const displayed = useMemo(() => {
+        const sorted = [...dataSource].sort((a, b) => {
+            const dateA = new Date(a.created_at || a.createdAt);
+            const dateB = new Date(b.created_at || b.createdAt);
+            return dateB - dateA;
+        });
+
+        return limit ? sorted.slice(0, limit) : sorted;
+    }, [dataSource, limit]);
 
     // Fetch transactions when component mounts
     useEffect(() => {

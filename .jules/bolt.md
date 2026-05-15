@@ -1,0 +1,3 @@
+## 2024-06-25 - Expensive Array Operations in Render Cycle
+**Learning:** Found multiple instances where large arrays were being `.filter().sort()` directly in the functional component body without memoization. In complex components with modals (e.g., `ResidentExpenses` with `PaymentModal`), this causes blocking operations on the main thread during every state change (like opening/closing the modal or typing in a search).
+**Action:** Always wrap `.filter().sort()` chains or any derived data calculation in `useMemo` hooks with their correct dependencies, so that the heavy lifting is only executed when the source data or filters actually change, preventing unnecessary UI blocking.
