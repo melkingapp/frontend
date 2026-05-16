@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
@@ -26,31 +26,37 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const { user } = useSelector(state => state.auth);
 
     // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
-    const getUserRole = () => {
-        const approvedRequests = membershipRequests.filter(req => 
-            req.status === 'approved' || 
-            req.status === 'owner_approved' || 
-            req.status === 'manager_approved'
-        );
-        
-        const hasOwnerRole = approvedRequests.some(req => req.role === 'owner');
-        const hasResidentRole = approvedRequests.some(req => req.role === 'resident');
-        
-        if (hasOwnerRole && hasResidentRole) {
-            return 'owner'; // اگر هم مالک و هم ساکن است، مالک را اولویت بده
-        } else if (hasOwnerRole) {
-            return 'owner';
-        } else if (hasResidentRole) {
-            return 'resident';
-        }
-        
-        return 'resident'; // پیش‌فرض
-    };
+    // ⚡ Bolt: Use useMemo with a single-pass loop instead of filter + multiple some calls
+    const userRole = useMemo(() => {
+        let hasOwnerRole = false;
+        let hasResidentRole = false;
 
-    const userRole = getUserRole();
+        for (let i = 0; i < membershipRequests.length; i++) {
+            const req = membershipRequests[i];
+            if (req.status === 'approved' || req.status === 'owner_approved' || req.status === 'manager_approved') {
+                if (req.role === 'owner') hasOwnerRole = true;
+                if (req.role === 'resident') hasResidentRole = true;
+
+                if (hasOwnerRole && hasResidentRole) break; // Early exit if we found both
+            }
+        }
+
+        if (hasOwnerRole) return 'owner';
+        if (hasResidentRole) return 'resident';
+        return 'resident'; // پیش‌فرض
+    }, [membershipRequests]);
 
     // Get pending requests count for display
-    const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
+    // ⚡ Bolt: Replace inline filter with useMemo and single-pass loop to avoid allocating new arrays
+    const pendingRequestsCount = useMemo(() => {
+        let count = 0;
+        for (let i = 0; i < requests.length; i++) {
+            if (requests[i].status === 'pending') {
+                count++;
+            }
+        }
+        return count;
+    }, [requests]);
 
     useEffect(() => {
         // Only fetch resident requests if we don't have them in Redux store
@@ -62,7 +68,8 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     // Get approved units from hook (already calculated in useResidentUnitData)
     // We need to recalculate here to match the exact format expected by the sidebar
-    const approvedUnits = (() => {
+    // ⚡ Bolt: Wrapped this inline IIFE inside a useMemo to prevent running this expensive data grouping on every render
+    const approvedUnits = useMemo(() => {
         const approvedRequests = membershipRequests.filter(req => 
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
@@ -94,7 +101,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         });
         
         return uniqueUnits;
-    })();
+    }, [membershipRequests]);
 
     // Auto-select first approved unit if none is selected
     useEffect(() => {
