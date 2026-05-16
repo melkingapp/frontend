@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
-import clsx from "clsx";
+const classNames = (...classes) => classes.filter(Boolean).join(" ");
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -106,7 +106,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
             return (
                 <div key={item.label} className="space-y-1 w-full">
                     <div
-                        className={clsx(
+                        className={classNames(
                             "flex items-center justify-between w-full group",
                             isCollapsed && !isMobile ? "justify-center" : ""
                         )}
@@ -114,7 +114,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
                         <Link
                             to={item.to}
                             onClick={() => handleItemClick(item)}
-                            className={clsx(
+                            className={classNames(
                                 "flex items-center px-3 py-2 rounded-xl transition-colors duration-300 w-full",
                                 isActive
                                     ? "bg-gradient-to-r from-yellow-500 to-yellow-400 text-[#1C2E4E] font-semibold shadow-lg"
@@ -137,7 +137,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
                                     e.stopPropagation();
                                     toggleMenu(item.label);
                                 }}
-                                className={clsx(
+                                className={classNames(
                                     "mr-2 transition",
                                     isMobile
                                         ? "text-gray-600 hover:text-yellow-500"
@@ -152,7 +152,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
 
                     {hasChildren && (isOpen || isChildActive) && !isCollapsed && (
                         <div
-                            className={clsx(
+                            className={classNames(
                                 "pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"
                             )}
                         >
@@ -166,7 +166,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
                                     <Link
                                         key={index}
                                         to={child.to}
-                                        className={clsx(
+                                        className={classNames(
                                             "block text-sm px-3 py-1.5 rounded-lg transition-colors duration-200 select-none",
                                             isChildActive
                                                 ? isMobile
@@ -192,7 +192,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
         <div className="relative z-50">
             <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={clsx(
+                className={classNames(
                     "text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition",
                     isMobile
                         ? "bg-yellow-100 text-yellow-800"
@@ -243,7 +243,7 @@ export default function ManagerSidebar({ navItems, sidebarOpen, onCloseSidebar }
         <>
             {/* Desktop Sidebar */}
             <aside
-                className={clsx(
+                className={classNames(
                     "hidden md:flex flex-col shadow-lg space-y-3 overflow-y-auto rounded-l-3xl transition-all duration-300 relative",
                     isCollapsed
                         ? "w-20 items-center bg-gradient-to-b from-[#1C2E4E] to-[#12355B] p-3"
