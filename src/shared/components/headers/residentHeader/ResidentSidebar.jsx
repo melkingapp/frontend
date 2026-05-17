@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
@@ -26,7 +26,8 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const { user } = useSelector(state => state.auth);
 
     // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
-    const getUserRole = () => {
+    // ⚡ Bolt Performance: Cache role calculation to prevent array iteration (.filter, .some) on every render
+    const userRole = useMemo(() => {
         const approvedRequests = membershipRequests.filter(req => 
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
@@ -45,12 +46,11 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         }
         
         return 'resident'; // پیش‌فرض
-    };
-
-    const userRole = getUserRole();
+    }, [membershipRequests]);
 
     // Get pending requests count for display
-    const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
+    // ⚡ Bolt Performance: Cache pending requests count to avoid filtering the requests array on every render
+    const pendingRequestsCount = useMemo(() => requests.filter(req => req.status === 'pending').length, [requests]);
 
     useEffect(() => {
         // Only fetch resident requests if we don't have them in Redux store
@@ -62,7 +62,8 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     // Get approved units from hook (already calculated in useResidentUnitData)
     // We need to recalculate here to match the exact format expected by the sidebar
-    const approvedUnits = (() => {
+    // ⚡ Bolt Performance: Cache approved units derivation to prevent object creation and array iteration on every render
+    const approvedUnits = useMemo(() => {
         const approvedRequests = membershipRequests.filter(req => 
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
@@ -94,7 +95,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         });
         
         return uniqueUnits;
-    })();
+    }, [membershipRequests]);
 
     // Auto-select first approved unit if none is selected
     useEffect(() => {
