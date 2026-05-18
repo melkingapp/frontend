@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { 
   TrendingUp, 
@@ -427,68 +427,70 @@ export default function BuildingBalance() {
     }
   };
 
-  const filteredTransactions = balanceData.transactions.filter(transaction => {
-    // Filter by transaction type
-    let matchesFilter = true;
-    if (filter !== "all") {
-      console.log(`🔥 Filtering for: ${filter}`);
-      console.log(`🔥 Transaction:`, transaction);
-      // Create a more flexible filtering system
-      const filterKeywords = {
-        "income": ["درآمد", "income", "مثبت"],
-        "expense": ["هزینه", "expense", "منفی"],
-        "charge": ["شارژ", "charge"],
-        "maintenance": ["تعمیرات", "maintenance", "تعمیر"],
-        "utility": ["قبض", "utility", "بیمه"],
-        "water": ["آب", "water"],
-        "electricity": ["برق", "electricity", "الکتریسیته"],
-        "gas": ["گاز", "gas"],
-        "cleaning": ["نظافت", "cleaning", "تمیز"],
-        "security": ["امنیت", "security", "نگهبان"],
-        "camera": ["دوربین", "camera", "نظارت"],
-        "parking": ["پارکینگ", "parking", "پارک"],
-        "purchases": ["اقلام خریدنی", "purchases", "خرید", "لامپ", "شیرآلات"],
-        "transfer": ["انتقال", "transfer", "جابجایی"]
-      };
-      
-      const keywords = filterKeywords[filter] || [];
-      
-      // Check multiple fields for matches
-      const checkFields = [
-        transaction.category,
-        transaction.type,
-        transaction.subject,
-        transaction.description,
-        transaction.title,
-        transaction.bill_type,
-        transaction.expense_type
-      ].filter(Boolean); // Remove null/undefined values
-      
-      matchesFilter = keywords.some(keyword => 
-        checkFields.some(field => 
-          field.toString().toLowerCase().includes(keyword.toLowerCase())
-        )
-      );
-      
-      // Special handling for income/expense based on amount
-      if (filter === "income") {
-        matchesFilter = matchesFilter || (transaction.amount && transaction.amount > 0);
-      } else if (filter === "expense") {
-        matchesFilter = matchesFilter || (transaction.amount && transaction.amount < 0);
+  const filteredTransactions = useMemo(() => {
+    return balanceData.transactions.filter(transaction => {
+      // Filter by transaction type
+      let matchesFilter = true;
+      if (filter !== "all") {
+        console.log(`🔥 Filtering for: ${filter}`);
+        console.log(`🔥 Transaction:`, transaction);
+        // Create a more flexible filtering system
+        const filterKeywords = {
+          "income": ["درآمد", "income", "مثبت"],
+          "expense": ["هزینه", "expense", "منفی"],
+          "charge": ["شارژ", "charge"],
+          "maintenance": ["تعمیرات", "maintenance", "تعمیر"],
+          "utility": ["قبض", "utility", "بیمه"],
+          "water": ["آب", "water"],
+          "electricity": ["برق", "electricity", "الکتریسیته"],
+          "gas": ["گاز", "gas"],
+          "cleaning": ["نظافت", "cleaning", "تمیز"],
+          "security": ["امنیت", "security", "نگهبان"],
+          "camera": ["دوربین", "camera", "نظارت"],
+          "parking": ["پارکینگ", "parking", "پارک"],
+          "purchases": ["اقلام خریدنی", "purchases", "خرید", "لامپ", "شیرآلات"],
+          "transfer": ["انتقال", "transfer", "جابجایی"]
+        };
+
+        const keywords = filterKeywords[filter] || [];
+
+        // Check multiple fields for matches
+        const checkFields = [
+          transaction.category,
+          transaction.type,
+          transaction.subject,
+          transaction.description,
+          transaction.title,
+          transaction.bill_type,
+          transaction.expense_type
+        ].filter(Boolean); // Remove null/undefined values
+
+        matchesFilter = keywords.some(keyword =>
+          checkFields.some(field =>
+            field.toString().toLowerCase().includes(keyword.toLowerCase())
+          )
+        );
+
+        // Special handling for income/expense based on amount
+        if (filter === "income") {
+          matchesFilter = matchesFilter || (transaction.amount && transaction.amount > 0);
+        } else if (filter === "expense") {
+          matchesFilter = matchesFilter || (transaction.amount && transaction.amount < 0);
+        }
       }
-    }
-    
-    // Filter by search term
-    const matchesSearch = searchTerm === "" || 
-      transaction.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const result = matchesFilter && matchesSearch;
-    if (filter !== "all") {
-      console.log(`🔥 Match result: ${result} (filter: ${matchesFilter}, search: ${matchesSearch})`);
-    }
-    return result;
-  });
+      
+      // Filter by search term
+      const matchesSearch = searchTerm === "" ||
+        transaction.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const result = matchesFilter && matchesSearch;
+      if (filter !== "all") {
+        console.log(`🔥 Match result: ${result} (filter: ${matchesFilter}, search: ${matchesSearch})`);
+      }
+      return result;
+    });
+  }, [balanceData.transactions, filter, searchTerm]);
   
   console.log(`🔥 Total transactions: ${balanceData.transactions.length}`);
   console.log(`🔥 Filtered transactions: ${filteredTransactions.length}`);
