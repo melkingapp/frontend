@@ -1,5 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useState, useEffect } from "react";
+import { Fragment, useState, useEffect, useMemo } from "react";
 import { X, Wallet, Edit2, Trash2, User, Building2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
@@ -55,6 +55,11 @@ const categoryLabels = {
 };
 
 // formatJalaliDate is now imported from utils
+
+const normalizeStatus = (status) => {
+  if (!status) return 'pending';
+  return String(status).toLowerCase();
+};
 
 export default function FinancenDetailsModal({ transaction, building, onClose, isResident = false, onEdit }) {
   const [unitFilter, setUnitFilter] = useState("all"); // all, paid, unpaid
@@ -136,11 +141,6 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     { key: 'pending', label: 'پرداخت نشده', color: 'text-red-700', bg: 'bg-red-50 border-red-100' },
   ];
   
-  const normalizeStatus = (status) => {
-    if (!status) return 'pending';
-    return String(status).toLowerCase();
-  };
-  
   // تعیین اینکه آیا کاربر می‌تونه پرداخت کنه
   // 1. resident همیشه می‌تونه پرداخت کنه
   // 2. owner همیشه می‌تونه پرداخت کنه
@@ -216,6 +216,18 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     console.log('🔍 Found user unit share:', found);
     return found;
   })();
+
+  // Calculate unit status counts efficiently
+  const unitStatusCounts = useMemo(() => {
+    const counts = { paid: 0, awaiting: 0, unpaid: 0 };
+    for (let i = 0; i < units.length; i++) {
+      const normalized = normalizeStatus(units[i].status);
+      if (normalized === "paid") counts.paid++;
+      else if (normalized === "awaiting_manager") counts.awaiting++;
+      else if (normalized === "pending") counts.unpaid++;
+    }
+    return counts;
+  }, [units]);
 
   // Filter units based on selected filter
   const filteredUnits = units.filter(unit => {
@@ -739,7 +751,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                                 : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
                             }`}
                           >
-                            پرداخت شده ({units.filter(u => normalizeStatus(u.status) === "paid").length})
+                            پرداخت شده ({unitStatusCounts.paid})
                           </button>
                           <button
                             onClick={() => setUnitFilter("awaiting")}
@@ -749,7 +761,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                                 : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
                             }`}
                           >
-                            منتظر تایید ({units.filter(u => normalizeStatus(u.status) === "awaiting_manager").length})
+                            منتظر تایید ({unitStatusCounts.awaiting})
                           </button>
                           <button
                             onClick={() => setUnitFilter("unpaid")}
@@ -759,7 +771,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                                 : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
                             }`}
                           >
-                            پرداخت نشده ({units.filter(u => normalizeStatus(u.status) === "pending").length})
+                            پرداخت نشده ({unitStatusCounts.unpaid})
                           </button>
                         </div>
                       </div>
