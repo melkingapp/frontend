@@ -56,6 +56,11 @@ const categoryLabels = {
 
 // formatJalaliDate is now imported from utils
 
+const normalizeStatus = (status) => {
+  if (!status) return 'pending';
+  return String(status).toLowerCase();
+};
+
 export default function FinancenDetailsModal({ transaction, building, onClose, isResident = false, onEdit }) {
   const [unitFilter, setUnitFilter] = useState("all"); // all, paid, unpaid
   const [isPaying, setIsPaying] = useState(false);
@@ -135,11 +140,6 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     { key: 'awaiting_manager', label: 'منتظر تایید مدیر', color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-100' },
     { key: 'pending', label: 'پرداخت نشده', color: 'text-red-700', bg: 'bg-red-50 border-red-100' },
   ];
-  
-  const normalizeStatus = (status) => {
-    if (!status) return 'pending';
-    return String(status).toLowerCase();
-  };
   
   // تعیین اینکه آیا کاربر می‌تونه پرداخت کنه
   // 1. resident همیشه می‌تونه پرداخت کنه
