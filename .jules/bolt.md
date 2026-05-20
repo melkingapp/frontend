@@ -1,3 +1,0 @@
-## 2024-05-20 - Combine Multiple Inline Filters into a Single useMemo Pass
-**Learning:** In React components like `FinanceDetailsModal.jsx`, repeatedly running O(n) operations like `.filter()` multiple times directly within the JSX render block (e.g., to count different status totals) introduces redundant array iterations and blocks the main thread during frequent state updates or re-renders.
-**Action:** Extract the inline `.filter().length` calculations and replace them with a single `useMemo` block that iterates through the data array exactly once (using a fast `for` loop or `.reduce()`), categorizing and counting the statuses simultaneously. This reduces time complexity from O(k * n) to O(n) and maintains referential equality.
