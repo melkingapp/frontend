@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
     selectResidentRequests,
@@ -26,7 +25,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
     const { user } = useSelector(state => state.auth);
 
     // تعیین نقش واقعی کاربر بر اساس درخواست‌های عضویت
-    const getUserRole = () => {
+    const userRole = useMemo(() => {
         const approvedRequests = membershipRequests.filter(req => 
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
@@ -45,12 +44,12 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         }
         
         return 'resident'; // پیش‌فرض
-    };
-
-    const userRole = getUserRole();
+    }, [membershipRequests]);
 
     // Get pending requests count for display
-    const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
+    const pendingRequestsCount = useMemo(() => {
+        return requests.filter(req => req.status === 'pending').length;
+    }, [requests]);
 
     useEffect(() => {
         // Only fetch resident requests if we don't have them in Redux store
@@ -62,7 +61,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
     // Get approved units from hook (already calculated in useResidentUnitData)
     // We need to recalculate here to match the exact format expected by the sidebar
-    const approvedUnits = (() => {
+    const approvedUnits = useMemo(() => {
         const approvedRequests = membershipRequests.filter(req => 
             req.status === 'approved' || 
             req.status === 'owner_approved' || 
@@ -94,7 +93,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         });
         
         return uniqueUnits;
-    })();
+    }, [membershipRequests]);
 
     // Auto-select first approved unit if none is selected
     useEffect(() => {
@@ -222,7 +221,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
             return (
                 <div key={index} className="w-full">
                     <div
-                        className={clsx(
+                        className={[
                             "flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 select-none",
                             isActive
                                 ? isMobile
@@ -231,7 +230,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                                 : isMobile
                                 ? "hover:bg-gray-100 text-gray-700"
                                 : "hover:bg-white/20 text-white/90"
-                        )}
+                        ].filter(Boolean).join(" ")}
                         onClick={() => {
                             if (hasChildren) {
                                 toggleMenu(item.label);
@@ -268,15 +267,15 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
                     {hasChildren && isOpen && !isCollapsed && (
                         <div
-                            className={clsx(
+                            className={[
                                 "pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"
-                            )}
+                            ].filter(Boolean).join(" ")}
                         >
                             {item.children.map((child, index) => (
                                 <Link
                                     key={index}
                                     to={child.to}
-                                    className={clsx(
+                                    className={[
                                         "block text-sm px-3 py-1.5 rounded-lg transition-colors duration-200 select-none",
                                         pathname === child.to
                                             ? isMobile
@@ -285,7 +284,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                                             : isMobile
                                             ? "hover:bg-gray-100 text-gray-700"
                                             : "hover:bg-white/20 text-white/90"
-                                    )}
+                                    ].filter(Boolean).join(" ")}
                                 >
                                     {child.label}
                                 </Link>
@@ -407,12 +406,12 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         <div className="relative z-50">
             <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className={clsx(
+                className={[
                     "text-sm font-semibold px-3 py-2 rounded-xl flex items-center justify-between w-full transition",
                     isMobile
                         ? "bg-yellow-100 text-yellow-800"
                         : "bg-yellow-100 text-yellow-900"
-                )}
+                ].filter(Boolean).join(" ")}
             >
                 <span className="truncate max-w-[150px]">
                     {selectedBuilding?.title ? `${selectedBuilding.title} - واحد ${unitNumber || 'نامشخص'}` : "انتخاب واحد"}
@@ -458,14 +457,14 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                                     <button
                                         key={unit.id}
                                         onClick={() => handleSelectBuilding(unit)}
-                                        className={clsx(
+                                        className={[
                                             "w-full text-right px-4 py-2 hover:bg-yellow-50 text-gray-800 transition-colors",
                                             selectedBuilding?.id === unit.id ||
                                             (selectedBuilding?.building_id === unit.building_id && 
                                              selectedBuilding?.unit_info?.unit_number === unit.unit_info?.unit_number)
                                                 ? "bg-yellow-100 border-r-4 border-yellow-400"
                                                 : ""
-                                        )}
+                                        ].filter(Boolean).join(" ")}
                                     >
                                         <div className="flex flex-col">
                                             <span className="font-medium">
@@ -529,12 +528,12 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
         <>
             {/* Desktop Sidebar */}
             <aside
-                className={clsx(
+                className={[
                     "hidden md:flex flex-col shadow-lg space-y-3 overflow-y-auto rounded-l-3xl transition-all duration-300 relative",
                     isCollapsed
                         ? "w-20 items-center bg-gradient-to-b from-[#1C2E4E] to-[#12355B] p-3"
                         : "w-64 bg-gradient-to-b from-[#1C2E4E] to-[#12355B] p-5"
-                )}
+                ].filter(Boolean).join(" ")}
             >
                 <button
                     onClick={() => setIsCollapsed((prev) => !prev)}
