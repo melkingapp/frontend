@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import {
   TrendingUp,
@@ -80,19 +80,24 @@ export default function ResidentExpenses() {
     fetchExpenses();
   };
 
-  const filteredExpenses = expenses
-    .filter((expense) => {
-      if (filterStatus === "all") return true;
-      return expense.status === filterStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === "due_date") {
-        return new Date(b.due_date) - new Date(a.due_date);
-      } else if (sortBy === "amount") {
-        return b.amount - a.amount;
-      }
-      return 0;
-    });
+  // ⚡ Bolt: Memoized the filtering and sorting of expenses to prevent expensive array
+  // recalculations on unrelated re-renders (e.g., when the payment modal toggles).
+  // Impact: Reduces CPU cycles during render by caching the derived state.
+  const filteredExpenses = useMemo(() => {
+    return expenses
+      .filter((expense) => {
+        if (filterStatus === "all") return true;
+        return expense.status === filterStatus;
+      })
+      .sort((a, b) => {
+        if (sortBy === "due_date") {
+          return new Date(b.due_date) - new Date(a.due_date);
+        } else if (sortBy === "amount") {
+          return b.amount - a.amount;
+        }
+        return 0;
+      });
+  }, [expenses, filterStatus, sortBy]);
 
   const getStatusBadge = (status, isOverdue) => {
     if (isOverdue) {
