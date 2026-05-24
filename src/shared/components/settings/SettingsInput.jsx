@@ -49,8 +49,8 @@ const SettingsInput = ({
                 )}
             </div>
             {error && (
-                <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600 animate-fade-in">
-                    <AlertCircle size={14} />
+                <div role="alert" className="mt-2 flex items-center gap-1.5 text-sm text-red-600 animate-fade-in">
+                    <AlertCircle size={14} aria-hidden="true" />
                     <span>{error}</span>
                 </div>
             )}

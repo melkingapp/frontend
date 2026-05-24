@@ -1,6 +1,6 @@
 function ErrorMessage({ children }) {
     if (!children) return null;
-    return <p className="text-red-500 text-xs mb-3">{children}</p>;
+    return <p role="alert" className="text-red-500 text-xs mb-3">{children}</p>;
 }
 
 export default function RadioGroup({ label, name, options, value, onChange, error }) {
