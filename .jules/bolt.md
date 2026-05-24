@@ -1,0 +1,3 @@
+## 2024-05-24 - Prevent Array Allocation on Every Render
+**Learning:** In React functional components, deriving state with fallback arrays like `const units = unitDetails.length > 0 ? unitDetails : [];` creates a new array reference on every render when the fallback is used. This causes any child components or hooks depending on `units` to also needlessly re-render or recalculate.
+**Action:** Always wrap array assignments that include fallback arrays (or dynamically filtered arrays) in a `useMemo` hook, ensuring the reference remains stable across renders. This simple optimization helps avoid cascading re-renders.

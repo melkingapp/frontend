@@ -1,5 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useState, useEffect } from "react";
+import { Fragment, useState, useEffect, useMemo } from "react";
 import { X, Wallet, Edit2, Trash2, User, Building2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
@@ -199,10 +199,10 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
   const showAwaitingBanner = localAwaitingApproval || derivedAwaitingApproval;
 
   // Use real data from transaction.unit_details or transactionDetails only
-  const units = unitDetails.length > 0 ? unitDetails : [];
+  const units = useMemo(() => unitDetails.length > 0 ? unitDetails : [], [unitDetails]);
   
   // پیدا کردن سهم واحد کاربر
-  const userUnitShare = (() => {
+  const userUnitShare = useMemo(() => {
     console.log('🔍 Finding user unit share...');
     console.log('🔍 residentUnitNumber:', residentUnitNumber);
     console.log('🔍 unitDetails:', unitDetails);
@@ -215,16 +215,16 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
     );
     console.log('🔍 Found user unit share:', found);
     return found;
-  })();
+  }, [residentUnitNumber, unitDetails]);
 
   // Filter units based on selected filter
-  const filteredUnits = units.filter(unit => {
+  const filteredUnits = useMemo(() => units.filter(unit => {
     const normalized = normalizeStatus(unit.status);
     if (unitFilter === "paid") return normalized === "paid";
     if (unitFilter === "awaiting") return normalized === "awaiting_manager";
     if (unitFilter === "unpaid") return normalized === "pending";
     return true; // all
-  });
+  }), [units, unitFilter]);
   
   const getUnitStatusStyle = (status) => {
     const normalized = normalizeStatus(status);
