@@ -54,7 +54,14 @@ export default function Header() {
 
                 {/* ----------------- Mobile Layout ------------------ */}
                 <div className="flex w-full items-center justify-between md:hidden">
-                    <button onClick={() => setMenuOpen(true)} className="text-gray-700">
+                    <button
+                        onClick={() => setMenuOpen(true)}
+                        className="text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C] rounded-md"
+                        aria-label="باز کردن منو"
+                        title="باز کردن منو"
+                        aria-expanded={menuOpen}
+                        aria-controls="mobile-menu"
+                    >
                         <Menu className="w-6 h-6" />
                     </button>
 
@@ -151,7 +158,7 @@ export default function Header() {
             </div>
 
             {/* Mobile Menu Drawer */}
-            <MobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+            <MobileMenu id="mobile-menu" isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
         </header>
     );
 }
