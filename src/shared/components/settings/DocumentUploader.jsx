@@ -239,6 +239,7 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                 clearFile();
                             }}
                             className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                            aria-label="حذف فایل انتخاب شده"
                         >
                             <X size={20} className="text-gray-600" />
                         </button>
@@ -322,6 +323,7 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                                 rel="noopener noreferrer"
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                 title="مشاهده سند"
+                                                aria-label="مشاهده سند"
                                             >
                                                 <FileText size={18} />
                                             </a>
@@ -329,6 +331,7 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                                 onClick={() => handleDownload(doc.file_url, doc.title)}
                                                 className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                                 title="دانلود سند"
+                                                aria-label="دانلود سند"
                                             >
                                                 <Download size={18} />
                                             </button>
@@ -338,6 +341,7 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                         onClick={() => confirmDelete(doc)}
                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="حذف سند"
+                                        aria-label="حذف سند"
                                         disabled={loading}
                                     >
                                         <Trash2 size={18} />
