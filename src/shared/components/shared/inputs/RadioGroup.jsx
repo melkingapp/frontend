@@ -1,12 +1,20 @@
+import { useId } from "react";
+
 function ErrorMessage({ children }) {
     if (!children) return null;
-    return <p className="text-red-500 text-xs mb-3">{children}</p>;
+    return <p role="alert" className="text-red-500 text-xs mb-3">{children}</p>;
 }
 
 export default function RadioGroup({ label, name, options, value, onChange, error }) {
+    const labelId = useId();
+
     return (
-        <div className={`my-4 ${error ? "border border-red-500 rounded-xl p-2" : ""}`}>
-            <p className="block text-sm font-semibold text-gray-700 mb-2">{label}</p>
+        <div
+            role="radiogroup"
+            aria-labelledby={labelId}
+            className={`my-4 ${error ? "border border-red-500 rounded-xl p-2" : ""}`}
+        >
+            <p id={labelId} className="block text-sm font-semibold text-gray-700 mb-2">{label}</p>
             <div className="grid grid-cols-2 gap-2">
                 {options.map(({ value: optVal, label: optLabel }) => (
                     <label
