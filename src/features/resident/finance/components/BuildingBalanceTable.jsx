@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Eye, Search, Filter, Calendar, X } from "lucide-react";
 import moment from "moment-jalaali";
@@ -24,6 +24,8 @@ const getStartOfYear = () => {
   const startOfYear = new Date(today.getFullYear(), 0, 1);
   return startOfYear.toISOString().split('T')[0];
 };
+
+const EMPTY_ARRAY = [];
 
 export default function BuildingBalanceTable() {
     const dispatch = useDispatch();
@@ -51,8 +53,8 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+    const transactions = useMemo(() => Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY), [transactionsData]);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
