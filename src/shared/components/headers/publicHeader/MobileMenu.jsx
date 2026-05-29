@@ -17,7 +17,7 @@ export default function MobileMenu({ isOpen, onClose }) {
     };
 
     return (
-        <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+        <Dialog id="mobile-menu" open={isOpen} onClose={onClose} className="relative z-50">
             <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
             <div className="fixed inset-y-0 right-0 w-72 bg-white shadow-2xl rounded-l-3xl flex flex-col">
 
