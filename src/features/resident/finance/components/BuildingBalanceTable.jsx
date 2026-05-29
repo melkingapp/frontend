@@ -10,6 +10,12 @@ import { TransactionFilter } from "../../../manager/finance/components/transacti
 import useCategories from "../../../../shared/hooks/useCategories";
 import { useResidentUnitData } from "../../building/hooks/useResidentUnitData";
 
+// ⚡ Bolt Optimization: Using a stable empty array reference prevents unnecessary
+// re-renders caused by returning a new literal [] on every Redux store update.
+// Expected Impact: Reduces unnecessary component re-renders when finance state updates
+// but transactions array is undefined/empty.
+const EMPTY_ARRAY = [];
+
 moment.loadPersian({ dialect: "persian-modern" });
 
 // Helper function to get current date in YYYY-MM-DD format
@@ -51,8 +57,8 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
