@@ -1,3 +1,6 @@
 ## 2024-05-24 - Accessibility improvements for Form Inputs
 **Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
 **Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2024-06-01 - Add ARIA label and focus styles to icon-only edit button in EditableCard
+**Learning:** Found an edit button (`EditableCard.jsx`) containing only a Lucide `Edit` icon without an `aria-label`, `title`, or keyboard focus styling. Since it renders conditionally based on the `isEditing` state, users of screen readers and keyboard navigation might completely miss this interactive element.
+**Action:** Always ensure icon-only buttons have localized `aria-label` and `title` attributes (e.g., \`ویرایش ${title}\`). Add `focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]` with a `rounded` class to enforce the app's standard focus ring color for keyboard navigation.
