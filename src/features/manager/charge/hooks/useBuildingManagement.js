@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedBuilding } from "../../building/buildingSlice";
 import { fetchBuildings, setSelectedBuilding, fetchBuildingUnits } from "../../building/buildingSlice";
 
+const EMPTY_ARRAY = [];
+
 /**
  * Custom hook for managing building-related operations
  */
@@ -11,9 +13,10 @@ export const useBuildingManagement = () => {
   const building = useSelector(selectSelectedBuilding);
   const buildings = useSelector(state => state.building.data);
 
+  // ⚡ Performance: Using stable EMPTY_ARRAY prevents unnecessary re-renders
   const buildingUnits = useSelector(state => {
     const buildingId = building?.building_id || building?.id;
-    return buildingId ? state.building.units[buildingId] || [] : [];
+    return buildingId ? state.building.units[buildingId] || EMPTY_ARRAY : EMPTY_ARRAY;
   });
 
   // Load buildings if not loaded
