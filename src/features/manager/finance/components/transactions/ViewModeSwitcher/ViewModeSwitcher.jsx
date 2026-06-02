@@ -110,8 +110,11 @@ export default function ViewModeSwitcher({
         <div className="flex-1 min-w-[220px] max-w-md w-full relative">
           <button
             type="button"
-            className="w-full px-4 py-3 border rounded-xl bg-gray-50 text-right flex justify-between items-center text-sm border-gray-200"
+            className="w-full px-4 py-3 border rounded-xl bg-gray-50 text-right flex justify-between items-center text-sm border-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold"
             onClick={() => setIsDropdownOpen((v) => !v)}
+            aria-expanded={isDropdownOpen}
+            aria-haspopup="listbox"
+            aria-controls="unit-dropdown-list"
           >
             <span className="truncate">{selectedLabel}</span>
             <span className="text-gray-500 text-xs">▼</span>
@@ -128,12 +131,14 @@ export default function ViewModeSwitcher({
                   className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-melkingGold"
                 />
               </div>
-              <div className="max-h-64 overflow-y-auto">
+              <div id="unit-dropdown-list" role="listbox" className="max-h-64 overflow-y-auto">
                 {filteredOptions.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
-                    className="w-full text-right px-4 py-2 text-sm hover:bg-gray-50"
+                    role="option"
+                    aria-selected={String(opt.value) === String(selectedUnitId)}
+                    className="w-full text-right px-4 py-2 text-sm hover:bg-gray-50 focus:outline-none focus-visible:bg-gray-50 focus-visible:ring-2 focus-visible:ring-melkingGold focus-visible:ring-inset"
                     onClick={() => handleSelectValue(opt.value)}
                   >
                     {opt.label}
