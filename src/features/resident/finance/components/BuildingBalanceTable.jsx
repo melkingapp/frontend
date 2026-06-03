@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Eye, Search, Filter, Calendar, X } from "lucide-react";
 import moment from "moment-jalaali";
@@ -24,6 +24,9 @@ const getStartOfYear = () => {
   const startOfYear = new Date(today.getFullYear(), 0, 1);
   return startOfYear.toISOString().split('T')[0];
 };
+
+// ⚡ Bolt: Define EMPTY_ARRAY outside to maintain referential equality in useSelector and useMemo
+const EMPTY_ARRAY = [];
 
 export default function BuildingBalanceTable() {
     const dispatch = useDispatch();
@@ -51,8 +54,14 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    // ⚡ Bolt: Use EMPTY_ARRAY fallback to prevent unnecessary re-renders on Redux store updates
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+
+    // ⚡ Bolt: Memoize the fallback logic to maintain referential stability
+    const transactions = useMemo(
+        () => Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY),
+        [transactionsData]
+    );
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
