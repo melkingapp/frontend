@@ -3,6 +3,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedBuilding } from "../../building/buildingSlice";
 import { fetchBuildings, setSelectedBuilding, fetchBuildingUnits } from "../../building/buildingSlice";
 
+// ⚡ Bolt: Maintain referential equality for fallback array in useSelector
+const EMPTY_ARRAY = [];
+
 /**
  * Custom hook for managing building-related operations
  */
@@ -13,7 +16,9 @@ export const useBuildingManagement = () => {
 
   const buildingUnits = useSelector(state => {
     const buildingId = building?.building_id || building?.id;
-    return buildingId ? state.building.units[buildingId] || [] : [];
+    // ⚡ Bolt: Use EMPTY_ARRAY to prevent returning a new reference on every state update,
+    // which would trigger unnecessary re-renders in components depending on buildingUnits
+    return buildingId ? state.building.units[buildingId] || EMPTY_ARRAY : EMPTY_ARRAY;
   });
 
   // Load buildings if not loaded

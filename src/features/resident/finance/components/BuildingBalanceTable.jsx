@@ -25,6 +25,9 @@ const getStartOfYear = () => {
   return startOfYear.toISOString().split('T')[0];
 };
 
+// ⚡ Bolt: Maintain referential equality for fallback array in useSelector
+const EMPTY_ARRAY = [];
+
 export default function BuildingBalanceTable() {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth?.user);
@@ -51,8 +54,10 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    // ⚡ Bolt: Use EMPTY_ARRAY to prevent returning a new reference on every state update,
+    // which would trigger unnecessary re-renders in components depending on transactionsData
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
