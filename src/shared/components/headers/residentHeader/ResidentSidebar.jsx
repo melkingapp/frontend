@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -222,7 +221,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
             return (
                 <div key={index} className="w-full">
                     <div
-                        className={clsx(
+                        className={[
                             "flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 select-none",
                             isActive
                                 ? isMobile
@@ -231,7 +230,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                                 : isMobile
                                 ? "hover:bg-gray-100 text-gray-700"
                                 : "hover:bg-white/20 text-white/90"
-                        )}
+                        ].filter(Boolean).join(" ")}
                         onClick={() => {
                             if (hasChildren) {
                                 toggleMenu(item.label);
@@ -268,15 +267,15 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
 
                     {hasChildren && isOpen && !isCollapsed && (
                         <div
-                            className={clsx(
+                            className={[
                                 "pl-8 pr-2 mt-1 space-y-1 rounded-r-md border-r-4 border-yellow-400"
-                            )}
+                            ].filter(Boolean).join(" ")}
                         >
                             {item.children.map((child, index) => (
                                 <Link
                                     key={index}
                                     to={child.to}
-                                    className={clsx(
+                                    className={[
                                         "block text-sm px-3 py-1.5 rounded-lg transition-colors duration-200 select-none",
                                         pathname === child.to
                                             ? isMobile
@@ -285,7 +284,7 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                                             : isMobile
                                             ? "hover:bg-gray-100 text-gray-700"
                                             : "hover:bg-white/20 text-white/90"
-                                    )}
+                                    ].filter(Boolean).join(" ")}
                                 >
                                     {child.label}
                                 </Link>
