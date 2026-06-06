@@ -70,7 +70,9 @@ export default function Header() {
                                     onClick={onClick}
                                     onMouseEnter={() => setHovered(id)}
                                     onMouseLeave={() => setHovered(null)}
-                                    className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] p-2"
+                                    onFocus={() => setHovered(id)}
+                                    onBlur={() => setHovered(null)}
+                                    className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                                     aria-label={label}
                                     type="button"
                                 >
@@ -123,7 +125,9 @@ export default function Header() {
                                     onClick={onClick}
                                     onMouseEnter={() => setHovered(id)}
                                     onMouseLeave={() => setHovered(null)}
-                                    className="relative group bg-black/10  hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C]"
+                                    onFocus={() => setHovered(id)}
+                                    onBlur={() => setHovered(null)}
+                                    className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                                     aria-label={label}
                                     type="button"
                                 >

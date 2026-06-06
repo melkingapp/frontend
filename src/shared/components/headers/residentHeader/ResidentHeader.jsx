@@ -81,7 +81,9 @@ export default function ResidentHeader({ onOpenSidebar }) {
                         onClick={onClick}
                         onMouseEnter={() => setHovered(id)}
                         onMouseLeave={() => setHovered(null)}
-                        className="relative group"
+                        onFocus={() => setHovered(id)}
+                        onBlur={() => setHovered(null)}
+                        className="relative group rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                         aria-label={label}
                         type="button"
                     >
