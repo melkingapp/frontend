@@ -59,7 +59,9 @@ export default function ManagerHeader({ onOpenSidebar }) {
                         onClick={onClick}
                         onMouseEnter={() => setHovered(id)}
                         onMouseLeave={() => setHovered(null)}
-                        className="relative group"
+                        onFocus={() => setHovered(id)}
+                        onBlur={() => setHovered(null)}
+                        className="relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold rounded-full"
                         aria-label={label}
                         type="button"
                     >
