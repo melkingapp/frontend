@@ -1,0 +1,3 @@
+## 2024-05-24 - React/Redux Performance Pattern: Inline fallbacks break referential equality
+**Learning:** Found a common anti-pattern in `src/features/resident/finance/components/BuildingBalanceTable.jsx` and `src/features/manager/finance/hooks/useTransactionsData.js` where Redux selectors use inline `|| []` fallbacks. This forces unnecessary component re-renders because a new array reference is created on every state update, defeating `useSelector`'s built-in equality checks.
+**Action:** Always define a constant empty array outside the component/hook (e.g., `const EMPTY_ARRAY = [];`) and use it as the fallback to maintain referential equality.
