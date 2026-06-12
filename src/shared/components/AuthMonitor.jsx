@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { logout, forceLogout } from '../../features/authentication/authSlice';
+import { getProfile } from '../../shared/services/profileService';
 
 const AuthMonitor = () => {
     const dispatch = useDispatch();
@@ -49,10 +50,16 @@ const AuthMonitor = () => {
                     dispatch(forceLogout());
                     navigate('/login', { replace: true });
                 } else {
-                    console.log('✅ Token is valid');
-                    // Token is valid but user is not authenticated in Redux
-                    // This might happen after page refresh
-                    // We could dispatch a re-authentication action here if needed
+                    console.log('✅ Token structure is valid, verifying with server...');
+                    // 🛡️ Server-side verification to prevent Auth Bypass
+                    try {
+                        await getProfile();
+                        console.log('✅ Token validated by server');
+                    } catch (serverError) {
+                        console.log('❌ Server rejected token, force logging out...');
+                        dispatch(forceLogout());
+                        navigate('/login', { replace: true });
+                    }
                 }
             } catch (error) {
                 console.error('❌ Invalid token format:', error);
