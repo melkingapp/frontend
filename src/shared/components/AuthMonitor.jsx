@@ -11,6 +11,24 @@ const AuthMonitor = () => {
     const { isAuthenticated, user } = useSelector(state => state.auth);
 
     useEffect(() => {
+        const verifySessionWithServer = async () => {
+            if (!isAuthenticated) return;
+            try {
+                await getProfile();
+                console.log('✅ Server-side session verification passed');
+            } catch (serverError) {
+                const status = serverError.response?.status;
+                if (status === 401 || status === 403) {
+                    console.log('❌ Server rejected session, force logging out...');
+                    dispatch(forceLogout());
+                    navigate('/login', { replace: true });
+                }
+            }
+        };
+
+        // Perform server-side validation strictly once upon component mount (when auth is true)
+        verifySessionWithServer();
+
         const checkAuthStatus = () => {
             // Check if tokens exist in localStorage
             const accessToken = localStorage.getItem('access_token');
@@ -50,16 +68,10 @@ const AuthMonitor = () => {
                     dispatch(forceLogout());
                     navigate('/login', { replace: true });
                 } else {
-                    console.log('✅ Token structure is valid, verifying with server...');
-                    // 🛡️ Server-side verification to prevent Auth Bypass
-                    try {
-                        await getProfile();
-                        console.log('✅ Token validated by server');
-                    } catch (serverError) {
-                        console.log('❌ Server rejected token, force logging out...');
-                        dispatch(forceLogout());
-                        navigate('/login', { replace: true });
-                    }
+                    console.log('✅ Token is valid');
+                    // Token is valid but user is not authenticated in Redux
+                    // This might happen after page refresh
+                    // We could dispatch a re-authentication action here if needed
                 }
             } catch (error) {
                 console.error('❌ Invalid token format:', error);
