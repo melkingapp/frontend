@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { logout, forceLogout } from '../../features/authentication/authSlice';
+import { getProfile } from '../../shared/services/profileService';
 
 const AuthMonitor = () => {
     const dispatch = useDispatch();
@@ -10,6 +11,24 @@ const AuthMonitor = () => {
     const { isAuthenticated, user } = useSelector(state => state.auth);
 
     useEffect(() => {
+        const verifySessionWithServer = async () => {
+            if (!isAuthenticated) return;
+            try {
+                await getProfile();
+                console.log('✅ Server-side session verification passed');
+            } catch (serverError) {
+                const status = serverError.response?.status;
+                if (status === 401 || status === 403) {
+                    console.log('❌ Server rejected session, force logging out...');
+                    dispatch(forceLogout());
+                    navigate('/login', { replace: true });
+                }
+            }
+        };
+
+        // Perform server-side validation strictly once upon component mount (when auth is true)
+        verifySessionWithServer();
+
         const checkAuthStatus = () => {
             // Check if tokens exist in localStorage
             const accessToken = localStorage.getItem('access_token');
