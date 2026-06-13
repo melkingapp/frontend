@@ -25,6 +25,9 @@ const getStartOfYear = () => {
   return startOfYear.toISOString().split('T')[0];
 };
 
+// ⚡ Bolt Performance Optimization:
+// Prevents unnecessary re-renders by maintaining referential equality
+// when falling back to an empty array in useSelector.
 const EMPTY_ARRAY = [];
 
 export default function BuildingBalanceTable() {

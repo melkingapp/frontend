@@ -2,6 +2,9 @@ import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { getPersianType } from "../../../../shared/utils";
 
+// ⚡ Bolt Performance Optimization:
+// Prevents unnecessary re-renders by maintaining referential equality
+// when falling back to an empty array in useSelector.
 const EMPTY_ARRAY = [];
 
 /**

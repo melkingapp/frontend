@@ -326,6 +326,9 @@ const surveysSlice = createSlice({
 
 export const { clearError, clearSurveyDetails, clearSurveyResponses } = surveysSlice.actions;
 
+// ⚡ Bolt Performance Optimization:
+// Prevents unnecessary re-renders by maintaining referential equality
+// when falling back to an empty array in selectSurveyResponses selector.
 const EMPTY_ARRAY = [];
 
 // Selectors
