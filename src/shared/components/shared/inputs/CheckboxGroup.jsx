@@ -1,6 +1,6 @@
-function ErrorMessage({ children }) {
+function ErrorMessage({ children, id }) {
     if (!children) return null;
-    return <p className="text-red-500 text-xs mb-3">{children}</p>;
+    return <p id={id} role="alert" className="text-red-500 text-xs mb-3">{children}</p>;
 }
 
 export default function CheckboxGroup({ label, options, selectedValues, onChange, error }) {
