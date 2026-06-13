@@ -1,11 +1,13 @@
 import { getPersianType } from "../../../utils/typeUtils";
 
-function ErrorMessage({ children }) {
+function ErrorMessage({ children, id }) {
     if (!children) return null;
-    return <p className="text-red-500 text-xs mb-3">{children}</p>;
+    return <p id={id} role="alert" className="text-red-500 text-xs mb-3">{children}</p>;
 }
 
 export default function SelectField({ label, name, value, onChange, options, error, disabled = false }) {
+    const errorId = error ? `${name}-error` : undefined;
+
     // اگر value وجود دارد اما در options نیست، با getPersianType label آن را پیدا کن
     const selectedOption = options.find(opt => opt.value === value);
     const displayOptions = selectedOption 
@@ -25,6 +27,8 @@ export default function SelectField({ label, name, value, onChange, options, err
                 value={value}
                 onChange={onChange}
                 disabled={disabled}
+                aria-invalid={!!error}
+                aria-describedby={errorId}
                 className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 ${error ? "border-red-500" : "border-gray-200"} ${disabled ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
             >
                 <option value="">انتخاب کنید</option>
@@ -34,7 +38,7 @@ export default function SelectField({ label, name, value, onChange, options, err
                     </option>
                 ))}
             </select>
-            <ErrorMessage>{error}</ErrorMessage>
+            <ErrorMessage id={errorId}>{error}</ErrorMessage>
         </div>
     );
 }
