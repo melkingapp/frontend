@@ -5,12 +5,20 @@ import { getPersianType } from "../../../../shared/utils";
 /**
  * Hook برای پردازش و نرمال‌سازی داده‌های تراکنش‌ها
  */
+// Define empty array outside hook to maintain referential equality across renders
+const EMPTY_ARRAY = [];
+
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
   // Get transactions from Redux state
-  const transactionsData = useSelector(state => state.finance.transactions || []);
-  const transactions = Array.isArray(transactionsData) 
-    ? transactionsData 
-    : (transactionsData?.transactions || []);
+  // ⚡ BOLT: using EMPTY_ARRAY prevents returning a new reference on every store update
+  const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+
+  // ⚡ BOLT: Wrapping conditional derivation in useMemo to prevent referential changes on unrelated renders
+  const transactions = useMemo(() => (
+    Array.isArray(transactionsData)
+      ? transactionsData
+      : (transactionsData?.transactions || EMPTY_ARRAY)
+  ), [transactionsData]);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {

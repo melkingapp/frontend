@@ -25,6 +25,9 @@ const getStartOfYear = () => {
   return startOfYear.toISOString().split('T')[0];
 };
 
+// Define empty array outside component to maintain referential equality across renders
+const EMPTY_ARRAY = [];
+
 export default function BuildingBalanceTable() {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth?.user);
@@ -51,8 +54,9 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    // ⚡ BOLT: using EMPTY_ARRAY prevents returning a new reference on every store update
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
