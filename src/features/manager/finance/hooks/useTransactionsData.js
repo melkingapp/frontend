@@ -12,9 +12,13 @@ export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter
   // Get transactions from Redux state
   // ⚡ BOLT: using EMPTY_ARRAY prevents returning a new reference on every store update
   const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
-  const transactions = Array.isArray(transactionsData) 
-    ? transactionsData 
-    : (transactionsData?.transactions || []);
+
+  // ⚡ BOLT: Wrapping conditional derivation in useMemo to prevent referential changes on unrelated renders
+  const transactions = useMemo(() => (
+    Array.isArray(transactionsData)
+      ? transactionsData
+      : (transactionsData?.transactions || EMPTY_ARRAY)
+  ), [transactionsData]);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {
