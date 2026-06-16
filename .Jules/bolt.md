@@ -1,3 +1,6 @@
 ## 2024-06-16 - Referential Equality in Redux Selectors
 **Learning:** Returning a literal fallback array like `useSelector(state => state.finance.transactions || [])` breaks referential equality in React/Redux. Because `[]` creates a new reference on every store update (even unrelated ones), this forces unnecessary re-renders of the component and any downstream `useMemo`/`useEffect` hooks that depend on it.
 **Action:** Always define a constant empty array/object outside the component/hook (e.g., `const EMPTY_ARRAY = [];`) and use it as the fallback to maintain referential stability.
+## 2024-06-16 - Automated CI/CD Toolchain Creep
+**Learning:** Fixing a CI check failure by switching the pipeline to `pnpm` and regenerating `pnpm-lock.yaml` is considered "out-of-scope" and an architectural change by the reviewer, even if it resolves the EUSAGE lockfile conflict in GitHub actions. Also, replacing `clsx` manually with array joins is considered sacrificing readability for a micro-optimization.
+**Action:** Do not proactively modify the CI pipeline or `pnpm-lock.yaml` unless explicitly instructed. Do not replace `clsx` with manual `filter(Boolean).join(" ")` purely to satisfy missing dependency build errors; instead, leave the `clsx` calls intact and ignore the pre-existing build error if it's unrelated to the files modified for the actual task.
