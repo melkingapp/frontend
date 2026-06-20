@@ -1,3 +1,6 @@
 ## 2024-05-24 - Accessibility improvements for Form Inputs
 **Learning:** Adding `aria-describedby`, `aria-invalid`, and `aria-required` to input fields significantly improves screen reader experience by linking errors and requirements to the input itself. Using `forwardRef` is crucial for libraries like `react-hook-form` to manage focus correctly (e.g., focusing on the first invalid field).
 **Action:** Always wrap form inputs with `forwardRef` and ensure error messages are programmatically linked to their inputs via ID.
+## 2025-02-28 - Accessible Floating Action Button Menus
+**Learning:** Custom FAB (Floating Action Button) menus built without native `<select>` tags lack critical semantic relationship markers, making them opaque to screen reader users navigating via keyboard. Additionally, the main toggle button (often icon-only) lacks context.
+**Action:** Always link the trigger button to its pop-up list by setting `aria-haspopup="menu"`, matching `aria-controls` to the container's `id`, and dynamically toggling `aria-expanded`. The container must use `role="menu"` and items `role="menuitem"`. Icon-only toggle buttons must include localized `aria-label` and `title` attributes (e.g., 'باز کردن منو'). Implement clear `focus-visible` rings on all interactive elements.
