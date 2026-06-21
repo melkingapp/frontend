@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { logout, forceLogout } from '../../features/authentication/authSlice';
+import { logout, forceLogout, login } from '../../features/authentication/authSlice';
+import { getProfile } from '../services/profileService';
+import { sanitizeUser } from '../utils/security';
 
 const AuthMonitor = () => {
     const dispatch = useDispatch();
@@ -34,25 +36,43 @@ const AuthMonitor = () => {
             // If user is not authenticated but has tokens, try to validate
             if (!isAuthenticated && accessToken && refreshToken) {
                 console.log('🔄 User not authenticated but has tokens, checking token validity...');
-                validateToken(accessToken);
+                validateToken(accessToken, refreshToken);
             }
         };
 
-        const validateToken = async (token) => {
+        const validateToken = async (token, refreshToken) => {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const exp = payload.exp * 1000;
                 const now = Date.now();
                 
                 if (exp < now) {
-                    console.log('❌ Token expired, force logging out...');
+                    console.log('❌ Token expired locally, force logging out...');
                     dispatch(forceLogout());
                     navigate('/login', { replace: true });
                 } else {
-                    console.log('✅ Token is valid');
-                    // Token is valid but user is not authenticated in Redux
-                    // This might happen after page refresh
-                    // We could dispatch a re-authentication action here if needed
+                    console.log('✅ Token is valid locally. Verifying with server...');
+                    // Server-side verification to prevent Auth Bypass via spoofed tokens
+                    try {
+                        const response = await getProfile();
+                        console.log('✅ Server verification successful');
+                        // Token is valid but user is not authenticated in Redux
+                        // This might happen after page refresh
+                        if (response) {
+                            const sanitizedUser = sanitizeUser(response);
+                            dispatch(login({
+                                user: sanitizedUser,
+                                tokens: { access: token, refresh: refreshToken }
+                            }));
+                        }
+                    } catch (serverError) {
+                        console.error('❌ Server verification failed:', serverError);
+                        // Only log out if it's a 401 or 403, otherwise it might just be a network error
+                        if (serverError.response?.status === 401 || serverError.response?.status === 403) {
+                            dispatch(forceLogout());
+                            navigate('/login', { replace: true });
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('❌ Invalid token format:', error);
