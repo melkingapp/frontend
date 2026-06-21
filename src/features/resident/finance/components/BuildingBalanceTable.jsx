@@ -25,6 +25,11 @@ const getStartOfYear = () => {
   return startOfYear.toISOString().split('T')[0];
 };
 
+// Bolt Performance Optimization:
+// Defining a constant empty array outside the component to prevent breaking
+// referential equality and forcing unnecessary re-renders when useSelector falls back to a default array.
+const EMPTY_ARRAY = [];
+
 export default function BuildingBalanceTable() {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth?.user);
@@ -51,8 +56,9 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    // Bolt Performance Optimization: Use EMPTY_ARRAY to maintain referential equality
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
