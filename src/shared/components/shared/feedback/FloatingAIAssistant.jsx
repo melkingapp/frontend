@@ -65,7 +65,9 @@ export default function FloatingAIAssistant({ to = "/manager/legal-ai" }) {
             onClick={handleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            className="fixed left-0 top-2/3 -translate-y-1/2 z-50 group"
+            onFocus={handleMouseEnter}
+            onBlur={handleMouseLeave}
+            className="fixed left-0 top-2/3 -translate-y-1/2 z-50 group focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold focus-visible:ring-offset-2 rounded-r-full"
             title="دستیار ملکینگ"
         >
             <div className={`relative flex items-center bg-gradient-to-br from-melkingGold via-yellow-400 to-melkingGold text-melkingDarkBlue py-3.5 rounded-r-full rounded-l-none shadow-2xl hover:shadow-[0_10px_40px_rgba(211,182,108,0.4)] overflow-hidden ${
