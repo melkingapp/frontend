@@ -1,0 +1,3 @@
+## 2025-02-27 - Fix Client-Side Auth Bypass
+**Learning:** Checking client-side token structures (JWT expiry) isn't sufficient for true authentication state validation since it leaves systems vulnerable to forged tokens or revoked sessions bypassing login guards.
+**Action:** When validating unauthenticated states with existing local tokens (e.g., during app hydration or refresh), always perform server-side validation with a minimal endpoint (like `getProfile`) and strictly evaluate the HTTP status code (e.g., 401/403) before forcing logout, ensuring true auth synchronization and preventing network errors from causing accidental logouts.

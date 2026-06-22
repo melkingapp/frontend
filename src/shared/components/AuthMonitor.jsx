@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { logout, forceLogout } from '../../features/authentication/authSlice';
+import { getProfile } from '../services/profileService';
 
 const AuthMonitor = () => {
     const dispatch = useDispatch();
@@ -48,16 +49,30 @@ const AuthMonitor = () => {
                     console.log('❌ Token expired, force logging out...');
                     dispatch(forceLogout());
                     navigate('/login', { replace: true });
-                } else {
-                    console.log('✅ Token is valid');
-                    // Token is valid but user is not authenticated in Redux
-                    // This might happen after page refresh
-                    // We could dispatch a re-authentication action here if needed
+                    return;
                 }
             } catch (error) {
                 console.error('❌ Invalid token format:', error);
                 dispatch(forceLogout());
                 navigate('/login', { replace: true });
+                return;
+            }
+
+            try {
+                // Server-side verification to prevent auth bypass
+                await getProfile();
+                console.log('✅ Token is valid and verified with server');
+                // Token is valid but user is not authenticated in Redux
+                // This might happen after page refresh
+                // We could dispatch a re-authentication action here if needed
+            } catch (error) {
+                console.error('❌ Server verification failed:', error);
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    dispatch(forceLogout());
+                    navigate('/login', { replace: true });
+                } else {
+                    console.log('⚠️ Verification failed but might be a network error, not logging out');
+                }
             }
         };
 
