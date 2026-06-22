@@ -1,0 +1,4 @@
+## 2025-06-22 - Fix Referential Instability in Redux Selectors
+
+**Learning:** Returning a dynamic or newly instantiated empty array (e.g., `[]` or `data || []`) as a fallback in Redux's `useSelector` breaks referential equality when the default path is evaluated. Because the inline empty array is a new reference on every state update, it triggers cascading downstream re-renders across the application, severely impacting performance for central data like transactions.
+**Action:** Always extract static fallback arrays or objects to a stable constant (e.g., `const EMPTY_ARRAY = [];`) defined entirely outside the React component or hook context, and use that stable reference as the fallback inside `useSelector` (e.g., `const data = useSelector(state => state.finance.transactions || EMPTY_ARRAY);`).

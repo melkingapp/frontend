@@ -2,15 +2,19 @@ import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { getPersianType } from "../../../../shared/utils";
 
+// ⚡ Bolt: Define stable empty array to prevent unnecessary re-renders when finance.transactions is undefined
+const EMPTY_ARRAY = [];
+
 /**
  * Hook برای پردازش و نرمال‌سازی داده‌های تراکنش‌ها
  */
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
   // Get transactions from Redux state
-  const transactionsData = useSelector(state => state.finance.transactions || []);
+  // ⚡ Bolt: Use stable fallback to prevent returning a new reference on every store update
+  const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
   const transactions = Array.isArray(transactionsData) 
     ? transactionsData 
-    : (transactionsData?.transactions || []);
+    : (transactionsData?.transactions || EMPTY_ARRAY);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {
