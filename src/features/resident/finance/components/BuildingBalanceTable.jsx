@@ -18,6 +18,11 @@ const getCurrentDate = () => {
   return today.toISOString().split('T')[0];
 };
 
+// React/Redux Performance Pattern: Returning a literal fallback array from useSelector breaks
+// referential equality, causing a new reference on every Redux store update and forcing unnecessary re-renders.
+// Extracted fallback to a stable constant to maintain referential stability.
+const EMPTY_ARRAY = [];
+
 // Helper function to get start of year in YYYY-MM-DD format
 const getStartOfYear = () => {
   const today = new Date();
@@ -51,8 +56,8 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
