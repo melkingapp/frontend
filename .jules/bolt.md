@@ -1,0 +1,3 @@
+## 2024-06-25 - Redux useSelector Fallback Array Referental Equality
+**Learning:** Returning a literal fallback array or object (e.g., `data || []`) directly from a `useSelector` hook breaks referential equality. It returns a new array reference on every single Redux store update, forcing the connected component to re-render even if the actual targeted slice of state hasn't changed.
+**Action:** Always extract fallback primitives (like `[]` or `{}`) to a stable constant (e.g., `const EMPTY_ARRAY = [];`) defined outside the React component or hook, and use that constant in the `useSelector` return statement.

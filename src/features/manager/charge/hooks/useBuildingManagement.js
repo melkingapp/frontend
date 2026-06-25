@@ -3,6 +3,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedBuilding } from "../../building/buildingSlice";
 import { fetchBuildings, setSelectedBuilding, fetchBuildingUnits } from "../../building/buildingSlice";
 
+// ⚡ Bolt Optimization: Define stable array reference outside component to prevent referential equality issues in Redux useSelector hooks, reducing unnecessary re-renders.
+const EMPTY_ARRAY = [];
+
 /**
  * Custom hook for managing building-related operations
  */
@@ -13,7 +16,7 @@ export const useBuildingManagement = () => {
 
   const buildingUnits = useSelector(state => {
     const buildingId = building?.building_id || building?.id;
-    return buildingId ? state.building.units[buildingId] || [] : [];
+    return buildingId ? state.building.units[buildingId] || EMPTY_ARRAY : EMPTY_ARRAY;
   });
 
   // Load buildings if not loaded
