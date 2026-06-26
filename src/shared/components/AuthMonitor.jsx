@@ -54,16 +54,17 @@ const AuthMonitor = () => {
 
                 // Perform server-side validation to ensure token hasn't been revoked
                 // and isn't just a forged client-side JWT bypassing checks
-                try {
-                    await getProfile();
-                    console.log('✅ Token is valid and verified with server');
-                } catch (serverError) {
-                    if (serverError.response?.status === 401 || serverError.response?.status === 403) {
-                        console.log('❌ Token rejected by server, force logging out...');
-                        dispatch(forceLogout());
-                        navigate('/login', { replace: true });
-                    }
-                }
+                getProfile()
+                    .then(() => {
+                        console.log('✅ Token is valid and verified with server');
+                    })
+                    .catch((serverError) => {
+                        if (serverError.response?.status === 401 || serverError.response?.status === 403) {
+                            console.log('❌ Token rejected by server, force logging out...');
+                            dispatch(forceLogout());
+                            navigate('/login', { replace: true });
+                        }
+                    });
             } catch (error) {
                 console.error('❌ Invalid token format:', error);
                 dispatch(forceLogout());
