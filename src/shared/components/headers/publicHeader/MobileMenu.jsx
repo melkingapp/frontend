@@ -17,14 +17,14 @@ export default function MobileMenu({ isOpen, onClose }) {
     };
 
     return (
-        <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+        <Dialog id="mobile-menu" open={isOpen} onClose={onClose} className="relative z-50">
             <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
             <div className="fixed inset-y-0 right-0 w-72 bg-white shadow-2xl rounded-l-3xl flex flex-col">
 
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
                     <h2 className="text-lg font-bold text-melkingDarkBlue">سامانه مدیریت ساختمان</h2>
-                    <button onClick={onClose} aria-label="بستن منو" className="p-2 rounded-full hover:bg-gray-100 transition">
+                    <button onClick={onClose} aria-label="بستن منو" title="بستن منو" className="p-2 rounded-full hover:bg-gray-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold">
                         <X className="w-6 h-6 text-gray-600" />
                     </button>
                 </div>
