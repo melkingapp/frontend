@@ -5,12 +5,16 @@ import { getPersianType } from "../../../../shared/utils";
 /**
  * Hook برای پردازش و نرمال‌سازی داده‌های تراکنش‌ها
  */
+// ⚡ Bolt Optimization: Stable reference to prevent unnecessary component re-renders when useSelector returns a fallback
+const EMPTY_ARRAY = [];
+
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
   // Get transactions from Redux state
-  const transactionsData = useSelector(state => state.finance.transactions || []);
+  // ⚡ Bolt Optimization: Using EMPTY_ARRAY to maintain referential equality
+  const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
   const transactions = Array.isArray(transactionsData) 
     ? transactionsData 
-    : (transactionsData?.transactions || []);
+    : (transactionsData?.transactions || EMPTY_ARRAY);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {

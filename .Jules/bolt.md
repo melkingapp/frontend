@@ -1,0 +1,3 @@
+## 2024-06-29 - Prevent Unnecessary Re-renders from useSelector Fallbacks
+**Learning:** Returning a literal fallback array (`|| []`) directly from a `useSelector` hook breaks referential equality. Redux runs all selectors after every dispatched action; if the fallback is triggered, it returns a new array reference every time, circumventing the reference equality check (`===`) and forcing unnecessary component re-renders even for unrelated state updates.
+**Action:** Always extract array/object fallbacks used in `useSelector` hooks to a stable module-level constant (e.g., `const EMPTY_ARRAY = [];`) defined outside the component.
