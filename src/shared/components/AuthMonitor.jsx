@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { logout, forceLogout } from '../../features/authentication/authSlice';
+import { getProfile } from '../../shared/services/profileService';
 
 const AuthMonitor = () => {
     const dispatch = useDispatch();
@@ -29,6 +30,17 @@ const AuthMonitor = () => {
                 dispatch(forceLogout());
                 navigate('/login', { replace: true });
                 return;
+            }
+
+            // Server-side session verification for authenticated users
+            if (isAuthenticated && accessToken) {
+                getProfile().catch((error) => {
+                    if (error.response?.status === 401 || error.response?.status === 403) {
+                        console.log('🚨 Explicit authentication failure detected, force logging out...');
+                        dispatch(forceLogout());
+                        navigate('/login', { replace: true });
+                    }
+                });
             }
 
             // If user is not authenticated but has tokens, try to validate

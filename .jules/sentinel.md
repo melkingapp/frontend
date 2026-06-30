@@ -1,0 +1,3 @@
+## 2025-06-30 - Fix Auth Bypass in AuthMonitor
+**Learning:** Checking for client-side tokens (`access_token` in `localStorage`) is not sufficient to guarantee that a user is actually authenticated and authorized. If the API tokens are compromised or revoked on the server, a purely client-side check will still consider the user authenticated, leading to an Auth Bypass vulnerability. We must verify the session against a protected server endpoint.
+**Action:** When performing auth monitoring in client-side React apps, ensure that we always validate the session against a backend API (like `getProfile`) and only force a logout if the backend explicitly responds with an authentication error (`401` or `403`).
