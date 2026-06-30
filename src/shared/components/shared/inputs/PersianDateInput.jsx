@@ -116,6 +116,8 @@ export default function PersianDateInput({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between bg-white"
       >
         <span className={displayValue ? 'text-gray-900' : 'text-gray-500'}>
@@ -136,12 +138,16 @@ export default function PersianDateInput({
                 <button
                   onClick={handlePrevMonth}
                   className="p-1 hover:bg-gray-100 rounded"
+                  aria-label="ماه قبل"
+                  title="ماه قبل"
                 >
                   ←
                 </button>
                 <button
                   onClick={handleNextMonth}
                   className="p-1 hover:bg-gray-100 rounded"
+                  aria-label="ماه بعد"
+                  title="ماه بعد"
                 >
                   →
                 </button>
@@ -168,6 +174,7 @@ export default function PersianDateInput({
                   <button
                     key={index}
                     onClick={() => handleDayClick(day.moment)}
+                    aria-pressed={day.isSelected}
                     className={`p-2 text-sm rounded hover:bg-blue-50 ${
                       day.isSelected
                         ? 'bg-blue-600 text-white'
@@ -187,12 +194,14 @@ export default function PersianDateInput({
               <button
                 onClick={handleToday}
                 className="text-xs text-blue-600 hover:text-blue-800"
+                aria-label="امروز"
               >
                 امروز
               </button>
               <button
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                aria-label="بستن تقویم"
               >
                 بستن
               </button>
