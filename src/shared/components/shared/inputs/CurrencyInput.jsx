@@ -116,7 +116,7 @@ const CurrencyInput = forwardRef(({
                 </div>
             </div>
             {error && (
-                <p id={errorId} className="text-red-500 text-xs mt-1">
+                <p id={errorId} role="alert" className="text-red-500 text-xs mt-1">
                     {error}
                 </p>
             )}
