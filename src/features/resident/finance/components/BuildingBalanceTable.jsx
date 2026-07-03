@@ -53,6 +53,7 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
+    // ⚡ Bolt: Use stable EMPTY_ARRAY constant instead of inline [] to prevent unnecessary Redux re-renders
     const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
     const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     

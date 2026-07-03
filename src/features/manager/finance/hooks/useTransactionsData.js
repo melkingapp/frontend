@@ -9,10 +9,11 @@ const EMPTY_ARRAY = [];
  */
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
   // Get transactions from Redux state
+  // ⚡ Bolt: Use stable EMPTY_ARRAY constant instead of inline [] to prevent unnecessary Redux re-renders
   const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
   const transactions = Array.isArray(transactionsData) 
     ? transactionsData 
-    : (transactionsData?.transactions || []);
+    : (transactionsData?.transactions || EMPTY_ARRAY);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {
