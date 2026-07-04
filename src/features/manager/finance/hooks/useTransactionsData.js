@@ -1,13 +1,15 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { getPersianType } from "../../../../shared/utils";
+import { EMPTY_ARRAY } from "../../../../constants/common";
 
 /**
  * Hook برای پردازش و نرمال‌سازی داده‌های تراکنش‌ها
  */
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
   // Get transactions from Redux state
-  const transactionsData = useSelector(state => state.finance.transactions || []);
+  // ⚡ Bolt: Use stable EMPTY_ARRAY constant to prevent unnecessary re-renders when data is missing
+  const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
   const transactions = Array.isArray(transactionsData) 
     ? transactionsData 
     : (transactionsData?.transactions || []);
