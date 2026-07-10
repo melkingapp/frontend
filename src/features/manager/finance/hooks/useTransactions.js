@@ -6,6 +6,8 @@ import { fetchTransactions, fetchCurrentFundBalance, clearTransactions } from ".
 import { fetchBuildings, setSelectedBuilding, fetchBuildingUnits } from "../../building/buildingSlice";
 import { getUnitFinancialTransactions, getUnitFinancialTransactionsForResidents } from "../../../../shared/services/transactionsService";
 
+const EMPTY_ARRAY = []; // ⚡ Bolt: Use stable EMPTY_ARRAY constant to maintain referential equality and prevent unnecessary re-renders in useSelector
+
 export function useTransactions() {
   const dispatch = useDispatch();
   const building = useSelector(selectSelectedBuilding);
@@ -22,14 +24,14 @@ export function useTransactions() {
 
   const buildingUnits = useSelector(state => {
     const buildingId = building?.building_id || building?.id;
-    if (!buildingId) return [];
+    if (!buildingId) return EMPTY_ARRAY;
     const unitsData = state.building.units[buildingId];
     if (Array.isArray(unitsData)) {
       return unitsData;
     } else if (unitsData && unitsData.units) {
       return unitsData.units;
     }
-    return [];
+    return EMPTY_ARRAY;
   });
 
   const userUnits = buildingUnits.filter(unit => 
