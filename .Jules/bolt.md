@@ -1,0 +1,3 @@
+## 2026-07-15 - Extract inline literal arrays from Redux useSelector to stable constants
+**Learning:** Returning inline array literals (`|| []`) as a fallback from `useSelector` hooks in React-Redux apps forces continuous, unnecessary component re-renders whenever the Redux store updates, even for completely unrelated actions, because the array literal always creates a new reference in memory that fails the strict equality check (`===`).
+**Action:** Always extract fallback arrays or objects to stable constants (e.g., `const EMPTY_ARRAY = [];`) defined outside the component or hook to maintain referential equality and prevent performance regressions.
