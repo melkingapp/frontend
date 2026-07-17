@@ -8,10 +8,10 @@ import { EMPTY_ARRAY } from "../../../../constants/index";
  */
 export function useTransactionsData(viewMode, unitTransactions, unitStatusFilter) {
   // Get transactions from Redux state
-  const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY); // ⚡ Bolt: Extract inline array to stable constant to prevent re-renders
+  const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY); // ⚡ Bolt: Use stable EMPTY_ARRAY
   const transactions = Array.isArray(transactionsData) 
     ? transactionsData 
-    : (transactionsData?.transactions || []);
+    : (transactionsData?.transactions || EMPTY_ARRAY);
 
   // Normalize unit financial transactions for UI
   const transactionsToDisplay = useMemo(() => {

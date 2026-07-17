@@ -52,8 +52,8 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY); // ⚡ Bolt: Extract inline array to stable constant to prevent re-renders
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY); // ⚡ Bolt: Use stable EMPTY_ARRAY
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
