@@ -9,6 +9,7 @@ import { FinanceDetailsModal } from "../../../manager/finance/components/transac
 import { TransactionFilter } from "../../../manager/finance/components/transactions/TransactionFilters";
 import useCategories from "../../../../shared/hooks/useCategories";
 import { useResidentUnitData } from "../../building/hooks/useResidentUnitData";
+import { EMPTY_ARRAY } from "../../../../constants/index";
 
 moment.loadPersian({ dialect: "persian-modern" });
 
@@ -51,8 +52,8 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
-    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY); // ⚡ Bolt: Use stable EMPTY_ARRAY
+    const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || EMPTY_ARRAY);
     
     // Fetch transactions when building or date range changes
     useEffect(() => {
