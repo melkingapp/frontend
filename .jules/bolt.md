@@ -1,0 +1,3 @@
+## 2024-05-18 - Prevent Unnecessary Re-renders with Stable Arrays
+**Learning:** Returning literal arrays (e.g., `|| []`) directly from `useSelector` causes the Redux selector to return a new array instance on every state change, even when the data itself hasn't changed. This breaks referential equality in React, triggering unnecessary re-renders in components and hooks that depend on that selector.
+**Action:** Always extract empty fallback arrays to a stable constant (e.g., `const EMPTY_ARRAY = [];`) outside the component/hook, or provide a default fallback value before the `useSelector` call, to ensure referential equality is maintained when the underlying Redux state is empty.
