@@ -49,8 +49,9 @@ const ChatMessage = ({ message }) => {
                     {!isUser && (
                         <button
                             onClick={handleCopy}
-                            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded hover:bg-gray-100"
+                            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             title="کپی کردن"
+                            aria-label="کپی کردن پیام"
                         >
                             {copied ? (
                                 <Check size={14} className="text-green-500" />
