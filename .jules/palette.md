@@ -1,0 +1,3 @@
+## 2025-02-20 - Enhancing Icon-Only Action Buttons Accessibility
+**Learning:** Found a critical accessibility gap where hidden or icon-only actions (like hover-to-show delete buttons or copy icons) are invisible to screen readers and keyboard users because they lack `aria-label` and `focus:opacity-100` utility classes, making them functionally unreachable.
+**Action:** Always add localized `aria-label`, `title`, and explicit keyboard focus states (`focus:outline-none focus-visible:ring-2 focus:opacity-100`) to interactive icon-only elements or elements whose visibility is governed by hover states.
