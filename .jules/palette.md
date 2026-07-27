@@ -1,0 +1,4 @@
+
+## 2024-05-24 - Improve Public Header Accessibility
+**Learning:** Found multiple icon-only buttons in `Header.jsx` and `MobileMenu.jsx` that were missing proper accessibility attributes. The hamburger menu button lacked `aria-label`, `title`, and keyboard focus states. The navigation icons mapped from arrays had `aria-label` but lacked `title` tooltips and visible focus rings. Adding these improves screen reader experience and keyboard navigation consistency.
+**Action:** Always ensure icon-only buttons have localized `aria-label` and `title` attributes (e.g., 'باز کردن منو' for Open Menu in Persian contexts). Rely on existing utility classes like `focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]` to enforce the app's standard focus ring color and consistently maintain keyboard accessibility.

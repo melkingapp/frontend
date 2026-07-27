@@ -24,7 +24,7 @@ export default function MobileMenu({ isOpen, onClose }) {
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
                     <h2 className="text-lg font-bold text-melkingDarkBlue">سامانه مدیریت ساختمان</h2>
-                    <button onClick={onClose} aria-label="بستن منو" className="p-2 rounded-full hover:bg-gray-100 transition">
+                    <button onClick={onClose} aria-label="بستن منو" title="بستن منو" className="p-2 rounded-full hover:bg-gray-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]">
                         <X className="w-6 h-6 text-gray-600" />
                     </button>
                 </div>
