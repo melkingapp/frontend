@@ -124,6 +124,8 @@ export default function BalanceDetailsModal({ transaction, onClose, isManager, t
           
           <button
             onClick={onClose}
+            aria-label="بستن"
+            title="بستن"
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X size={20} />
