@@ -487,6 +487,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                     <>
                       <button
                         onClick={handleEdit}
+                        aria-label="ویرایش"
                         className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                         title="ویرایش"
                       >
@@ -494,6 +495,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                       </button>
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
+                        aria-label="حذف"
                         className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                         title="حذف"
                       >
@@ -501,7 +503,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                       </button>
                     </>
                   )}
-                  <button onClick={onClose}>
+                  <button onClick={onClose} aria-label="بستن" title="بستن">
                     <X className="text-gray-500 hover:text-red-500" />
                   </button>
                 </div>

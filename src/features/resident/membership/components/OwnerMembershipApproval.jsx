@@ -115,12 +115,16 @@ const RequestCard = ({ request, onApprove, onReject, onViewDetails, onEdit, appr
           </button>
           <button
             onClick={() => onEdit(request)}
+            aria-label="ویرایش"
+            title="ویرایش"
             className="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
           >
             <Edit size={16} />
           </button>
           <button
             onClick={() => onViewDetails(request)}
+            aria-label="مشاهده جزئیات"
+            title="مشاهده جزئیات"
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <Eye size={16} />
@@ -169,6 +173,8 @@ const RequestDetailsModal = ({ request, isOpen, onClose }) => {
             <h2 className="text-xl font-bold text-gray-900">جزئیات درخواست عضویت</h2>
             <button
               onClick={onClose}
+              aria-label="بستن"
+              title="بستن"
               className="text-gray-400 hover:text-gray-600 transition-colors"
             >
               <XCircle size={24} />
@@ -334,6 +340,8 @@ const EditRequestModal = ({ request, isOpen, onClose, onSave }) => {
             <h2 className="text-xl font-bold text-gray-900">ویرایش درخواست عضویت</h2>
             <button
               onClick={onClose}
+              aria-label="بستن"
+              title="بستن"
               className="text-gray-400 hover:text-gray-600 transition-colors"
             >
               <XCircle size={24} />
