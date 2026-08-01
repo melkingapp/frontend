@@ -1,0 +1,3 @@
+## 2024-05-14 - Prevent Unnecessary Re-renders with useSelector
+**Learning:** Found multiple instances where `useSelector` returns inline fallback values like `[]` (e.g., `useSelector(state => state.finance.transactions || [])`). In React, an inline array literal `[]` creates a new reference on every render, defeating Redux's built-in referential equality checks and triggering unnecessary re-renders across the component tree.
+**Action:** Extract inline array fallbacks to stable variables (e.g., `const EMPTY_ARRAY = [];`) outside of the selector or component scope, and use that variable in the `useSelector` fallback to maintain referential equality.
