@@ -1,0 +1,3 @@
+## 2024-08-01 - Add keyboard accessibility and ARIA labels to Header buttons
+**Learning:** Adding `onFocus` and `onBlur` handlers that mirror `onMouseEnter` and `onMouseLeave` is critical for interactive components with tooltips to ensure they are fully accessible via keyboard navigation. Additionally, ensuring explicit focus visibility (e.g. `focus-visible:ring-2 focus-visible:ring-[#D3B66C]`) makes these elements easily discernible for non-pointer users.
+**Action:** Always verify keyboard focus states and mirror tooltip visibility logic (`onFocus`/`onBlur`) for any interactive icon-only buttons or custom interactive elements to ensure complete keyboard accessibility.
