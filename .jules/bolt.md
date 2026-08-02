@@ -1,0 +1,3 @@
+## 2024-05-18 - Stable references in useSelector
+**Learning:** Returning inline array literals (`[]`) from Redux `useSelector` hooks in React causes the selector to return a new reference on every single state change, failing equality checks and triggering unnecessary re-renders in components, even if the relevant data hasn't changed. This is especially impactful in data-heavy components like tables.
+**Action:** Always extract inline literal arrays (and objects) returned by `useSelector` hooks to stable constants (e.g., `const EMPTY_ARRAY = [];`) defined outside the component or hook to maintain referential equality and prevent re-renders.
