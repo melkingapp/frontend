@@ -1,0 +1,3 @@
+## 2025-03-09 - Accessible Icon Buttons in Header
+**Learning:** Icon-only buttons lacking localized ARIA labels and visual focus states are a recurring accessibility issue in shared navigational components. Adding native `title` tooltips alongside keyboard focus indicators drastically improves usability for all users, not just screen reader users.
+**Action:** When working on navigation or icon-heavy UIs, prioritize adding `focus-visible:ring-2` to support keyboard navigators, and ensure icon-only buttons include localized `aria-label` and `title` attributes for dual screen-reader and mouse-hover support.
