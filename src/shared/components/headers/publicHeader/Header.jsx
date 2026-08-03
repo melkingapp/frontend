@@ -54,7 +54,12 @@ export default function Header() {
 
                 {/* ----------------- Mobile Layout ------------------ */}
                 <div className="flex w-full items-center justify-between md:hidden">
-                    <button onClick={() => setMenuOpen(true)} className="text-gray-700">
+                    <button
+                        onClick={() => setMenuOpen(true)}
+                        className="text-gray-700 p-2 rounded-md hover:bg-gray-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold"
+                        aria-label="باز کردن منو"
+                        title="باز کردن منو"
+                    >
                         <Menu className="w-6 h-6" />
                     </button>
 
