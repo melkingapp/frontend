@@ -1,0 +1,3 @@
+## 2025-02-05 - Optimize Redux useSelector Default Fallbacks
+**Learning:** Found a recurring pattern in React-Redux apps where returning inline literal arrays (e.g., `data || []`) as default values inside `useSelector` hooks triggers unnecessary component re-renders. Every time the Redux store updates, even for unrelated state changes, a new array reference is created, breaking referential equality (`[] !== []`).
+**Action:** Always extract inline literal array fallbacks to a stable constant (e.g., `const EMPTY_ARRAY = [];`) defined outside the component or hook when used within `useSelector` or dependency arrays to ensure referential stability and prevent unnecessary re-renders.
