@@ -36,6 +36,8 @@ const ChatSidebar = ({ chats, currentChat, onSelectChat, onNewChat, onDeleteChat
                         <button
                             onClick={() => setSearchQuery('')}
                             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            aria-label="پاک کردن جستجو"
+                            title="پاک کردن جستجو"
                         >
                             <X size={18} />
                         </button>
