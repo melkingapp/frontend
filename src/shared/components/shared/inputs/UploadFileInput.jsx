@@ -55,19 +55,19 @@ export default function UploadFileInput({ label, onFilesChange, accept = "image/
 
             <label
                 htmlFor="file-upload"
-                className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition text-indigo-600"
+                className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 transition text-indigo-600"
             >
                 <UploadCloud className="w-5 h-5" />
                 انتخاب فایل (عکس، PDF و ...)
+                <input
+                    id="file-upload"
+                    type="file"
+                    accept={accept}
+                    multiple
+                    onChange={handleFiles}
+                    className="sr-only"
+                />
             </label>
-            <input
-                id="file-upload"
-                type="file"
-                accept={accept}
-                multiple
-                onChange={handleFiles}
-                className="hidden"
-            />
 
             {files.length > 0 && (
                 <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -80,7 +80,7 @@ export default function UploadFileInput({ label, onFilesChange, accept = "image/
                             <button
                                 type="button"
                                 onClick={() => removeFile(idx)}
-                                className="absolute top-1 left-1 z-10 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition hover:bg-red-600"
+                                className="absolute top-1 left-1 z-10 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-red-500 transition hover:bg-red-600"
                                 aria-label="حذف فایل"
                             >
                                 <X className="w-4 h-4" />
