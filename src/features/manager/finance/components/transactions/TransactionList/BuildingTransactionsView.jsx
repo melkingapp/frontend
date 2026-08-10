@@ -1,7 +1,8 @@
+import { memo } from "react";
 import FinanceTableRow from "./FinanceTableRow";
 import { Loader2 } from "lucide-react";
 
-export default function BuildingTransactionsView({
+const BuildingTransactionsView = memo(function BuildingTransactionsView({
   filteredData,
   onSelect,
   onEdit,
@@ -53,5 +54,7 @@ export default function BuildingTransactionsView({
       ))}
     </>
   );
-}
+});
+
+export default BuildingTransactionsView;
 
