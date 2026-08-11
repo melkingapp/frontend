@@ -1,0 +1,3 @@
+## 2024-08-11 - FloatingActionButton Keyboard & Screen Reader Accessibility
+**Learning:** Floating Action Buttons (FABs) with sub-menus often lack both accessible names and clear focus indicators by default. Because they only contain an icon (e.g., `<Plus />`), screen readers cannot announce their purpose. Furthermore, keyboard users need `focus-visible` styles to see which button is active before expanding the menu.
+**Action:** When implementing or modifying icon-only FABs, always ensure `aria-label` and `title` attributes are present (and dynamically update based on `open` state, e.g., "Open Menu" vs "Close Menu"). Additionally, use `focus:outline-none focus-visible:ring-2` to provide clear keyboard focus rings.
