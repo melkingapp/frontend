@@ -1,0 +1,3 @@
+## 2024-08-13 - Memoizing List Items
+**Learning:** Wrapping list item components like `FinanceTableRow` with `React.memo` is a straightforward and highly effective performance optimization in this codebase, especially since they are rendered in large numbers inside tables and views. However, tests frequently fail due to multiple `jest.config` file conflicts, which is an ongoing environment issue to be aware of.
+**Action:** When working on components rendered inside `.map()` loops or lists (like rows or items), proactively consider applying `React.memo` to skip unnecessary re-renders. Additionally, ignore the Jest configuration error if tests fail strictly for that reason, as it is a known environment issue.
