@@ -399,7 +399,9 @@ export default function ExtraPaymentRequests() {
                             <h3 className="text-lg font-bold text-slate-900">تصویر فیش</h3>
                             <button
                                 onClick={closeImagePreview}
-                                className="p-2 hover:bg-slate-100 rounded-lg transition"
+                                aria-label="بستن"
+                                title="بستن"
+                                className="p-2 hover:bg-slate-100 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                             >
                                 <XCircle size={24} className="text-slate-500" />
                             </button>
