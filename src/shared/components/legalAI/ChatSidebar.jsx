@@ -35,7 +35,7 @@ const ChatSidebar = ({ chats, currentChat, onSelectChat, onNewChat, onDeleteChat
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery('')}
-                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-full p-0.5" aria-label="پاک کردن جستجو"
                         >
                             <X size={18} />
                         </button>
@@ -86,7 +86,7 @@ const ChatSidebar = ({ chats, currentChat, onSelectChat, onNewChat, onDeleteChat
                                         e.stopPropagation();
                                         onDeleteChat(chat.id);
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200"
+                                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500" aria-label="حذف چت"
                                     title="حذف چت"
                                 >
                                     <Trash2 size={16} />
