@@ -1,0 +1,3 @@
+## 2025-08-15 - Add ARIA attributes and focus styles to Floating Action Button
+**Learning:** Found an icon-only Floating Action Button component lacking essential accessibility semantics (like aria-expanded, roles for menu/menuitem) and visible keyboard focus states. This pattern might be common across the app's interactive custom components.
+**Action:** When implementing custom interactive elements like dropdowns or FABs, always ensure to explicitly define roles, dynamic ARIA attributes (like aria-expanded), localized screen reader labels, and prominent `focus-visible` states using existing utility classes to guarantee keyboard accessibility.
