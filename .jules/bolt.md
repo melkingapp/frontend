@@ -1,0 +1,3 @@
+## 2025-02-15 - React.memo for List Rows and Views
+**Learning:** In complex transaction dashboards, parent state changes (like global filters or active tabs) can cause expensive deep re-renders of list views and every single row component. While typical, standard `React.memo` wrapping helps reduce re-renders when list data remains unchanged.
+**Action:** When implementing new table rows or list view wrappers that receive heavy, stable objects, proactively wrap the component in `React.memo` and ensure the closing parenthesis `);` is added when transforming `export default function...` into `const Component = memo(function...); export default Component;`.

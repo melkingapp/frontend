@@ -1,7 +1,15 @@
+import React, { memo } from "react";
 import FinanceTableRow from "./FinanceTableRow";
 import { Loader2 } from "lucide-react";
 
-export default function BuildingTransactionsView({
+/*
+ * ⚡ Bolt Performance Optimization:
+ * 💡 What: Wrapped BuildingTransactionsView with React.memo()
+ * 🎯 Why: This view component renders a list of rows. Memoizing it prevents the entire list from re-rendering when the parent updates but the list data hasn't changed.
+ * 📊 Impact: Prevents unnecessary reconciliation of the list array, reducing CPU usage during unrelated parent state changes.
+ * 🔬 Measurement: Use React Profiler to ensure this view only updates when filteredData or manager status changes.
+ */
+const BuildingTransactionsView = memo(function BuildingTransactionsView({
   filteredData,
   onSelect,
   onEdit,
@@ -53,5 +61,7 @@ export default function BuildingTransactionsView({
       ))}
     </>
   );
-}
+});
+
+export default BuildingTransactionsView;
 

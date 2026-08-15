@@ -1,7 +1,15 @@
+import React, { memo } from "react";
 import FinanceTableRow from "./FinanceTableRow";
 import { Loader2 } from "lucide-react";
 
-export default function UnitTransactionsView({
+/*
+ * ⚡ Bolt Performance Optimization:
+ * 💡 What: Wrapped UnitTransactionsView with React.memo()
+ * 🎯 Why: This view component renders a list of rows for a specific unit. Memoizing it prevents the list from re-rendering when parent state (like building-wide filters) updates.
+ * 📊 Impact: Eliminates unnecessary reconciliation of unit transactions when user interacts with other parts of the dashboard.
+ * 🔬 Measurement: Use React Profiler to verify this component avoids re-rendering during general dashboard state updates.
+ */
+const UnitTransactionsView = memo(function UnitTransactionsView({
   unitTransactions,
   unitTransactionsLoading,
   selectedUnitId,
@@ -65,5 +73,7 @@ export default function UnitTransactionsView({
       )}
     </>
   );
-}
+});
+
+export default UnitTransactionsView;
 
