@@ -1,0 +1,3 @@
+## 2024-08-16 - Make hover-dependent icon buttons keyboard accessible
+**Learning:** Found a critical accessibility issue pattern where icon-only action buttons (like delete buttons in lists) have their visibility governed solely by `group-hover:opacity-100`. This renders them completely invisible and effectively undiscoverable for users navigating via keyboard.
+**Action:** When working on UI components containing hover-dependent interactive elements, always ensure keyboard accessibility by explicitly adding `focus:opacity-100` alongside focus-visible styling (`focus:outline-none focus-visible:ring-2`) so the element becomes visibly revealed when focused via keyboard.
