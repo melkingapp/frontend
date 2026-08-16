@@ -165,7 +165,7 @@ export default function FinanceTransactions() {
   const handleSelectUnitInvoice = useCallback((tx) => {
     setSelectedUnitInvoice(tx);
     setShowUnitFinancialModal(true);
-  }, []);
+  }, [setSelectedUnitInvoice, setShowUnitFinancialModal]);
 
   const handleResetFilters = () => {
     resetFilters();
@@ -215,12 +215,12 @@ export default function FinanceTransactions() {
   const handleEditExpense = useCallback((expense) => {
     setEditingExpense(expense);
     setActiveModal("expense");
-  }, []);
+  }, [setEditingExpense, setActiveModal]);
 
   const handleDeleteExpense = useCallback((expense) => {
     setExpenseToDelete(expense);
     setDeleteWarning(null); // Reset warning when opening delete modal
-  }, []);
+  }, [setExpenseToDelete, setDeleteWarning]);
 
   const confirmDeleteExpense = async () => {
     if (!expenseToDelete) return;
