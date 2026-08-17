@@ -1,0 +1,3 @@
+## 2024-03-24 - React.memo Optimization Strategy
+**Learning:** Found that lists rendering `FinanceTableRow` inside `BuildingTransactionsView` and `UnitTransactionsView` were causing re-renders because `onSelect`, `onEdit`, and `onDelete` props were not memoized in the parent (`TransactionsPage`). Wrapping `FinanceTableRow` in `React.memo` while passing down inline or unmemoized functions won't work effectively.
+**Action:** Always verify if prop functions are stable (e.g., using `useCallback`) when applying `React.memo()`. Here, wrapping `FinanceTableRow` in `React.memo` and ensuring `TransactionsPage` uses `useCallback` for its handlers would optimize the list rendering.
