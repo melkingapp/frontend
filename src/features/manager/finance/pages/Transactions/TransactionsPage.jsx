@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Plus, Coins } from "lucide-react";
@@ -41,6 +41,9 @@ export default function FinanceTransactions() {
   const transactionsLoading = useSelector(selectFinanceLoading);
 
   const [selected, setSelected] = useState(null);
+
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders of list items
+  const handleSetSelected = useCallback((val) => setSelected(val), []);
   const [activeModal, setActiveModal] = useState(null);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
@@ -162,10 +165,11 @@ export default function FinanceTransactions() {
 
   const handleExpense = () => setActiveModal("expense");
 
-  const handleSelectUnitInvoice = (tx) => {
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders of list items
+  const handleSelectUnitInvoice = useCallback((tx) => {
     setSelectedUnitInvoice(tx);
     setShowUnitFinancialModal(true);
-  };
+  }, []);
 
   const handleResetFilters = () => {
     resetFilters();
@@ -212,15 +216,17 @@ export default function FinanceTransactions() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSubmitting, activeModal]);
 
-  const handleEditExpense = (expense) => {
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders of list items
+  const handleEditExpense = useCallback((expense) => {
     setEditingExpense(expense);
     setActiveModal("expense");
-  };
+  }, []);
 
-  const handleDeleteExpense = (expense) => {
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders of list items
+  const handleDeleteExpense = useCallback((expense) => {
     setExpenseToDelete(expense);
     setDeleteWarning(null); // Reset warning when opening delete modal
-  };
+  }, []);
 
   const confirmDeleteExpense = async () => {
     if (!expenseToDelete) return;
@@ -615,7 +621,7 @@ export default function FinanceTransactions() {
             ) : (
               <BuildingTransactionsView
                 filteredData={filteredData}
-                onSelect={setSelected}
+                onSelect={handleSetSelected}
                 onEdit={handleEditExpense}
                 onDelete={handleDeleteExpense}
                 isManager={isManager}
