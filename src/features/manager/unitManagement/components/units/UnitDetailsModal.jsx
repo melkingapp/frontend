@@ -307,7 +307,9 @@ export default function UnitDetailsModal({ unit, isOpen, onClose }) {
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 left-4 text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+                    aria-label="بستن"
+                    title="بستن"
+                    className="absolute top-4 left-4 text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold"
                 >
                     <X size={24} />
                 </button>

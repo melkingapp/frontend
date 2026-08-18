@@ -180,8 +180,9 @@ const UnitItem = memo(function UnitItem({ unit, onSelect, onEdit = () => {} }) {
                                     onEdit(unit);
                                 }
                             }}
-                            className="text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-100 p-2 rounded-full transition-colors"
+                            aria-label="ویرایش واحد"
                             title="ویرایش واحد"
+                            className="text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-100 p-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold"
                         >
                             <Edit size={18} />
                         </button>
