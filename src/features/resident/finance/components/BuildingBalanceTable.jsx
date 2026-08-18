@@ -10,6 +10,8 @@ import { TransactionFilter } from "../../../manager/finance/components/transacti
 import useCategories from "../../../../shared/hooks/useCategories";
 import { useResidentUnitData } from "../../building/hooks/useResidentUnitData";
 
+const EMPTY_ARRAY = [];
+
 moment.loadPersian({ dialect: "persian-modern" });
 
 // Helper function to get current date in YYYY-MM-DD format
@@ -51,7 +53,7 @@ export default function BuildingBalanceTable() {
     });
     
     // Get transactions from Redux state
-    const transactionsData = useSelector(state => state.finance.transactions || []);
+    const transactionsData = useSelector(state => state.finance.transactions || EMPTY_ARRAY);
     const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
     
     // Fetch transactions when building or date range changes
