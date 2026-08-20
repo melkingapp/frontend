@@ -1,0 +1,3 @@
+## 2024-08-20 - React.memo on TransactionList items
+**Learning:** In large React applications with frequent state updates, mapping over long lists without memoization (like `FinanceTableRow` in the transaction list) can cause significant UI thread blocking due to unnecessary re-renders of list items. Shallow comparisons using `React.memo` efficiently solve this when properties are stable.
+**Action:** When implementing or optimizing complex lists or tables that show many components concurrently, wrap the row components in `React.memo()` and ensure that handlers passed to them are reference-stable to avoid unnecessary re-renders.
