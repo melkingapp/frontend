@@ -476,13 +476,9 @@ export const useChargeFormHandlers = ({
             // Convert Persian digits to English digits
             const persianToEnglish = (str) => {
               if (!str) return str;
-              const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-              const englishDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-              let result = String(str);
-              persianDigits.forEach((persian, index) => {
-                result = result.replace(new RegExp(persian, 'g'), englishDigits[index]);
-              });
-              return result;
+              // ⚡ Bolt: Optimized digit conversion using a single regex and character code offset
+              // This avoids instantiating 10 RegExp objects per function call, reducing GC pressure and execution time
+              return String(str).replace(/[\u06F0-\u06F9]/g, w => String.fromCharCode(w.charCodeAt(0) - 1728));
             };
             
             const englishDate = persianToEnglish(endDate);
