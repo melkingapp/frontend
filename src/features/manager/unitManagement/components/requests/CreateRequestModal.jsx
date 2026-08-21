@@ -209,6 +209,8 @@ export default function CreateRequestModal({ isOpen, onClose, buildingId, onSucc
                                     <button
                                         onClick={onClose}
                                         className="text-gray-400 hover:text-gray-600 transition"
+                                        title="بستن"
+                                        aria-label="بستن"
                                     >
                                         <X size={24} />
                                     </button>
