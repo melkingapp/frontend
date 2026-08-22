@@ -86,8 +86,8 @@ const ChatSidebar = ({ chats, currentChat, onSelectChat, onNewChat, onDeleteChat
                                         e.stopPropagation();
                                         onDeleteChat(chat.id);
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200"
-                                    title="حذف چت"
+                                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                                    title="حذف چت" aria-label="حذف چت"
                                 >
                                     <Trash2 size={16} />
                                 </button>

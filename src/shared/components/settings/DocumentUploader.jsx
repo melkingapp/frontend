@@ -320,15 +320,15 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                                 href={getFullMediaUrl(doc.file_url)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="مشاهده سند"
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                                                title="مشاهده سند" aria-label="مشاهده سند"
                                             >
                                                 <FileText size={18} />
                                             </a>
                                             <button
                                                 onClick={() => handleDownload(doc.file_url, doc.title)}
-                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="دانلود سند"
+                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                                                title="دانلود سند" aria-label="دانلود سند"
                                             >
                                                 <Download size={18} />
                                             </button>
@@ -336,8 +336,8 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                     )}
                                     <button
                                         onClick={() => confirmDelete(doc)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="حذف سند"
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                                        title="حذف سند" aria-label="حذف سند"
                                         disabled={loading}
                                     >
                                         <Trash2 size={18} />

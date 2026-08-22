@@ -170,7 +170,7 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
           <button
             onClick={fetchSchedules}
             className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-            title="بروزرسانی"
+            title="بروزرسانی" aria-label="بروزرسانی"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -194,7 +194,7 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
           onClick={fetchSchedules}
           disabled={loading}
           className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-          title="بروزرسانی"
+          title="بروزرسانی" aria-label="بروزرسانی"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
@@ -263,8 +263,8 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
                     <button
                       onClick={() => handleExecute(schedule.schedule_id)}
                       disabled={isLoading === 'execute'}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-                      title="اجرای دستی"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                      title="اجرای دستی" aria-label="اجرای دستی"
                     >
                       {isLoading === 'execute' ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -296,8 +296,8 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
                   <button
                     onClick={() => handleDelete(schedule.schedule_id, announcement.title)}
                     disabled={isLoading === 'delete'}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                    title="حذف"
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                    title="حذف" aria-label="حذف"
                   >
                     {isLoading === 'delete' ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

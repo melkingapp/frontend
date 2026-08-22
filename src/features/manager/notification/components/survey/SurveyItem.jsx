@@ -196,8 +196,8 @@ export default function SurveyItem({ survey, onSelect, selectedBuilding: propSel
                     <button
                         type="button"
                         onClick={handleDeleteClick}
-                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                        title="حذف"
+                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                        title="حذف" aria-label="حذف"
                     >
                         <Trash2 size={18} />
                     </button>

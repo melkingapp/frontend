@@ -128,15 +128,15 @@ export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelet
                 <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white rounded-lg px-1">
                     <button
                         onClick={handleEdit}
-                        className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="ویرایش"
+                        className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                        title="ویرایش" aria-label="ویرایش"
                     >
                         <Edit2 className="w-4 h-4 text-blue-600" />
                     </button>
                     <button
                         onClick={handleDelete}
-                        className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
-                        title="حذف"
+                        className="p-1.5 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                        title="حذف" aria-label="حذف"
                     >
                         <Trash2 className="w-4 h-4 text-red-600" />
                     </button>

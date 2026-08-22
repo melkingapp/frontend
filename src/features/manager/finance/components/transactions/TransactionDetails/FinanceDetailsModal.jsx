@@ -487,15 +487,15 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                     <>
                       <button
                         onClick={handleEdit}
-                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="ویرایش"
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                        title="ویرایش" aria-label="ویرایش"
                       >
                         <Edit2 className="w-5 h-5 text-blue-600" />
                       </button>
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        title="حذف"
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingDarkBlue"
+                        title="حذف" aria-label="حذف"
                       >
                         <Trash2 className="w-5 h-5 text-red-600" />
                       </button>

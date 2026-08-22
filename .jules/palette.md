@@ -1,0 +1,3 @@
+## 2024-08-22 - Focus Rings and ARIA Labels for Icon Buttons
+**Learning:** Icon-only buttons across various generic components lacked both screen-reader accessibility (`aria-label`) and keyboard navigation visibility. Using the application's specific custom theme colors (like `melkingDarkBlue`) for focus rings via Tailwind's `focus-visible:ring-melkingDarkBlue` provides a consistent and branded accessibility experience compared to generic colors.
+**Action:** Always verify icon-only buttons have descriptive `aria-label` attributes and explicitly ensure keyboard accessibility by appending `focus:outline-none focus-visible:ring-2 focus-visible:ring-<theme-color>` to their class lists.
