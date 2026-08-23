@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   Eye, 
   ArrowUpRight, 
@@ -73,8 +73,8 @@ export default function BalanceTable({ transactions, onTransactionClick, isLoadi
   };
 
   // تفکیک تراکنش‌ها به دارایی و بدهی
-  const assetsTransactions = transactions.filter(t => (t.amount || 0) > 0); // واریزی‌ها و درآمدها
-  const liabilitiesTransactions = transactions.filter(t => (t.amount || 0) < 0); // برداشت‌ها و هزینه‌ها
+  const assetsTransactions = useMemo(() => transactions.filter(t => (t.amount || 0) > 0), [transactions]); // واریزی‌ها و درآمدها
+  const liabilitiesTransactions = useMemo(() => transactions.filter(t => (t.amount || 0) < 0), [transactions]); // برداشت‌ها و هزینه‌ها
 
   // کامپوننت برای رندر کردن یک ردیف جدول
   const renderTableRow = (transaction, index) => (
