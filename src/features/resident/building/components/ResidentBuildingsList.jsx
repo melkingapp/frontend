@@ -26,8 +26,8 @@ export default function ResidentBuildingsList() {
 
     // Auto-refresh every 30 seconds for pending requests
     useEffect(() => {
-        const requests = buildings.map(b => ({ status: 'approved' })); // Simplified check
-        const hasPendingRequests = requests.some(req => req.status === 'pending');
+        // Fix unnecessary loop that re-creates the same data
+        const hasPendingRequests = buildings.some(b => b.status === 'pending');
         if (!hasPendingRequests) return;
 
         const interval = setInterval(() => {

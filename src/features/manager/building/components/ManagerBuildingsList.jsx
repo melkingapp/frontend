@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Building } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -15,7 +15,7 @@ export default function ManagerBuildingsList() {
     const selectedBuildingId = useSelector((state) => state.building.selectedBuildingId);
     const currentFundBalance = useSelector(selectCurrentFundBalance);
 
-    const myBuildings = buildings.filter((b) => {
+    const myBuildings = useMemo(() => buildings.filter((b) => {
         // Check if manager phone matches
         const managerPhone = b.manager?.phone_number || b.manager?.phone;
         if (managerPhone && userPhone && managerPhone === userPhone) {
@@ -28,7 +28,7 @@ export default function ManagerBuildingsList() {
         // If manager data is missing but building exists, include it (edge case)
         // This handles cases where building was just created and manager data might not be fully loaded
         return false;
-    });
+    }), [buildings, userPhone, userId]);
 
     useEffect(() => {
         dispatch(fetchBuildings());
