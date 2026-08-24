@@ -238,7 +238,9 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                 e.stopPropagation();
                                 clearFile();
                             }}
-                            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                            className="p-1 hover:bg-gray-200 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
+                            aria-label="پاک کردن فایل"
+                            title="پاک کردن فایل"
                         >
                             <X size={20} className="text-gray-600" />
                         </button>
