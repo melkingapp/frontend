@@ -238,7 +238,9 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                 e.stopPropagation();
                                 clearFile();
                             }}
-                            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                            className="p-1 hover:bg-gray-200 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+                            aria-label="بستن"
+                            title="بستن"
                         >
                             <X size={20} className="text-gray-600" />
                         </button>
@@ -336,7 +338,8 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                     )}
                                     <button
                                         onClick={() => confirmDelete(doc)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                                        aria-label="حذف سند"
                                         title="حذف سند"
                                         disabled={loading}
                                     >
