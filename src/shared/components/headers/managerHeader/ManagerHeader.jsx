@@ -39,7 +39,7 @@ export default function ManagerHeader({ onOpenSidebar }) {
         <header className="h-16 backdrop-blur-md bg-[#1c2e4ef0] text-white px-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
             {/* Mobile Menu Button */}
             <button
-                className="lg:hidden text-white hover:text-[#D3B66C] transition-colors duration-200"
+                className="lg:hidden text-white hover:text-[#D3B66C] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C] rounded-md"
                 onClick={onOpenSidebar}
                 aria-label="باز کردن منو"
             >
@@ -59,7 +59,9 @@ export default function ManagerHeader({ onOpenSidebar }) {
                         onClick={onClick}
                         onMouseEnter={() => setHovered(id)}
                         onMouseLeave={() => setHovered(null)}
-                        className="relative group"
+                        onFocus={() => setHovered(id)}
+                        onBlur={() => setHovered(null)}
+                        className="relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C] rounded-full"
                         aria-label={label}
                         type="button"
                     >
