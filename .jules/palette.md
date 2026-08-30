@@ -1,0 +1,3 @@
+## 2024-05-24 - Accessibility and Focus Management in Header
+**Learning:** Icon buttons that rely on hover for tooltip visibility (e.g., `onMouseEnter`) completely hide context from keyboard users. Additionally, relying on browser default focus states in custom Tailwind UI components often results in invisible or poor-contrast focus indicators.
+**Action:** Always map `onFocus` and `onBlur` handlers alongside `onMouseEnter` and `onMouseLeave` to ensure tooltips appear for keyboard navigation. Always apply explicit focus rings using `focus:outline-none focus-visible:ring-2` with the app's specific brand colors (e.g., `melkingGold` or `#D3B66C`) on interactive elements.
