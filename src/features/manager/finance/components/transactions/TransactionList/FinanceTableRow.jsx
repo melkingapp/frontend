@@ -10,7 +10,7 @@ import React from "react";
 import { Crown, Edit2, Trash2, User, Building2 } from "lucide-react";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusColor } from "../../../../../../shared/utils";
 
-const FinanceTableRow = React.memo(({ transaction, onSelect, onEdit, onDelete, isManager = false }) => {
+const FinanceTableRow = React.memo(function FinanceTableRow({ transaction, onSelect, onEdit, onDelete, isManager = false, isUnitView = false }) {
     // ⚡ Bolt Performance Optimization:
     // Wrapped FinanceTableRow in React.memo to prevent unnecessary re-renders when list updates
     // getStatusColor and formatJalaliDate are now imported from utils

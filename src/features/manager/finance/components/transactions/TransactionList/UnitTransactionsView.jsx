@@ -1,7 +1,8 @@
 import FinanceTableRow from "./FinanceTableRow";
+import React, { useCallback } from "react";
 import { Loader2 } from "lucide-react";
 
-export default function UnitTransactionsView({
+export default React.memo(function UnitTransactionsView({
   unitTransactions,
   unitTransactionsLoading,
   selectedUnitId,
@@ -11,6 +12,11 @@ export default function UnitTransactionsView({
   onDelete,
   isManager,
 }) {
+  // Memoize handlers to prevent unnecessary row re-renders
+  const handleSelect = useCallback((item) => onSelectUnitInvoice && onSelectUnitInvoice(item), [onSelectUnitInvoice]);
+  const handleEdit = useCallback((item) => onEdit && onEdit(item), [onEdit]);
+  const handleDelete = useCallback((item) => onDelete && onDelete(item), [onDelete]);
+
   if (!selectedUnitId && !unitTransactionsLoading) {
     return (
       <div className="text-center py-12">
@@ -55,9 +61,9 @@ export default function UnitTransactionsView({
           <FinanceTableRow 
             key={`${item.id}-${item.type || item.category}-${item.title}-${index}`} 
             transaction={item} 
-            onSelect={onSelectUnitInvoice} 
-            onEdit={onEdit}
-            onDelete={onDelete}
+            onSelect={handleSelect}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
             isManager={isManager}
             isUnitView={true}
           />
@@ -65,5 +71,5 @@ export default function UnitTransactionsView({
       )}
     </>
   );
-}
+});
 

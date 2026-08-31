@@ -1,3 +1,0 @@
-## 2025-02-12 - Prevent Re-renders in Long Finance List
-**Learning:** Found that `FinanceTableRow` (used in BuildingTransactionsView and UnitTransactionsView to display long lists of building financial data) was frequently re-rendering when parent lists updated state, as it wasn't wrapped in `React.memo`. Since it processes transaction type labels, translations, and colors on every render, this was blocking the main thread during quick scrolls or filtering of long transaction histories.
-**Action:** Always wrap heavily-repeated list row components in `React.memo` (and verify dependent props like `isUnitView` aren't mistakenly left unused if not actually needed for row UI) to ensure the component is cleanly memoized for list rendering performance.
