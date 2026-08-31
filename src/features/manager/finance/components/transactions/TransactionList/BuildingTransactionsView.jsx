@@ -1,7 +1,8 @@
 import FinanceTableRow from "./FinanceTableRow";
+import React, { useCallback } from "react";
 import { Loader2 } from "lucide-react";
 
-export default function BuildingTransactionsView({
+export default React.memo(function BuildingTransactionsView({
   filteredData,
   onSelect,
   onEdit,
@@ -9,6 +10,11 @@ export default function BuildingTransactionsView({
   isManager,
   loading = false,
 }) {
+  // Memoize handlers to prevent unnecessary row re-renders
+  const handleSelect = useCallback((item) => onSelect && onSelect(item), [onSelect]);
+  const handleEdit = useCallback((item) => onEdit && onEdit(item), [onEdit]);
+  const handleDelete = useCallback((item) => onDelete && onDelete(item), [onDelete]);
+
   // Show loading state when data is being fetched
   if (loading) {
     return (
@@ -44,14 +50,14 @@ export default function BuildingTransactionsView({
         <FinanceTableRow 
           key={`${item.id}-${item.type || item.category}-${item.title}-${index}`} 
           transaction={item} 
-          onSelect={onSelect} 
-          onEdit={onEdit}
-          onDelete={onDelete}
+          onSelect={handleSelect}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
           isManager={isManager}
           isUnitView={false}
         />
       ))}
     </>
   );
-}
+});
 
