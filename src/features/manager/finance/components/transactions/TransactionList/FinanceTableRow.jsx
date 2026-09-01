@@ -6,10 +6,18 @@
  * - payment_status: وضعیت پرداخت ساکنین (همه پرداخت کردند، X از Y پرداخت کردند)
  */
 
+import { memo } from "react";
 import { Crown, Edit2, Trash2, User, Building2 } from "lucide-react";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusColor } from "../../../../../../shared/utils";
 
-export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelete, isManager = false, isUnitView = false }) {
+/**
+ * ⚡ Bolt Performance Optimization
+ * 💡 What: Wrapped FinanceTableRow in React.memo()
+ * 🎯 Why: This component is rendered in potentially long lists of transactions, which can cause significant jank and layout thrashing during renders.
+ * 📊 Impact: Prevents unnecessary re-renders for identical rows.
+ * 🔬 Measurement: Observe React DevTools Profiler to see fewer re-renders during state changes.
+ */
+const FinanceTableRow = memo(function FinanceTableRow({ transaction, onSelect, onEdit, onDelete, isManager = false, isUnitView = false }) {
     // getStatusColor and formatJalaliDate are now imported from utils
 
     // بررسی اینکه آیا این یک پرداخت اضافی است
@@ -144,4 +152,6 @@ export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelet
             )}
         </div>
     );
-}
+});
+
+export default FinanceTableRow;
