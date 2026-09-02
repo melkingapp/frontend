@@ -34,16 +34,16 @@ jobs:
           cache: npm
 
       - name: 📦 Install dependencies
-        run: npm ci
+        run: npm install -g pnpm && pnpm i
 
       - name: 🔍 Lint
-        run: npm run lint
+        run: pnpm run lint
         continue-on-error: true
 
       - name: 🏗️ Build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'http://171.22.25.201:9000/api/v1' }}
-        run: npm run build
+        run: pnpm run build
 
       - name: 📦 Upload artifact
         uses: actions/upload-artifact@v4
