@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Eye, Search, Filter, Calendar, X } from "lucide-react";
 import moment from "moment-jalaali";
@@ -72,78 +72,83 @@ export default function BuildingBalanceTable() {
         }
     }, [dispatch, building?.building_id, dateRange, isResident, approvedBuildings.length]);
     
+    // ⚡ Bolt: Memoize the sorted and filtered transactions to avoid recalculating on every render.
+    // Impact: Eliminates O(N log N) array operations on re-renders.
+    // Measurement: Profile React component to observe fewer CPU cycles.
     // Sort and filter transactions
-    const sortedData = [...transactions].sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
-    );
-    
-    const filteredData = sortedData.filter(item => {
-        let matchesFilter = false;
+    const filteredData = useMemo(() => {
+        const sortedData = [...transactions].sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
+        );
         
-        if (filter === "all") {
-            matchesFilter = true;
-        } else if (filter === "purchases") {
-            matchesFilter = item.title && item.title.startsWith("اقلام خریدنی");
-        } else if (filter.startsWith("custom_")) {
-            const customType = filter.replace("custom_", "").replace(/_/g, " ");
-            matchesFilter = item.title === customType || 
-                           item.bill_type === customType ||
-                           (item.bill_type === 'other' && item.description === customType);
-        } else {
-            // Map expense type filters to actual data
-            const filterMapping = {
-                'water_bill': 'قبض آب',
-                'electricity_bill': 'قبض برق',
-                'gas': 'قبض گاز',
-                'maintenance': 'تعمیرات',
-                'cleaning': 'نظافت',
-                'security': 'امنیت',
-                'camera': 'دوربین',
-                'parking': 'پارکینگ',
-                'charge': 'شارژ',
-                'repair': 'تعمیرات',
-                'rent': 'اجاره',
-                'service': 'خدمات',
-                'other': 'سایر'
-            };
+        return sortedData.filter(item => {
+            let matchesFilter = false;
             
-            const expectedTitle = filterMapping[filter];
-            
-            const billTypeMapping = {
-                'water_bill': 'water',
-                'electricity_bill': 'electricity',
-                'gas': 'gas',
-                'maintenance': 'maintenance',
-                'cleaning': 'cleaning',
-                'security': 'security',
-                'camera': 'camera',
-                'parking': 'parking',
-                'charge': 'charge',
-                'repair': 'maintenance',
-                'rent': 'other',
-                'service': 'other',
-                'other': 'other'
-            };
-            
-            const expectedBillType = billTypeMapping[filter];
-            const filterLabel = categories.find(cat => cat.value === filter)?.label;
-            
-            matchesFilter = item.title === expectedTitle || 
-                           (item.bill_type && item.bill_type === expectedBillType) ||
-                           (item.category && item.category === filter) ||
-                           (item.title && item.title === filterLabel);
-        }
-        
-        const search = searchTerm.trim().toLowerCase();
-        const matchesSearch =
-            search === "" ||
-            item.title.toLowerCase().includes(search) ||
-            item.status.toLowerCase().includes(search) ||
-            item.date.toLowerCase().includes(search) ||
-            item.amount.toString().includes(search);
+            if (filter === "all") {
+                matchesFilter = true;
+            } else if (filter === "purchases") {
+                matchesFilter = item.title && item.title.startsWith("اقلام خریدنی");
+            } else if (filter.startsWith("custom_")) {
+                const customType = filter.replace("custom_", "").replace(/_/g, " ");
+                matchesFilter = item.title === customType ||
+                               item.bill_type === customType ||
+                               (item.bill_type === 'other' && item.description === customType);
+            } else {
+                // Map expense type filters to actual data
+                const filterMapping = {
+                    'water_bill': 'قبض آب',
+                    'electricity_bill': 'قبض برق',
+                    'gas': 'قبض گاز',
+                    'maintenance': 'تعمیرات',
+                    'cleaning': 'نظافت',
+                    'security': 'امنیت',
+                    'camera': 'دوربین',
+                    'parking': 'پارکینگ',
+                    'charge': 'شارژ',
+                    'repair': 'تعمیرات',
+                    'rent': 'اجاره',
+                    'service': 'خدمات',
+                    'other': 'سایر'
+                };
 
-        return matchesFilter && matchesSearch;
-    });
+                const expectedTitle = filterMapping[filter];
+
+                const billTypeMapping = {
+                    'water_bill': 'water',
+                    'electricity_bill': 'electricity',
+                    'gas': 'gas',
+                    'maintenance': 'maintenance',
+                    'cleaning': 'cleaning',
+                    'security': 'security',
+                    'camera': 'camera',
+                    'parking': 'parking',
+                    'charge': 'charge',
+                    'repair': 'maintenance',
+                    'rent': 'other',
+                    'service': 'other',
+                    'other': 'other'
+                };
+
+                const expectedBillType = billTypeMapping[filter];
+                const filterLabel = categories.find(cat => cat.value === filter)?.label;
+
+                matchesFilter = item.title === expectedTitle ||
+                               (item.bill_type && item.bill_type === expectedBillType) ||
+                               (item.category && item.category === filter) ||
+                               (item.title && item.title === filterLabel);
+            }
+            
+            const search = searchTerm.trim().toLowerCase();
+            const matchesSearch =
+                search === "" ||
+                item.title.toLowerCase().includes(search) ||
+                item.status.toLowerCase().includes(search) ||
+                item.date.toLowerCase().includes(search) ||
+                item.amount.toString().includes(search);
+
+            return matchesFilter && matchesSearch;
+        });
+    }, [transactions, filter, searchTerm, categories]);
     
     // Calculate totals
     const totalCost = filteredData.reduce((sum, t) => sum + t.amount, 0);
