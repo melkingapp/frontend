@@ -271,4 +271,4 @@ export default React.memo(function PaymentItem({ payment, buildingId }) {
       <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 ring-emerald-500/0 group-focus-within:ring-2 group-hover:ring-1 group-hover:ring-gray-100" />
     </article>
   );
-});
+}););

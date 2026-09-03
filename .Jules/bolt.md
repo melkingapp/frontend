@@ -1,3 +1,6 @@
 ## 2023-10-27 - React.memo on Complex List Items
 **Learning:** List items like `PaymentItem` that include multiple nested components, conditionals, and expensive date formatting (`moment-jalaali`) inside lists (like `PaymentBase`) cause significant render thrashing during parent state updates (like filtering or refreshing). Wrapping the complex list item component in `React.memo()` mitigates this.
 **Action:** When implementing heavy list rendering components, especially those rendering financial transactions or logs which can grow large, evaluate the list items for `React.memo` integration by default.
+## 2023-10-27 - React.memo on Complex List Items
+**Learning:** List items like `PaymentItem` that include multiple nested components, conditionals, and expensive date formatting (`moment-jalaali`) inside lists (like `PaymentBase`) cause significant render thrashing during parent state updates (like filtering or refreshing). Wrapping the complex list item component in `React.memo()` mitigates this.
+**Action:** When implementing heavy list rendering components, especially those rendering financial transactions or logs which can grow large, evaluate the list items for `React.memo` integration by default.
