@@ -13,7 +13,7 @@ export default function FormulaNameInput({
         <h3 className="text-lg font-semibold text-gray-800">تعریف فرمول جدید</h3>
         <button
           onClick={onBack}
-          className="text-sm text-gray-600 hover:text-gray-800"
+          className="text-sm text-gray-600 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 rounded px-2 py-1 transition-colors"
         >
           ← بازگشت به لیست فرمول‌ها
         </button>

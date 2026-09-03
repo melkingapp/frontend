@@ -111,7 +111,8 @@ export default function ReportsMenu({ building, isManager = false }) {
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            aria-label="بستن"
           >
             <X size={20} />
           </button>
