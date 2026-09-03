@@ -41,7 +41,9 @@ class ApiService {
         if (response.status === 401 || response.status === 403) {
           console.log('Authentication failed, redirecting to login...');
           this.clearAuthData();
-          window.location.href = '/login';
+          window.dispatchEvent(new CustomEvent('api-unauthorized', {
+            detail: { status: response.status, error: 'Authentication failed' }
+          }));
         }
         return false;
       }
@@ -208,11 +210,6 @@ class ApiService {
             window.dispatchEvent(new CustomEvent('api-unauthorized', {
               detail: { status: 401, url: url, error: errorMessage }
             }));
-            
-            // Redirect to login if not already there
-            if (window.location.pathname !== '/login') {
-              window.location.href = '/login';
-            }
             
             errorMessage = errorMessage || 'Unauthorized';
             break;
@@ -450,10 +447,6 @@ class ApiService {
             window.dispatchEvent(new CustomEvent('api-unauthorized', {
               detail: { status: 401, url: url, error: errorMessage }
             }));
-            
-            if (window.location.pathname !== '/login') {
-              window.location.href = '/login';
-            }
             
             errorMessage = errorMessage || 'Unauthorized';
             break;

@@ -182,9 +182,9 @@ client.interceptors.response.use(
             if (isInvalidTokenType) {
                 console.log('🚨 Invalid token type error - clearing auth and redirecting to login...');
                 clearTokens();
-                if (window.location.pathname !== '/login') {
-                    window.location.href = '/login';
-                }
+                window.dispatchEvent(new CustomEvent('api-unauthorized', {
+                    detail: { status: 401, error: 'Invalid token type' }
+                }));
                 return Promise.reject(error);
             }
 
@@ -200,9 +200,9 @@ client.interceptors.response.use(
             } catch (refreshError) {
                 console.error('Token refresh failed:', refreshError);
                 clearTokens();
-                if (window.location.pathname !== '/login') {
-                    window.location.href = '/login';
-                }
+                window.dispatchEvent(new CustomEvent('api-unauthorized', {
+                    detail: { status: 401, error: 'Token refresh failed' }
+                }));
                 return Promise.reject(refreshError);
             }
         }
