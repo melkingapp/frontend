@@ -130,6 +130,7 @@ export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelet
                         onClick={handleEdit}
                         className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors"
                         title="ویرایش"
+                        aria-label="ویرایش"
                     >
                         <Edit2 className="w-4 h-4 text-blue-600" />
                     </button>
@@ -137,6 +138,7 @@ export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelet
                         onClick={handleDelete}
                         className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                         title="حذف"
+                        aria-label="حذف"
                     >
                         <Trash2 className="w-4 h-4 text-red-600" />
                     </button>

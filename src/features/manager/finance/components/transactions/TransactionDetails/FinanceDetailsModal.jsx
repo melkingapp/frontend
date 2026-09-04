@@ -501,7 +501,7 @@ export default function FinancenDetailsModal({ transaction, building, onClose, i
                       </button>
                     </>
                   )}
-                  <button onClick={onClose}>
+                  <button onClick={onClose} aria-label="بستن">
                     <X className="text-gray-500 hover:text-red-500" />
                   </button>
                 </div>
