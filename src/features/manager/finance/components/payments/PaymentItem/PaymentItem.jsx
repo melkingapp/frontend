@@ -1,3 +1,5 @@
+import React from "react";
+
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Home, Calendar, Check, X, Loader2, ImageIcon } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../../shared/utils";
@@ -16,9 +18,16 @@ moment.loadPersian({ dialect: "persian-modern" });
  * — تمرکز روی چگالی اطلاعات + سلسله‌مراتب بصری واضح
  * — دکمه‌های اکشن در دسترس، نمایش فاکتور در Modal/Inline
  */
-export default function PaymentItem({ payment, buildingId }) {
+
+
+// ⚡ Bolt Performance Optimization
+// 💡 What: Wrapped PaymentItem in React.memo
+// 🎯 Why: This component is rendered in the payment list and contains complex internal state and memoized values. Preventing unnecessary re-renders of list items avoids recalculating these values when the parent list updates.
+// 📊 Impact: Improves scrolling performance and reduces render time for long lists of payments.
+// 🔬 Measurement: Use React DevTools Profiler to measure the render time of the PaymentsList component when approving or rejecting a payment.
+const PaymentItem = React.memo(function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
@@ -268,4 +277,6 @@ export default function PaymentItem({ payment, buildingId }) {
       <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 ring-emerald-500/0 group-focus-within:ring-2 group-hover:ring-1 group-hover:ring-gray-100" />
     </article>
   );
-}
+});
+
+export default PaymentItem;

@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * FinanceTableRow Component
  * 
@@ -9,7 +11,14 @@
 import { Crown, Edit2, Trash2, User, Building2 } from "lucide-react";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusColor } from "../../../../../../shared/utils";
 
-export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelete, isManager = false, isUnitView = false }) {
+
+
+// ⚡ Bolt Performance Optimization
+// 💡 What: Wrapped FinanceTableRow in React.memo
+// 🎯 Why: This component is rendered within long lists (BuildingTransactionsView, UnitTransactionsView). When the parent list re-renders, all rows re-render even if their props haven't changed. React.memo prevents these unnecessary re-renders.
+// 📊 Impact: Significantly reduces rendering time and CPU usage when filtering, sorting, or adding new items to large transaction lists.
+// 🔬 Measurement: Use React DevTools Profiler to compare the render duration of the list before and after this change when toggling filters.
+const FinanceTableRow = React.memo(function FinanceTableRow({ transaction, onSelect, onEdit, onDelete, isManager = false, isUnitView = false }) {
     // getStatusColor and formatJalaliDate are now imported from utils
 
     // بررسی اینکه آیا این یک پرداخت اضافی است
@@ -144,4 +153,6 @@ export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelet
             )}
         </div>
     );
-}
+});
+
+export default FinanceTableRow;
