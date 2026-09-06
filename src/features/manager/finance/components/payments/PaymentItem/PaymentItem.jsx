@@ -27,7 +27,7 @@ moment.loadPersian({ dialect: "persian-modern" });
 // 🔬 Measurement: Use React DevTools Profiler to measure the render time of the PaymentsList component when approving or rejecting a payment.
 const PaymentItem = React.memo(function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
