@@ -8,8 +8,15 @@
 
 import { Crown, Edit2, Trash2, User, Building2 } from "lucide-react";
 import { formatJalaliDate, getPersianType, getPersianStatus, getStatusColor } from "../../../../../../shared/utils";
+import React from 'react';
 
-export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelete, isManager = false, isUnitView = false }) {
+/**
+ * ⚡ Bolt Performance Optimization:
+ * Wrapped FinanceTableRow with React.memo() to prevent unnecessary re-renders.
+ * Expected Impact: Reduces re-renders of list items when parent list or unrelated state updates.
+ * Measurement: Use React Profiler to verify unchanged rows don't re-render.
+ */
+const FinanceTableRow = React.memo(function FinanceTableRow({ transaction, onSelect, onEdit, onDelete, isManager = false, isUnitView = false }) {
     // getStatusColor and formatJalaliDate are now imported from utils
 
     // بررسی اینکه آیا این یک پرداخت اضافی است
@@ -144,4 +151,6 @@ export default function FinanceTableRow({ transaction, onSelect, onEdit, onDelet
             )}
         </div>
     );
-}
+});
+
+export default FinanceTableRow;
