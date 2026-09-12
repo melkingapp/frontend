@@ -1,0 +1,3 @@
+## 2024-05-24 - Memoizing Filtered Arrays in React Components
+**Learning:** The O(n) array filtering operations inside React component bodies are executed on every render, which wastes CPU cycles on large datasets (like membership requests) when unrelated state changes (such as modal toggles or route updates). By wrapping these operations in `useMemo`, we can prevent unnecessary recalculations.
+**Action:** When working with medium-to-large datasets in React components (e.g. lists, grids, tables), always wrap the filtering/sorting/mapping calculations in a `useMemo` hook, especially if the component handles other dynamic states.
