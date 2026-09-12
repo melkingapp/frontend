@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { fetchMembershipRequests, approveMembershipRequestByManager, rejectMembershipRequest, withdrawMembershipRequest } from "../membershipSlice";
@@ -267,14 +267,21 @@ export default function MembershipRequestsList() {
     console.log('View details for request:', request);
   };
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = searchTerm === '' || 
-      request.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.building_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.unit_number.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
+  // ⚡ Bolt Optimization: Memoize filteredRequests
+  // 💡 What: Wrapped the array filtering operation with useMemo.
+  // 🎯 Why: Previously, filtering recalculated on every render, wasting CPU cycles on large datasets when unrelated state (like modal toggles) changed.
+  // 📊 Impact: O(n) filtering operation now only runs when requests or searchTerm change, significantly improving component re-render speed.
+  // 🔬 Measurement: Verify with React Profiler that filtering time is 0ms on unrelated state updates.
+  const filteredRequests = useMemo(() => {
+    return requests.filter(request => {
+      const matchesSearch = searchTerm === '' ||
+        request.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.building_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.unit_number.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return matchesSearch;
+    });
+  }, [requests, searchTerm]);
 
   if (loading) {
     return (
