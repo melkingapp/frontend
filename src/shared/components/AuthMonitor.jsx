@@ -40,22 +40,17 @@ const AuthMonitor = () => {
 
         const validateToken = async (token) => {
             try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                const exp = payload.exp * 1000;
-                const now = Date.now();
+                // 🛡️ Sentinel Security Fix: Server-side token validation instead of unverified client-side atob()
+                const { getProfile } = await import('../../shared/services/profileService');
+                const response = await getProfile();
                 
-                if (exp < now) {
-                    console.log('❌ Token expired, force logging out...');
-                    dispatch(forceLogout());
-                    navigate('/login', { replace: true });
+                if (response && response.id) {
+                    console.log('✅ Token is valid and verified by server');
                 } else {
-                    console.log('✅ Token is valid');
-                    // Token is valid but user is not authenticated in Redux
-                    // This might happen after page refresh
-                    // We could dispatch a re-authentication action here if needed
+                    throw new Error('Invalid profile response');
                 }
             } catch (error) {
-                console.error('❌ Invalid token format:', error);
+                console.error('❌ Server validation failed or invalid token:', error);
                 dispatch(forceLogout());
                 navigate('/login', { replace: true });
             }
