@@ -1,0 +1,3 @@
+## 2024-05-24 - Stop Re-rendering Connected List Items
+**Learning:** Selecting an entire object from Redux state (e.g., `useSelector(state => state.payments)`) inside a list item component causes the component to re-render whenever *any* part of that state object changes, even if the item doesn't use the changed part. In this codebase, list items like `PaymentItem` select `{ loading }` from `state.payments`, meaning every item re-renders when the global loading state changes.
+**Action:** When connecting list items to Redux for simple primitive values like `loading`, select just that specific primitive value: `useSelector(state => state.payments.loading)`.
