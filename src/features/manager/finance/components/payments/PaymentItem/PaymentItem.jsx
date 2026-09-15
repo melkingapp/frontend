@@ -2,7 +2,7 @@
 import { Home, Calendar, Check, X, Loader2, ImageIcon } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../../shared/utils";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
@@ -16,9 +16,14 @@ moment.loadPersian({ dialect: "persian-modern" });
  * — تمرکز روی چگالی اطلاعات + سلسله‌مراتب بصری واضح
  * — دکمه‌های اکشن در دسترس، نمایش فاکتور در Modal/Inline
  */
-export default function PaymentItem({ payment, buildingId }) {
+function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+
+  // ⚡ Bolt: Optimized Redux selection to select only the primitive `loading` value
+  // This prevents all list items from re-rendering when other data in the `payments` slice changes.
+  // Impact: significantly reduces re-renders in large payment lists.
+  // Measurement: Profile React renders while approving/rejecting a payment.
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
@@ -269,3 +274,5 @@ export default function PaymentItem({ payment, buildingId }) {
     </article>
   );
 }
+
+export default React.memo(PaymentItem);
