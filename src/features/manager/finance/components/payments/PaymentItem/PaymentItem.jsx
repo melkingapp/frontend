@@ -3,7 +3,7 @@ import { Home, Calendar, Check, X, Loader2, ImageIcon } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../../shared/utils";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
 import { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../../store/slices/paymentsSlice";
@@ -18,7 +18,9 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // ⚡ Bolt Optimization: Removed unused 'loading' state selection via useSelector.
+  // Impact: Prevents unnecessary O(n) re-renders across all PaymentItem components in lists whenever global 'loading' state updates.
+  // Measurement: Profile React DevTools; rendering payments list should no longer show re-renders on arbitrary loading state changes.
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
