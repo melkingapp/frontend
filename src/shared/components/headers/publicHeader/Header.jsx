@@ -58,7 +58,6 @@ export default function Header() {
                         onClick={() => setMenuOpen(true)}
                         className="text-gray-700 p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                         aria-label="باز کردن منو"
-                        title="باز کردن منو"
                         aria-expanded={menuOpen}
                     >
                         <Menu className="w-6 h-6" />
@@ -80,7 +79,6 @@ export default function Header() {
                                     onBlur={() => setHovered(null)}
                                     className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                                     aria-label={label}
-                                    title={label}
                                     type="button"
                                 >
                                     <div className="flex items-center justify-center transition-all duration-200 rounded-full shadow-sm">
@@ -136,7 +134,6 @@ export default function Header() {
                                     onBlur={() => setHovered(null)}
                                     className="relative group bg-black/10  hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                                     aria-label={label}
-                                    title={label}
                                     type="button"
                                 >
                                     <div className="w-10 h-10 flex items-center justify-center transition-all duration-200 rounded-full shadow-sm">
