@@ -1,0 +1,3 @@
+## 2024-05-24 - Unused Global State in List Items
+**Learning:** Components rendered in lists (`PaymentItem`, `RequestItem`) frequently select the entire `loading` or `updateLoading` state from Redux, but do not actually consume it (e.g. `loading` is assigned but never used in the component). Selecting state in a list item that is updated globally will cause every item in the list to re-render when that state changes, creating an O(n) rendering bottleneck.
+**Action:** Actively look for and remove unused `useSelector` hooks in list item components to prevent widespread, unnecessary re-renders when global states like `loading` change.
