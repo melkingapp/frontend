@@ -2,7 +2,7 @@
 import { Home, Calendar, Check, X, Loader2 } from "lucide-react";
 import DocumentViewer from "../../../../../shared/components/shared/display/DocumentViewer";
 import { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../slices/paymentsSlice";
@@ -17,7 +17,11 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+
+  // ⚡ Bolt Optimization:
+  // Removed unused `useSelector(state => state.payments.loading)` to prevent O(n) re-renders.
+  // Impact: Eliminates unnecessary list-wide re-renders during payment loading states.
+  // Measurement: Profile React DevTools during payment fetch/update; observe zero list item re-renders.
   const [isProcessing, setIsProcessing] = useState(false);
 
   const roleStyle = useMemo(() => {
