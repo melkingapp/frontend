@@ -169,8 +169,9 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
           </h2>
           <button
             onClick={fetchSchedules}
-            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold"
             title="بروزرسانی"
+            aria-label="بروزرسانی"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -193,8 +194,9 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
         <button
           onClick={fetchSchedules}
           disabled={loading}
-          className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+          className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold"
           title="بروزرسانی"
+          aria-label="بروزرسانی"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
@@ -263,8 +265,9 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
                     <button
                       onClick={() => handleExecute(schedule.schedule_id)}
                       disabled={isLoading === 'execute'}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold"
                       title="اجرای دستی"
+                      aria-label="اجرای دستی"
                     >
                       {isLoading === 'execute' ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -277,12 +280,13 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
                   <button
                     onClick={() => handleToggle(schedule.schedule_id, schedule.is_active)}
                     disabled={isLoading === 'toggle'}
-                    className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                    className={`p-2 rounded-lg transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold ${
                       schedule.is_active
                         ? 'text-orange-600 hover:bg-orange-50'
                         : 'text-green-600 hover:bg-green-50'
                     }`}
                     title={schedule.is_active ? 'غیرفعال کردن' : 'فعال کردن'}
+                    aria-label={schedule.is_active ? 'غیرفعال کردن' : 'فعال کردن'}
                   >
                     {isLoading === 'toggle' ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -296,8 +300,9 @@ const ChargeSchedulesList = forwardRef(function ChargeSchedulesList({ buildingId
                   <button
                     onClick={() => handleDelete(schedule.schedule_id, announcement.title)}
                     disabled={isLoading === 'delete'}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-melkingGold"
                     title="حذف"
+                    aria-label="حذف"
                   >
                     {isLoading === 'delete' ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
