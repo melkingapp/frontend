@@ -74,6 +74,15 @@ export default function ManagerBuildingsList() {
                     const buildingId = building.building_id || building.id;
                     const isSelected = buildingId === selectedBuildingId;
 
+                    // ⚡ BOLT OPTIMIZATION:
+                    // 💡 What: Removed Inline IIFE (Immediately Invoked Function Expression) from render loop.
+                    // 🎯 Why: Re-creating and executing a function inside a map on every render cycle causes unnecessary overhead and GC pressure.
+                    // 📊 Impact: Improves render performance of the building list.
+                    // 🔬 Measurement: React Profiler will show reduced render time for ManagerBuildingsList component.
+                    const balance = isSelected && currentFundBalance?.current_balance !== undefined
+                        ? currentFundBalance.current_balance
+                        : building.fund_balance || 0;
+
                     return (
                         <div
                             key={buildingId || `building-${index}`}
@@ -102,14 +111,7 @@ export default function ManagerBuildingsList() {
                                 <p className="text-sm text-gray-600">
                                     موجودی صندوق:{" "}
                                     <span className="font-bold text-gray-900">
-                                        {(() => {
-                                            const buildingId = building.building_id || building.id;
-                                            const isSelectedBuilding = buildingId === selectedBuildingId;
-                                            const balance = isSelectedBuilding && currentFundBalance?.current_balance !== undefined 
-                                                ? currentFundBalance.current_balance 
-                                                : building.fund_balance || 0;
-                                            return balance.toLocaleString("fa-IR");
-                                        })()} تومان
+                                        {balance.toLocaleString("fa-IR")} تومان
                                     </span>
                                 </p>
 
