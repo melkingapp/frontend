@@ -54,7 +54,12 @@ export default function Header() {
 
                 {/* ----------------- Mobile Layout ------------------ */}
                 <div className="flex w-full items-center justify-between md:hidden">
-                    <button onClick={() => setMenuOpen(true)} className="text-gray-700">
+                    <button
+                        onClick={() => setMenuOpen(true)}
+                        className="text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C] rounded"
+                        aria-label="باز کردن منو"
+                        aria-expanded={menuOpen}
+                    >
                         <Menu className="w-6 h-6" />
                     </button>
 
@@ -70,7 +75,9 @@ export default function Header() {
                                     onClick={onClick}
                                     onMouseEnter={() => setHovered(id)}
                                     onMouseLeave={() => setHovered(null)}
-                                    className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] p-2"
+                                    onFocus={() => setHovered(id)}
+                                    onBlur={() => setHovered(null)}
+                                    className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                                     aria-label={label}
                                     type="button"
                                 >
@@ -123,7 +130,9 @@ export default function Header() {
                                     onClick={onClick}
                                     onMouseEnter={() => setHovered(id)}
                                     onMouseLeave={() => setHovered(null)}
-                                    className="relative group bg-black/10  hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C]"
+                                    onFocus={() => setHovered(id)}
+                                    onBlur={() => setHovered(null)}
+                                    className="relative group bg-black/10 hover:bg-[#D3B66C]/20 rounded-full text-melkingDarkBlue hover:text-[#D3B66C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]"
                                     aria-label={label}
                                     type="button"
                                 >
