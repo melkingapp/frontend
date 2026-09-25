@@ -17,7 +17,8 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // ⚡ Bolt: Selecting primitive avoids O(n) list re-renders when other payment state changes
+  const loading = useSelector(state => state.payments?.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const roleStyle = useMemo(() => {
