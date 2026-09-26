@@ -1,0 +1,3 @@
+## 2024-11-20 - Standardized Accessible Icon Button Pattern
+**Learning:** Icon-only menu buttons in this React application frequently lack localization attributes (aria-label/title) for Persian users and miss aria-expanded state properties and explicit focus rings, resulting in poor screen reader experience and keyboard navigation.
+**Action:** Always implement the standardized app-specific pattern for state-toggling icon buttons: include localized `aria-label` and `title`, bind `aria-expanded` to the state variable, and enforce focus visibility using `focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C] rounded-md`.
