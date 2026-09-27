@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Home, Calendar, Check, X, Loader2 } from "lucide-react";
 import DocumentViewer from "../../../../../shared/components/shared/display/DocumentViewer";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
@@ -15,9 +15,14 @@ moment.loadPersian({ dialect: "persian-modern" });
  * — تمرکز روی چگالی اطلاعات + سلسله‌مراتب بصری واضح
  * — دکمه‌های اکشن در دسترس، نمایش فاکتور در Modal/Inline
  */
-export default function PaymentItem({ payment, buildingId }) {
+// ⚡ Bolt Optimization: Added React.memo and primitive Redux selectors.
+// - What: Changed `useSelector(state => state.payments)` to `useSelector(state => state.payments.loading)`. Wrapped with `React.memo`.
+// - Why: Selecting the entire `payments` slice caused all items to re-render when ANY data in the slice updated (e.g., when one payment was approved).
+// - Impact: O(n) re-renders reduced to O(1). Only the specific updated component re-renders.
+// - Measurement: Use React Profiler. Approving a single payment should no longer highlight all other PaymentItems as re-rendered.
+const PaymentItem = React.memo(function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const roleStyle = useMemo(() => {
@@ -233,4 +238,6 @@ export default function PaymentItem({ payment, buildingId }) {
       <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 ring-emerald-500/0 group-focus-within:ring-2 group-hover:ring-1 group-hover:ring-gray-100" />
     </article>
   );
-}
+});
+
+export default PaymentItem;
