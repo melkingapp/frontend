@@ -1,19 +1,25 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Home, Check, X } from "lucide-react";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { updateRequestStatus } from "../../slices/requestsSlice";
 
-export default function RequestItem({ request }) {
+// ⚡ Bolt Optimization: Added React.memo and primitive Redux selectors.
+// - What: Changed `useSelector(state => state.requests)` to `useSelector(state => state.requests.updateLoading)`. Changed `useSelector(state => state.auth)` to `useSelector(state => state.auth.user?.role)`. Wrapped with `React.memo`.
+// - Why: Selecting entire slices (`requests`, `building`, `auth`) caused all items to re-render when any data in those slices updated (e.g., when a request status was updated).
+// - Impact: O(n) re-renders reduced to O(1). Only the specific updated component re-renders.
+// - Measurement: Use React Profiler. Approving a single request should no longer highlight all other RequestItems as re-rendered.
+const RequestItem = React.memo(function RequestItem({ request }) {
     const dispatch = useDispatch();
-    const { updateLoading } = useSelector(state => state.requests);
-    const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
-    const { user } = useSelector(state => state.auth);
+    const updateLoading = useSelector(state => state.requests.updateLoading);
+    const selectedBuildingId = useSelector(state => state.building.selectedBuildingId);
+    const buildings = useSelector(state => state.building.data);
+    const userRole = useSelector(state => state.auth.user?.role);
     const [expanded, setExpanded] = useState(false);
     
     // Only show approve/reject buttons for managers
-    const isManager = user?.role === 'manager';
+    const isManager = userRole === 'manager';
 
     const buildingId = selectedBuildingId || (buildings && buildings.length > 0 ? buildings[0].building_id : null);
 
@@ -174,4 +180,6 @@ export default function RequestItem({ request }) {
             </div>
         </article>
     );
-}
+});
+
+export default RequestItem;
