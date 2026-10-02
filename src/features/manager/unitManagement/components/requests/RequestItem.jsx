@@ -1,13 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Home, Check, X } from "lucide-react";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { updateRequestStatus } from "../../slices/requestsSlice";
 
-export default function RequestItem({ request }) {
+const RequestItem = React.memo(function RequestItem({ request }) {
     const dispatch = useDispatch();
-    const { updateLoading } = useSelector(state => state.requests);
+    // BOLT OPTIMIZATION: Select only primitive 'updateLoading' value instead of full state slice
+    // to avoid O(n) re-renders across all list items when unrelated request state changes
+    const updateLoading = useSelector(state => state.requests.updateLoading);
     const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
     const { user } = useSelector(state => state.auth);
     const [expanded, setExpanded] = useState(false);
@@ -174,4 +176,6 @@ export default function RequestItem({ request }) {
             </div>
         </article>
     );
-}
+});
+
+export default RequestItem;
