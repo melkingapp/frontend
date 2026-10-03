@@ -538,8 +538,10 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
             >
                 <button
                     onClick={() => setIsCollapsed((prev) => !prev)}
-                    className="mb-4 self-end text-yellow-300 hover:text-yellow-400 transition-transform duration-300"
+                    className="mb-4 self-end text-yellow-300 hover:text-yellow-400 transition-transform duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 rounded-md"
                     aria-label={isCollapsed ? "باز کردن سایدبار" : "کوچک کردن سایدبار"}
+                    title={isCollapsed ? "باز کردن سایدبار" : "کوچک کردن سایدبار"}
+                    aria-expanded={!isCollapsed}
                 >
                     {isCollapsed ? <ChevronRight size={22} /> : <ChevronLeft size={22} />}
                 </button>
@@ -574,9 +576,10 @@ export default function ResidentSidebar({ navItems, sidebarOpen, onCloseSidebar 
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
-                            className="mb-4 text-melkingDarkBlue text-sm hover:text-gray-900 transition"
+                            className="mb-4 text-melkingDarkBlue text-sm hover:text-gray-900 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C] rounded-md"
                             onClick={onCloseSidebar}
                             aria-label="بستن منوی موبایل"
+                            title="بستن منوی موبایل"
                         >
                             ✕ بستن
                         </button>
