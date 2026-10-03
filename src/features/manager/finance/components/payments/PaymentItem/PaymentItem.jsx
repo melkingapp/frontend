@@ -3,7 +3,7 @@ import { Home, Calendar, Check, X, Loader2, ImageIcon } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../../shared/utils";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
 import { useMemo, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../../store/slices/paymentsSlice";
@@ -18,10 +18,11 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   // ⚡ Bolt Performance Optimization:
-  // Removed unused `useSelector(state => state.payments)` subscription.
+  // Refactored `useSelector` to select only the primitive `loading` value instead of the entire `state.payments` slice.
   // Impact: Prevents O(n) re-renders across all PaymentItem components when unrelated payment state changes.
   // Measurement: Verify decreased re-renders using React DevTools Profiler during state updates.
   const dispatch = useDispatch();
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
