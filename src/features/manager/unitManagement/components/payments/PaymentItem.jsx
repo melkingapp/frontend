@@ -16,8 +16,11 @@ moment.loadPersian({ dialect: "persian-modern" });
  * — دکمه‌های اکشن در دسترس، نمایش فاکتور در Modal/Inline
  */
 export default function PaymentItem({ payment, buildingId }) {
+  // ⚡ Bolt Performance Optimization:
+  // Removed unused `useSelector(state => state.payments)` subscription.
+  // Impact: Prevents O(n) re-renders across all PaymentItem components when unrelated payment state changes.
+  // Measurement: Verify decreased re-renders using React DevTools Profiler during state updates.
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const roleStyle = useMemo(() => {

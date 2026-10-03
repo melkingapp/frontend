@@ -6,10 +6,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateRequestStatus } from "../../slices/requestsSlice";
 
 export default function RequestItem({ request }) {
+    // ⚡ Bolt Performance Optimization:
+    // Refactored `useSelector` hooks to select only specific primitive values instead of entire slice objects.
+    // Impact: Prevents O(n) re-renders across all RequestItem components when unrelated state in `requests`, `building`, or `auth` slices change.
+    // Measurement: Verify decreased re-renders using React DevTools Profiler during state updates.
     const dispatch = useDispatch();
-    const { updateLoading } = useSelector(state => state.requests);
-    const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
-    const { user } = useSelector(state => state.auth);
+    const updateLoading = useSelector(state => state.requests.updateLoading);
+    const selectedBuildingId = useSelector(state => state.building.selectedBuildingId);
+    const buildings = useSelector(state => state.building.data);
+    const user = useSelector(state => state.auth.user);
     const [expanded, setExpanded] = useState(false);
     
     // Only show approve/reject buttons for managers
