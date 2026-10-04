@@ -238,7 +238,9 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                                 e.stopPropagation();
                                 clearFile();
                             }}
-                            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                            className="p-1 hover:bg-gray-200 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            aria-label="حذف فایل انتخاب شده"
+                            title="حذف فایل انتخاب شده"
                         >
                             <X size={20} className="text-gray-600" />
                         </button>
@@ -276,6 +278,8 @@ const DocumentUploader = ({ buildingId, documents, onDocumentUploaded, onDocumen
                 onClick={handleUpload}
                 disabled={isUploading || !selectedFile || !documentTitle}
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 border border-transparent text-sm font-semibold rounded-lg shadow-md text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-indigo-600 disabled:hover:to-blue-600 transition-all duration-200 transform hover:scale-105 disabled:transform-none"
+                aria-label="آپلود سند"
+                title="آپلود سند"
             >
                 {isUploading ? (
                     <>
