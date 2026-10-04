@@ -2,8 +2,8 @@
 import { Home, Calendar, Check, X, Loader2, ImageIcon } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../../shared/utils";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
-import { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useMemo, useState, memo } from "react";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../../store/slices/paymentsSlice";
@@ -16,9 +16,15 @@ moment.loadPersian({ dialect: "persian-modern" });
  * — تمرکز روی چگالی اطلاعات + سلسله‌مراتب بصری واضح
  * — دکمه‌های اکشن در دسترس، نمایش فاکتور در Modal/Inline
  */
-export default function PaymentItem({ payment, buildingId }) {
+/*
+ * ⚡ Bolt Optimization:
+ * Wrap component with React.memo and remove unused useSelector(state => state.payments).
+ * Expected impact: Prevents O(n) re-renders across all list items whenever the payments global state updates.
+ * Measurement strategy: Use React Profiler to verify that PaymentItem only renders when its specific payment or buildingId props change.
+ */
+const PaymentItem = memo(function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // Removed unused useSelector for loading state that caused excessive re-renders
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
@@ -268,4 +274,6 @@ export default function PaymentItem({ payment, buildingId }) {
       <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 ring-emerald-500/0 group-focus-within:ring-2 group-hover:ring-1 group-hover:ring-gray-100" />
     </article>
   );
-}
+});
+
+export default PaymentItem;
