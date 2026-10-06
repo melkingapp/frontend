@@ -18,7 +18,9 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // ⚡ Bolt Optimization: Subscribe only to the specific 'loading' primitive
+  // instead of the entire 'payments' slice to prevent O(n) re-renders across all items.
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils

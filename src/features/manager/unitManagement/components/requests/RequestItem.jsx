@@ -7,9 +7,12 @@ import { updateRequestStatus } from "../../slices/requestsSlice";
 
 export default function RequestItem({ request }) {
     const dispatch = useDispatch();
-    const { updateLoading } = useSelector(state => state.requests);
-    const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
-    const { user } = useSelector(state => state.auth);
+    // ⚡ Bolt Optimization: Select specific primitive values instead of entire state slices
+    // to prevent widespread O(n) re-renders across all list items when unrelated data updates.
+    const updateLoading = useSelector(state => state.requests.updateLoading);
+    const selectedBuildingId = useSelector(state => state.building.selectedBuildingId);
+    const buildings = useSelector(state => state.building.data);
+    const user = useSelector(state => state.auth.user);
     const [expanded, setExpanded] = useState(false);
     
     // Only show approve/reject buttons for managers
