@@ -117,6 +117,8 @@ export default function PersianDateInput({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between bg-white"
+        aria-label="باز کردن تقویم"
+        aria-expanded={isOpen}
       >
         <span className={displayValue ? 'text-gray-900' : 'text-gray-500'}>
           {displayValue || placeholder}
@@ -136,12 +138,14 @@ export default function PersianDateInput({
                 <button
                   onClick={handlePrevMonth}
                   className="p-1 hover:bg-gray-100 rounded"
+                  aria-label="ماه قبل"
                 >
                   ←
                 </button>
                 <button
                   onClick={handleNextMonth}
                   className="p-1 hover:bg-gray-100 rounded"
+                  aria-label="ماه بعد"
                 >
                   →
                 </button>
