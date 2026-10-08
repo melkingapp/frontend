@@ -7,7 +7,7 @@ import { updateRequestStatus } from "../../slices/requestsSlice";
 
 export default function RequestItem({ request }) {
     const dispatch = useDispatch();
-    const { updateLoading } = useSelector(state => state.requests);
+    const updateLoading = useSelector(state => state.requests.updateLoading); // ⚡ Bolt: Extract specific primitive from state to prevent unnecessary O(n) re-renders
     const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
     const { user } = useSelector(state => state.auth);
     const [expanded, setExpanded] = useState(false);

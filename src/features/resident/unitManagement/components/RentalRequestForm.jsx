@@ -8,7 +8,8 @@ import { User, Building, Home, Phone, MessageSquare, CheckCircle, AlertCircle, X
 const RentalRequestForm = ({ onSuccess, onCancel }) => {
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
-  const { createLoading, error } = useSelector(state => state.requests);
+  const createLoading = useSelector(state => state.requests.createLoading);
+  const error = useSelector(state => state.requests.error); // ⚡ Bolt: Extract specific primitive from state to prevent unnecessary O(n) re-renders
 
   const [formData, setFormData] = useState({
     building_code: '',
