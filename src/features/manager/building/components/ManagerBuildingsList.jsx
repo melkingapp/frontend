@@ -74,6 +74,16 @@ export default function ManagerBuildingsList() {
                     const buildingId = building.building_id || building.id;
                     const isSelected = buildingId === selectedBuildingId;
 
+                    // ⚡ Bolt Performance Optimization:
+                    // Extracted inline IIFE into direct variable declarations to prevent unnecessary
+                    // function creation and execution on every render cycle.
+                    // Expected Impact: Reduces overhead and garbage collection pressure in list renders.
+                    // Measurement: Profile renders; list should have less GC churn.
+                    const balance = isSelected && currentFundBalance?.current_balance !== undefined
+                        ? currentFundBalance.current_balance
+                        : building.fund_balance || 0;
+                    const formattedBalance = balance.toLocaleString("fa-IR");
+
                     return (
                         <div
                             key={buildingId || `building-${index}`}
@@ -102,14 +112,7 @@ export default function ManagerBuildingsList() {
                                 <p className="text-sm text-gray-600">
                                     موجودی صندوق:{" "}
                                     <span className="font-bold text-gray-900">
-                                        {(() => {
-                                            const buildingId = building.building_id || building.id;
-                                            const isSelectedBuilding = buildingId === selectedBuildingId;
-                                            const balance = isSelectedBuilding && currentFundBalance?.current_balance !== undefined 
-                                                ? currentFundBalance.current_balance 
-                                                : building.fund_balance || 0;
-                                            return balance.toLocaleString("fa-IR");
-                                        })()} تومان
+                                        {formattedBalance} تومان
                                     </span>
                                 </p>
 
