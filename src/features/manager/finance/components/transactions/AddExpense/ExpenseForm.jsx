@@ -6,6 +6,7 @@ import InputField from "../../../../../../shared/components/shared/inputs/InputF
 import UploadFileInput from "../../../../../../shared/components/shared/inputs/UploadFileInput";
 import PersianDateInput from "../../../../../../shared/components/shared/inputs/PersianDateInput";
 import { formatNumber } from "../../../../../../shared/utils/helper";
+import { useMemo } from "react";
 
 export default function ExpenseForm({
     form,
@@ -30,6 +31,40 @@ export default function ExpenseForm({
     isEditing = false,
     hasPayments = false,
 }) {
+    /*
+    * ⚡ Bolt: Removed inline IIFE and extracted custom target cost calculations using useMemo.
+    * Impact: Prevents recalculation of target units and costs on every render,
+    *         reducing unnecessary object creation and garbage collection overhead.
+    * Measurement: Render times during form input typing should see a slight improvement
+    *              and memory allocation profile should be flatter.
+    */
+    const customCostData = useMemo(() => {
+        if (form.distribution !== "custom") return { targetUnits: [], totalCosts: 0, totalAmount: 0, difference: 0, isEqual: true };
+
+        let targetUnits = [];
+        if (form.target === "all") {
+            targetUnits = unitsList;
+        } else if (form.target === "custom") {
+            targetUnits = unitsList.filter(unit => form.selectedUnits.includes(unit.value));
+        } else {
+            targetUnits = unitsList;
+        }
+
+        const totalCosts = targetUnits.reduce((sum, unit) => {
+            const unitId = unit.unit?.units_id || unit.unit?.id || unit.value;
+            const cost = parseFloat(customUnitCosts[String(unitId)] || 0);
+            return sum + (isNaN(cost) ? 0 : cost);
+        }, 0);
+
+        const totalAmount = parseFloat(form.amount?.toString().replace(/,/g, "") || 0);
+        const difference = totalCosts - totalAmount;
+        const isEqual = Math.abs(difference) <= 1;
+
+        return { targetUnits, totalCosts, totalAmount, difference, isEqual };
+    }, [form.distribution, form.target, form.selectedUnits, form.amount, unitsList, customUnitCosts]);
+
+    const { targetUnits, totalCosts, totalAmount, difference, isEqual } = customCostData;
+
     return (
         <>
             <div className="mb-6">
@@ -148,34 +183,20 @@ export default function ExpenseForm({
                 />
                 
                 {/* ✅ اضافه شد: هشدارهای برای روش‌های توزیع نامناسب */}
-                {form.distribution === "per_person" && unitsList && (
-                    (() => {
-                        const totalResidents = unitsList.reduce((sum, unit) => {
-                            return sum + (unit.resident_count || 0);
-                        }, 0);
-                        return totalResidents === 0 ? (
-                            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <p className="text-sm text-amber-800">
-                                    ⚠️ <strong>هشدار:</strong> تمام واحدهای انتخاب‌شده خالی هستند. مبلغ به صورت مساوی تقسیم خواهد شد.
-                                </p>
-                            </div>
-                        ) : null;
-                    })()
+                {form.distribution === "per_person" && unitsList && unitsList.reduce((sum, unit) => sum + (unit.resident_count || 0), 0) === 0 && (
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm text-amber-800">
+                            ⚠️ <strong>هشدار:</strong> تمام واحدهای انتخاب‌شده خالی هستند. مبلغ به صورت مساوی تقسیم خواهد شد.
+                        </p>
+                    </div>
                 )}
                 
-                {form.distribution === "parking" && unitsList && (
-                    (() => {
-                        const totalParking = unitsList.reduce((sum, unit) => {
-                            return sum + (unit.parking_count || 0);
-                        }, 0);
-                        return totalParking === 0 ? (
-                            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <p className="text-sm text-amber-800">
-                                    ⚠️ <strong>هشدار:</strong> هیچ واحدی پارکینگ ندارد. مبلغ به صورت مساوی تقسیم خواهد شد.
-                                </p>
-                            </div>
-                        ) : null;
-                    })()
+                {form.distribution === "parking" && unitsList && unitsList.reduce((sum, unit) => sum + (unit.parking_count || 0), 0) === 0 && (
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm text-amber-800">
+                            ⚠️ <strong>هشدار:</strong> هیچ واحدی پارکینگ ندارد. مبلغ به صورت مساوی تقسیم خواهد شد.
+                        </p>
+                    </div>
                 )}
                 
                 {form.distribution === "custom" && (
@@ -194,92 +215,65 @@ export default function ExpenseForm({
                             <p className="text-red-500 text-sm mb-3">{errors.customUnitCosts}</p>
                         )}
                         <div className="space-y-2 max-h-60 overflow-y-auto pr-2 py-1">
-                            {(() => {
-                                // تعیین واحدهای هدف
-                                let targetUnits = [];
-                                if (form.target === "all") {
-                                    targetUnits = unitsList;
-                                } else if (form.target === "custom") {
-                                    targetUnits = unitsList.filter(unit => form.selectedUnits.includes(unit.value));
-                                } else {
-                                    targetUnits = unitsList;
-                                }
-
-                                // محاسبه مجموع مبالغ
-                                const totalCosts = targetUnits.reduce((sum, unit) => {
-                                    const unitId = unit.unit?.units_id || unit.unit?.id || unit.value;
-                                    const cost = parseFloat(customUnitCosts[String(unitId)] || 0);
-                                    return sum + (isNaN(cost) ? 0 : cost);
-                                }, 0);
-
-                                const totalAmount = parseFloat(form.amount.toString().replace(/,/g, "") || 0);
-                                const difference = totalCosts - totalAmount;
-                                const isEqual = Math.abs(difference) <= 1; // اجازه خطای کوچک
+                            {targetUnits.map((unit) => {
+                                // استفاده از units_id واقعی برای کلید
+                                const unitId = unit.unit?.units_id || unit.unit?.id || unit.value;
+                                const currentCost = customUnitCosts[String(unitId)] || "";
 
                                 return (
-                                    <>
-                                        {targetUnits.map((unit) => {
-                                            // استفاده از units_id واقعی برای کلید
-                                            const unitId = unit.unit?.units_id || unit.unit?.id || unit.value;
-                                            const currentCost = customUnitCosts[String(unitId)] || "";
-
-                                            return (
-                                                <div key={unitId} className="flex items-center gap-3 py-1">
-                                                    <label className="text-sm text-gray-700 min-w-[100px] flex-shrink-0">
-                                                        {unit.label}:
-                                                    </label>
-                                                    <div className="flex-1 min-w-0">
-                                                        <InputField
-                                                            name={`customCost_${unitId}`}
-                                                            type="text"
-                                                            value={formatNumber(currentCost)}
-                                                            onChange={(e) => {
-                                                                const rawValue = e.target.value.replace(/,/g, "");
-                                                                if (!isNaN(rawValue) || rawValue === "") {
-                                                                    onCustomUnitCostChange(String(unitId), rawValue);
-                                                                }
-                                                            }}
-                                                            placeholder="مبلغ واحد"
-                                                            disabled={hasPayments && isEditing}
-                                                        />
-                                                    </div>
-                                                    <span className="text-sm text-gray-500 flex-shrink-0">تومان</span>
-                                                </div>
-                                            );
-                                        })}
-                                        {/* نمایش مجموع و مقایسه با مبلغ کل */}
-                                        {targetUnits.length > 0 && (
-                                            <div className="mt-3 pt-3 border-t border-blue-300">
-                                                <div className="flex items-center justify-between text-sm">
-                                                    <span className="text-gray-700 font-medium">مجموع مبالغ واحدها:</span>
-                                                    <span className={`font-semibold ${isEqual ? 'text-green-600' : 'text-orange-600'}`}>
-                                                        {formatNumber(totalCosts)} تومان
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-sm mt-1">
-                                                    <span className="text-gray-700 font-medium">مبلغ کل:</span>
-                                                    <span className="font-semibold text-gray-800">
-                                                        {formatNumber(totalAmount)} تومان
-                                                    </span>
-                                                </div>
-                                                {!isEqual && totalAmount > 0 && (
-                                                    <div className={`flex items-center justify-between text-xs mt-2 p-2 rounded ${difference > 0 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
-                                                        <span>تفاوت:</span>
-                                                        <span className="font-semibold">
-                                                            {difference > 0 ? '+' : ''}{formatNumber(Math.abs(difference))} تومان
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                {isEqual && totalAmount > 0 && (
-                                                    <div className="flex items-center justify-center text-xs mt-2 p-2 rounded bg-green-100 text-green-700">
-                                                        <span>✓ مجموع مبالغ با مبلغ کل برابر است</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </>
+                                    <div key={unitId} className="flex items-center gap-3 py-1">
+                                        <label className="text-sm text-gray-700 min-w-[100px] flex-shrink-0">
+                                            {unit.label}:
+                                        </label>
+                                        <div className="flex-1 min-w-0">
+                                            <InputField
+                                                name={`customCost_${unitId}`}
+                                                type="text"
+                                                value={formatNumber(currentCost)}
+                                                onChange={(e) => {
+                                                    const rawValue = e.target.value.replace(/,/g, "");
+                                                    if (!isNaN(rawValue) || rawValue === "") {
+                                                        onCustomUnitCostChange(String(unitId), rawValue);
+                                                    }
+                                                }}
+                                                placeholder="مبلغ واحد"
+                                                disabled={hasPayments && isEditing}
+                                            />
+                                        </div>
+                                        <span className="text-sm text-gray-500 flex-shrink-0">تومان</span>
+                                    </div>
                                 );
-                            })()}
+                            })}
+                            {/* نمایش مجموع و مقایسه با مبلغ کل */}
+                            {targetUnits.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-blue-300">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-700 font-medium">مجموع مبالغ واحدها:</span>
+                                        <span className={`font-semibold ${isEqual ? 'text-green-600' : 'text-orange-600'}`}>
+                                            {formatNumber(totalCosts)} تومان
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm mt-1">
+                                        <span className="text-gray-700 font-medium">مبلغ کل:</span>
+                                        <span className="font-semibold text-gray-800">
+                                            {formatNumber(totalAmount)} تومان
+                                        </span>
+                                    </div>
+                                    {!isEqual && totalAmount > 0 && (
+                                        <div className={`flex items-center justify-between text-xs mt-2 p-2 rounded ${difference > 0 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
+                                            <span>تفاوت:</span>
+                                            <span className="font-semibold">
+                                                {difference > 0 ? '+' : ''}{formatNumber(Math.abs(difference))} تومان
+                                            </span>
+                                        </div>
+                                    )}
+                                    {isEqual && totalAmount > 0 && (
+                                        <div className="flex items-center justify-center text-xs mt-2 p-2 rounded bg-green-100 text-green-700">
+                                            <span>✓ مجموع مبالغ با مبلغ کل برابر است</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <p className="text-xs text-blue-600 mt-3">
                             💡 مبلغ هر واحد را به صورت جداگانه وارد کنید. مجموع باید برابر مبلغ کل باشد.
