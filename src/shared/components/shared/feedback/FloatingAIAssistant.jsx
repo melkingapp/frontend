@@ -65,6 +65,8 @@ export default function FloatingAIAssistant({ to = "/manager/legal-ai" }) {
             onClick={handleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            onFocus={handleMouseEnter}
+            onBlur={handleMouseLeave}
             className="fixed left-0 top-2/3 -translate-y-1/2 z-50 group"
             title="دستیار ملکینگ"
         >
