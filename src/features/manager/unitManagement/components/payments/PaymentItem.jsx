@@ -17,7 +17,13 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  /*
+   * ⚡ Bolt Optimization:
+   * Removed unused global Redux state selector for `loading` that caused unnecessary O(n) re-renders
+   * whenever any payment status changed across the entire list.
+   * Expected Impact: Eliminates redundant renders for all non-active list items.
+   * Measurement Strategy: Verify with React Profiler that only the interacted item re-renders.
+   */
   const [isProcessing, setIsProcessing] = useState(false);
 
   const roleStyle = useMemo(() => {

@@ -1,0 +1,3 @@
+## 2024-03-22 - Remove unused Redux selectors in List Items
+**Learning:** Selecting global state (like `loading` from `state.payments`) that is either completely unused or used inappropriately in individual list item components forces React to re-render ALL items in the list every time that global state changes. This creates O(n) re-renders for every state change. Instead of using global loading states for individual item actions, use local component state (e.g. `isProcessing`).
+**Action:** Audit list item components (like PaymentItem, RequestItem) to remove unnecessary `useSelector` calls, especially for loading states, and rely on local state or explicitly pass primitive values as props from the parent list component.
