@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
-import clsx from "clsx";
+import clsx from "../../../utils/clsx";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
