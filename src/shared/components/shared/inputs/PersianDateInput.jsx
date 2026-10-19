@@ -136,12 +136,14 @@ export default function PersianDateInput({
                 <button
                   onClick={handlePrevMonth}
                   className="p-1 hover:bg-gray-100 rounded"
+                  aria-label="ماه قبل"
                 >
                   ←
                 </button>
                 <button
                   onClick={handleNextMonth}
                   className="p-1 hover:bg-gray-100 rounded"
+                  aria-label="ماه بعد"
                 >
                   →
                 </button>
