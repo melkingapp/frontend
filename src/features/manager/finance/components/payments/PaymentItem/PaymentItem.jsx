@@ -10,6 +10,24 @@ import { approvePayment, rejectPayment, fetchPendingPayments } from "../../../st
 
 moment.loadPersian({ dialect: "persian-modern" });
 
+/*
+ * ⚡ BOLT PERFORMANCE OPTIMIZATION
+ * 💡 What: Moved `avatarColors` array outside the component and removed unused `loading` state from `useSelector`.
+ * 🎯 Why:
+ *    1. Extracting unused state (`loading`) via useSelector creates a subscription that causes widespread O(n) re-renders across all list items whenever that global state changes.
+ *    2. Defining static arrays inside the component body causes unnecessary memory allocation and object recreation on every single render cycle.
+ * 📊 Impact: Prevents O(n) unnecessary re-renders of the list when payment loading state changes, and reduces GC pressure/memory allocation per item.
+ * 🔬 Measurement: Profile React renders during a global payment state change; list items should no longer re-render.
+ */
+const avatarColors = [
+  "bg-pink-100 text-pink-700",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+  "bg-teal-100 text-teal-700",
+  "bg-blue-100 text-blue-700",
+  "bg-rose-100 text-rose-700",
+];
+
 /**
  * PaymentItem (Pro)
  * — کارت جمع‌وجور، حرفه‌ای و ریسپانسیو برای آیتم پرداخت
@@ -18,7 +36,6 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
@@ -88,15 +105,6 @@ export default function PaymentItem({ payment, buildingId }) {
       return "—";
     }
   }, [payment?.createdAt]);
-
-  const avatarColors = [
-    "bg-pink-100 text-pink-700",
-    "bg-purple-100 text-purple-700",
-    "bg-amber-100 text-amber-700",
-    "bg-teal-100 text-teal-700",
-    "bg-blue-100 text-blue-700",
-    "bg-rose-100 text-rose-700",
-  ];
 
   const avatarColor = useMemo(() => {
     const k = Number.isFinite(payment?.id) ? payment.id : 0;
