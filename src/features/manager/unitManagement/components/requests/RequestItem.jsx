@@ -5,6 +5,22 @@ import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { updateRequestStatus } from "../../slices/requestsSlice";
 
+/*
+ * ⚡ BOLT PERFORMANCE OPTIMIZATION
+ * 💡 What: Moved `avatarColors` array outside the component body.
+ * 🎯 Why: Defining static arrays inside the component body causes unnecessary memory allocation and object recreation on every single render cycle.
+ * 📊 Impact: Reduces GC pressure/memory allocation per list item, ensuring smoother scrolling and rendering performance for large lists of requests.
+ * 🔬 Measurement: Profile memory usage and component render time during list updates; allocation rates should be lower.
+ */
+const avatarColors = [
+    "bg-pink-100 text-pink-700",
+    "bg-purple-100 text-purple-700",
+    "bg-amber-100 text-amber-700",
+    "bg-teal-100 text-teal-700",
+    "bg-blue-100 text-blue-700",
+    "bg-rose-100 text-rose-700",
+];
+
 export default function RequestItem({ request }) {
     const dispatch = useDispatch();
     const { updateLoading } = useSelector(state => state.requests);
@@ -72,15 +88,6 @@ export default function RequestItem({ request }) {
             toast.error("خطا در رد درخواست: " + error);
         }
     };
-
-    const avatarColors = [
-        "bg-pink-100 text-pink-700",
-        "bg-purple-100 text-purple-700",
-        "bg-amber-100 text-amber-700",
-        "bg-teal-100 text-teal-700",
-        "bg-blue-100 text-blue-700",
-        "bg-rose-100 text-rose-700",
-    ];
 
     const avatarColor = useMemo(() => {
         const k = Number.isFinite(request?.id) ? request.id : 0;
