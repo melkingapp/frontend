@@ -1,0 +1,3 @@
+## 2024-10-24 - Improve keyboard accessibility for tooltips and icon-only buttons
+**Learning:** Icon-only buttons and elements with custom hover tooltips often become inaccessible to keyboard users because `onMouseEnter`/`onMouseLeave` are not paired with `onFocus`/`onBlur`. Also, interactive elements like FABs lack proper `aria-expanded` and visible focus rings.
+**Action:** Always pair `onMouseEnter` and `onMouseLeave` with `onFocus` and `onBlur`. Add localized `aria-label` and `title` to icon-only buttons. Use utility classes `focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3B66C]` for a consistent, keyboard-navigable experience.
