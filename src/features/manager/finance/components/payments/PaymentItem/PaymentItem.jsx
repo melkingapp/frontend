@@ -3,7 +3,7 @@ import { Home, Calendar, Check, X, Loader2, ImageIcon } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../../shared/utils";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
 import { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../../store/slices/paymentsSlice";
@@ -16,9 +16,22 @@ moment.loadPersian({ dialect: "persian-modern" });
  * — تمرکز روی چگالی اطلاعات + سلسله‌مراتب بصری واضح
  * — دکمه‌های اکشن در دسترس، نمایش فاکتور در Modal/Inline
  */
+// ⚡ Bolt Optimization:
+// - Extracted `avatarColors` to module scope to prevent array recreation on every list item render.
+// - Removed unused `useSelector` state (`loading`) to prevent O(n) re-renders across all list items.
+// Impact: Reduced memory allocation and DOM churn for large lists.
+// Measurement: Use React Profiler to verify list items don't re-render on payment load state change.
+const avatarColors = [
+  "bg-pink-100 text-pink-700",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+  "bg-teal-100 text-teal-700",
+  "bg-blue-100 text-blue-700",
+  "bg-rose-100 text-rose-700",
+];
+
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
@@ -88,15 +101,6 @@ export default function PaymentItem({ payment, buildingId }) {
       return "—";
     }
   }, [payment?.createdAt]);
-
-  const avatarColors = [
-    "bg-pink-100 text-pink-700",
-    "bg-purple-100 text-purple-700",
-    "bg-amber-100 text-amber-700",
-    "bg-teal-100 text-teal-700",
-    "bg-blue-100 text-blue-700",
-    "bg-rose-100 text-rose-700",
-  ];
 
   const avatarColor = useMemo(() => {
     const k = Number.isFinite(payment?.id) ? payment.id : 0;
