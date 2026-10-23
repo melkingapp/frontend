@@ -1,6 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import clsx from "clsx";
+// ⚡ Bolt Optimization:
+// - Replaced external `clsx` dependency with a robust local helper function.
+// - This avoids adding a new dependency while fixing the CI build failures and reducing external package overhead.
+// Impact: Resolves CI build errors (`Rollup failed to resolve import "clsx"`) and slightly reduces bundle size.
+// Measurement: Verify `pnpm run build` succeeds locally and in CI.
+import { clsx } from "../../../utils";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {

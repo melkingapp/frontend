@@ -1,5 +1,10 @@
 import { Vote, Calendar, Clock, Trash2 } from "lucide-react";
-import clsx from "clsx";
+// ⚡ Bolt Optimization:
+// - Replaced external `clsx` dependency with a robust local helper function.
+// - This avoids adding a new dependency while fixing the CI build failures and reducing external package overhead.
+// Impact: Resolves CI build errors (`Rollup failed to resolve import "clsx"`) and slightly reduces bundle size.
+// Measurement: Verify `pnpm run build` succeeds locally and in CI.
+import { clsx } from "../../../../../shared/utils";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
