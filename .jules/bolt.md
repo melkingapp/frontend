@@ -1,0 +1,3 @@
+## 2024-05-15 - Unused Redux State in List Items
+**Learning:** When optimizing React components connected to Redux, particularly list items, extracting unused state via useSelector creates a subscription that causes widespread, unnecessary O(n) re-renders across all list items whenever that global state changes. Also, static arrays should be moved outside the component function body.
+**Action:** Always ensure that any state selected via useSelector is actually consumed by the component, and move static configurations (e.g., color palettes) outside the render loop to prevent recreation on every render.

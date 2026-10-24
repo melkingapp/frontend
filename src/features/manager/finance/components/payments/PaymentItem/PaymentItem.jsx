@@ -3,12 +3,22 @@ import { Home, Calendar, Check, X, Loader2, ImageIcon } from "lucide-react";
 import { getPersianType, getTypeIcon } from "../../../../../../shared/utils";
 import DocumentViewer from "../../../../../../shared/components/shared/display/DocumentViewer";
 import { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../../store/slices/paymentsSlice";
 
 moment.loadPersian({ dialect: "persian-modern" });
+
+// ⚡ Bolt: Moved static configuration out of the render loop to prevent recreation on every render
+const avatarColors = [
+  "bg-pink-100 text-pink-700",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+  "bg-teal-100 text-teal-700",
+  "bg-blue-100 text-blue-700",
+  "bg-rose-100 text-rose-700",
+];
 
 /**
  * PaymentItem (Pro)
@@ -18,7 +28,7 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // ⚡ Bolt: Removed unused `loading` state from `useSelector` to prevent O(N) list re-renders when global loading state changes
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
@@ -88,15 +98,6 @@ export default function PaymentItem({ payment, buildingId }) {
       return "—";
     }
   }, [payment?.createdAt]);
-
-  const avatarColors = [
-    "bg-pink-100 text-pink-700",
-    "bg-purple-100 text-purple-700",
-    "bg-amber-100 text-amber-700",
-    "bg-teal-100 text-teal-700",
-    "bg-blue-100 text-blue-700",
-    "bg-rose-100 text-rose-700",
-  ];
 
   const avatarColor = useMemo(() => {
     const k = Number.isFinite(payment?.id) ? payment.id : 0;
