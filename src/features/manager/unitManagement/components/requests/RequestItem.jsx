@@ -5,6 +5,18 @@ import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { updateRequestStatus } from "../../slices/requestsSlice";
 
+// Optimization: move static arrays outside of render functions to prevent reallocation on every cycle
+// Impact: Reduces memory allocations and garbage collection overhead on every list render.
+// Measurement: Verify reduced re-allocation via React Profiler.
+const avatarColors = [
+  "bg-pink-100 text-pink-700",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+  "bg-teal-100 text-teal-700",
+  "bg-blue-100 text-blue-700",
+  "bg-rose-100 text-rose-700",
+];
+
 export default function RequestItem({ request }) {
     const dispatch = useDispatch();
     const { updateLoading } = useSelector(state => state.requests);
@@ -72,15 +84,6 @@ export default function RequestItem({ request }) {
             toast.error("خطا در رد درخواست: " + error);
         }
     };
-
-    const avatarColors = [
-        "bg-pink-100 text-pink-700",
-        "bg-purple-100 text-purple-700",
-        "bg-amber-100 text-amber-700",
-        "bg-teal-100 text-teal-700",
-        "bg-blue-100 text-blue-700",
-        "bg-rose-100 text-rose-700",
-    ];
 
     const avatarColor = useMemo(() => {
         const k = Number.isFinite(request?.id) ? request.id : 0;
