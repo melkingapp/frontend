@@ -8,6 +8,20 @@ import { toast } from "sonner";
 import moment from "moment-jalaali";
 import { approvePayment, rejectPayment, fetchPendingPayments } from "../../../store/slices/paymentsSlice";
 
+// ⚡ BOLT PERFORMANCE OPTIMIZATION:
+// 💡 What: Moved avatarColors array outside the component render function.
+// 🎯 Why: Prevents unnecessary memory allocation and garbage collection overhead on every render cycle, especially important for lists.
+// 📊 Impact: Reduces memory pressure and slightly improves rendering time per item.
+// 🔬 Measurement: Profile React rendering with and without this change to see fewer object allocations.
+const avatarColors = [
+  "bg-pink-100 text-pink-700",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+  "bg-teal-100 text-teal-700",
+  "bg-blue-100 text-blue-700",
+  "bg-rose-100 text-rose-700",
+];
+
 moment.loadPersian({ dialect: "persian-modern" });
 
 /**
@@ -88,15 +102,6 @@ export default function PaymentItem({ payment, buildingId }) {
       return "—";
     }
   }, [payment?.createdAt]);
-
-  const avatarColors = [
-    "bg-pink-100 text-pink-700",
-    "bg-purple-100 text-purple-700",
-    "bg-amber-100 text-amber-700",
-    "bg-teal-100 text-teal-700",
-    "bg-blue-100 text-blue-700",
-    "bg-rose-100 text-rose-700",
-  ];
 
   const avatarColor = useMemo(() => {
     const k = Number.isFinite(payment?.id) ? payment.id : 0;
