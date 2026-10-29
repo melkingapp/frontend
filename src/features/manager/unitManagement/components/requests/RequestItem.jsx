@@ -5,6 +5,18 @@ import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { updateRequestStatus } from "../../slices/requestsSlice";
 
+// ⚡ Bolt: Moved static avatarColors array outside component to prevent unnecessary memory allocation on every render cycle
+// Expected Impact: Reduces memory pressure and improves list rendering performance
+// Measurement: Profile list rendering using React DevTools before and after change
+const AVATAR_COLORS = [
+    "bg-pink-100 text-pink-700",
+    "bg-purple-100 text-purple-700",
+    "bg-amber-100 text-amber-700",
+    "bg-teal-100 text-teal-700",
+    "bg-blue-100 text-blue-700",
+    "bg-rose-100 text-rose-700",
+];
+
 export default function RequestItem({ request }) {
     const dispatch = useDispatch();
     const { updateLoading } = useSelector(state => state.requests);
@@ -73,18 +85,9 @@ export default function RequestItem({ request }) {
         }
     };
 
-    const avatarColors = [
-        "bg-pink-100 text-pink-700",
-        "bg-purple-100 text-purple-700",
-        "bg-amber-100 text-amber-700",
-        "bg-teal-100 text-teal-700",
-        "bg-blue-100 text-blue-700",
-        "bg-rose-100 text-rose-700",
-    ];
-
     const avatarColor = useMemo(() => {
         const k = Number.isFinite(request?.id) ? request.id : 0;
-        return avatarColors[k % avatarColors.length];
+        return AVATAR_COLORS[k % AVATAR_COLORS.length];
     }, [request?.id]);
 
     return (
