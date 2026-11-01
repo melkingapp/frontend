@@ -7,8 +7,8 @@ import { updateRequestStatus } from "../../slices/requestsSlice";
 
 export default function RequestItem({ request }) {
     const dispatch = useDispatch();
-    // 💡 Impact: Select primitive state properties directly instead of full state object to prevent O(N) list re-renders
-    // 🔬 Measurement: Observe React DevTools Profiler to ensure other items don't re-render when loading state changes
+    // 💡 Impact: Select primitive state directly to prevent O(N) list re-renders
+    // 🔬 Measurement: Profile React renders to verify only affected component renders
     const updateLoading = useSelector(state => state.requests.updateLoading);
     const selectedBuildingId = useSelector(state => state.building.selectedBuildingId);
     const buildings = useSelector(state => state.building.data);
