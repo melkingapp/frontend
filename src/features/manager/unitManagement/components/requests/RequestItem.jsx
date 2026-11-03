@@ -7,13 +7,16 @@ import { updateRequestStatus } from "../../slices/requestsSlice";
 
 export default function RequestItem({ request }) {
     const dispatch = useDispatch();
-    const { updateLoading } = useSelector(state => state.requests);
-    const { selectedBuildingId, data: buildings } = useSelector(state => state.building);
-    const { user } = useSelector(state => state.auth);
+    // 💡 Impact: Prevents O(N) list re-renders by selecting specific primitives rather than full state slices
+    // 🔬 Measurement: Profile React component renders during list interactions (e.g. status updates)
+    const updateLoading = useSelector(state => state.requests?.updateLoading);
+    const selectedBuildingId = useSelector(state => state.building?.selectedBuildingId);
+    const buildings = useSelector(state => state.building?.data);
+    const userRole = useSelector(state => state.auth?.user?.role);
     const [expanded, setExpanded] = useState(false);
     
     // Only show approve/reject buttons for managers
-    const isManager = user?.role === 'manager';
+    const isManager = userRole === 'manager';
 
     const buildingId = selectedBuildingId || (buildings && buildings.length > 0 ? buildings[0].building_id : null);
 
