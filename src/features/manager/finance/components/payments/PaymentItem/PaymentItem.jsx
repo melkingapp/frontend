@@ -10,6 +10,15 @@ import { approvePayment, rejectPayment, fetchPendingPayments } from "../../../st
 
 moment.loadPersian({ dialect: "persian-modern" });
 
+const avatarColors = [
+  "bg-pink-100 text-pink-700",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+  "bg-teal-100 text-teal-700",
+  "bg-blue-100 text-blue-700",
+  "bg-rose-100 text-rose-700",
+];
+
 /**
  * PaymentItem (Pro)
  * — کارت جمع‌وجور، حرفه‌ای و ریسپانسیو برای آیتم پرداخت
@@ -18,7 +27,9 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // 💡 Impact: Prevents O(N) re-renders when other slice properties change
+  // 🔬 Measurement: Profile re-renders in DevTools when payments list updates
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
@@ -88,15 +99,6 @@ export default function PaymentItem({ payment, buildingId }) {
       return "—";
     }
   }, [payment?.createdAt]);
-
-  const avatarColors = [
-    "bg-pink-100 text-pink-700",
-    "bg-purple-100 text-purple-700",
-    "bg-amber-100 text-amber-700",
-    "bg-teal-100 text-teal-700",
-    "bg-blue-100 text-blue-700",
-    "bg-rose-100 text-rose-700",
-  ];
 
   const avatarColor = useMemo(() => {
     const k = Number.isFinite(payment?.id) ? payment.id : 0;
