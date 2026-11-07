@@ -15,9 +15,20 @@ moment.loadPersian({ dialect: "persian-modern" });
  * — تمرکز روی چگالی اطلاعات + سلسله‌مراتب بصری واضح
  * — دکمه‌های اکشن در دسترس، نمایش فاکتور در Modal/Inline
  */
+const avatarColors = [
+  "bg-pink-100 text-pink-700",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+  "bg-teal-100 text-teal-700",
+  "bg-blue-100 text-blue-700",
+  "bg-rose-100 text-rose-700",
+];
+
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // 💡 Impact: Selecting specific state properties instead of full slice prevents O(N) re-renders when list changes
+  // 🔬 Measurement: Observe React DevTools Profiler to ensure list items only re-render when they are modified
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const roleStyle = useMemo(() => {
@@ -83,15 +94,6 @@ export default function PaymentItem({ payment, buildingId }) {
       return "—";
     }
   }, [payment?.createdAt]);
-
-  const avatarColors = [
-    "bg-pink-100 text-pink-700",
-    "bg-purple-100 text-purple-700",
-    "bg-amber-100 text-amber-700",
-    "bg-teal-100 text-teal-700",
-    "bg-blue-100 text-blue-700",
-    "bg-rose-100 text-rose-700",
-  ];
 
   const avatarColor = useMemo(() => {
     const k = Number.isFinite(payment?.id) ? payment.id : 0;
