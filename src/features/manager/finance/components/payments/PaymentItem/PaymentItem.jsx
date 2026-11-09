@@ -18,7 +18,9 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // 💡 Impact: Prevents O(N) re-renders across all PaymentItem instances when unrelated state changes.
+  // 🔬 Measurement: Observe React DevTools Profiler during payment approval; fewer components should render.
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
