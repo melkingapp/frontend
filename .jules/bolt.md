@@ -1,0 +1,3 @@
+## 2024-03-24 - O(N) Performance bottlenecks in list components
+**Learning:** Redux selectors returning full state slices (e.g., `useSelector(state => state.payments)` instead of primitive values like `loading`) inside list item components (like `PaymentItem` or `RequestItem`) can cause severe O(N) performance bottlenecks, as every item component will re-render when ANY unrelated property of the selected state slice changes.
+**Action:** Avoid selecting entire state slices in Redux-connected list item components. Always select specific primitive properties (e.g., `useSelector(state => state.payments.loading)`) to prevent O(N) re-renders.
