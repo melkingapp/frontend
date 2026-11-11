@@ -18,7 +18,9 @@ moment.loadPersian({ dialect: "persian-modern" });
  */
 export default function PaymentItem({ payment, buildingId }) {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.payments);
+  // 💡 Impact: Prevents O(N) list re-renders by selecting specific primitive properties instead of full state slices.
+  // 🔬 Measurement: Profile React renders while updating other payment states. Should see 0 re-renders for unchanged items.
+  const loading = useSelector(state => state.payments.loading);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // getTypeIcon is now imported from utils
